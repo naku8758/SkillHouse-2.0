@@ -1,0 +1,167 @@
+/* =====================================================================
+   SKILLHOUSE · SISTEMA DE DISEÑO
+   Tokens compartidos por todas las páginas (landing, paneles, ayuda).
+   Inspirado en el propio isotipo de la marca: estrellas fugaces sobre
+   un cielo nocturno de aprendizaje ("aprender es hacer brillar algo").
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,500&display=swap');
+
+:root{
+  /* --- Cielo / marca --- */
+  --sh-navy-950:#080B21;
+  --sh-navy-900:#0E1338;
+  --sh-navy-800:#161B4A;
+  --sh-navy-700:#20265F;
+
+  /* --- Acentos --- */
+  --sh-indigo:#5B2EFF;
+  --sh-indigo-light:#8B6BFF;
+  --sh-cyan:#22D3EE;
+  --sh-pink:#FF3EA5;
+  --sh-amber:#FFC145;
+  --sh-mint:#34D399;
+
+  /* --- Superficies claras --- */
+  --sh-cloud-50:#F6F7FD;
+  --sh-cloud-100:#EDF0FB;
+  --sh-cloud-200:#DFE4F7;
+  --sh-white:#FFFFFF;
+
+  /* --- Texto --- */
+  --sh-ink-900:#12142B;
+  --sh-ink-600:#464B6E;
+  --sh-ink-400:#7A7FA0;
+  --sh-on-dark:#EAEBFF;
+  --sh-on-dark-soft:#B7BBE8;
+
+  /* --- Gradientes de marca --- */
+  --sh-grad-brand: linear-gradient(115deg, #5B2EFF 0%, #8B2EFF 45%, #FF3EA5 100%);
+  --sh-grad-brand-soft: linear-gradient(115deg, rgba(91,46,255,.14), rgba(255,62,165,.14));
+  --sh-grad-cyan: linear-gradient(115deg, #22D3EE 0%, #5B2EFF 100%);
+  --sh-grad-night: radial-gradient(120% 140% at 15% 0%, #171d52 0%, #0E1338 45%, #080B21 100%);
+
+  /* --- Forma --- */
+  --sh-r-sm:10px;
+  --sh-r-md:16px;
+  --sh-r-lg:24px;
+  --sh-r-xl:32px;
+  --sh-r-pill:999px;
+
+  /* --- Sombra --- */
+  --sh-shadow-sm: 0 4px 14px rgba(18,20,60,.08);
+  --sh-shadow-md: 0 12px 30px rgba(18,20,60,.12);
+  --sh-shadow-lg: 0 20px 50px rgba(14,19,56,.22);
+  --sh-shadow-glow: 0 0 0 1px rgba(139,107,255,.25), 0 12px 34px rgba(91,46,255,.35);
+
+  /* --- Tipografía --- */
+  --sh-font-display:'Baloo 2', 'Fredoka One', cursive;
+  --sh-font-body:'Poppins', sans-serif;
+
+  /* --- Movimiento --- */
+  --sh-ease: cubic-bezier(.22,1,.36,1);
+  --sh-fast:.2s;
+  --sh-med:.4s;
+  --sh-slow:.7s;
+}
+
+*{ box-sizing:border-box; }
+
+::selection{ background:var(--sh-indigo); color:#fff; }
+
+/* Scrollbar de marca (progressive enhancement, no rompe nada si no aplica) */
+::-webkit-scrollbar{ width:11px; height:11px; }
+::-webkit-scrollbar-track{ background:var(--sh-cloud-100); }
+::-webkit-scrollbar-thumb{ background:var(--sh-indigo-light); border-radius:99px; border:3px solid var(--sh-cloud-100); }
+
+/* Foco visible accesible, consistente en todo el sitio */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible{
+  outline: 3px solid var(--sh-cyan);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* =====================================================================
+   ANIMACIONES COMPARTIDAS
+   ===================================================================== */
+
+@keyframes sh-fade-up{
+  from{ opacity:0; transform:translateY(22px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+@keyframes sh-fade-in{
+  from{ opacity:0; }
+  to{ opacity:1; }
+}
+@keyframes sh-pop-in{
+  0%{ opacity:0; transform:scale(.92) translateY(10px); }
+  100%{ opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes sh-float{
+  0%,100%{ transform:translateY(0) rotate(0deg); }
+  50%{ transform:translateY(-14px) rotate(2deg); }
+}
+@keyframes sh-float-slow{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-10px); }
+}
+@keyframes sh-twinkle{
+  0%,100%{ opacity:.25; transform:scale(.8); }
+  50%{ opacity:1; transform:scale(1.15); }
+}
+@keyframes sh-gradient-shift{
+  0%{ background-position:0% 50%; }
+  50%{ background-position:100% 50%; }
+  100%{ background-position:0% 50%; }
+}
+@keyframes sh-spin-slow{
+  to{ transform:rotate(360deg); }
+}
+@keyframes sh-count-pulse{
+  0%{ transform:scale(1); }
+  50%{ transform:scale(1.06); }
+  100%{ transform:scale(1); }
+}
+
+/* Utilidad: elementos que se revelan al hacer scroll (activada por js/ui.js).
+   Si el JS no carga por cualquier motivo, el contenido sigue visible
+   igualmente porque el estado inicial no depende de JS aquí. */
+.sh-reveal{
+  opacity:0;
+  transform:translateY(24px);
+  transition: opacity .7s var(--sh-ease), transform .7s var(--sh-ease);
+}
+.sh-reveal.is-visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.sh-reveal-stagger > *{
+  opacity:0;
+  transform:translateY(24px);
+  transition: opacity .6s var(--sh-ease), transform .6s var(--sh-ease);
+}
+.sh-reveal-stagger.is-visible > *{
+  opacity:1;
+  transform:translateY(0);
+}
+.sh-reveal-stagger.is-visible > *:nth-child(1){ transition-delay:.03s; }
+.sh-reveal-stagger.is-visible > *:nth-child(2){ transition-delay:.11s; }
+.sh-reveal-stagger.is-visible > *:nth-child(3){ transition-delay:.19s; }
+.sh-reveal-stagger.is-visible > *:nth-child(4){ transition-delay:.27s; }
+.sh-reveal-stagger.is-visible > *:nth-child(5){ transition-delay:.35s; }
+.sh-reveal-stagger.is-visible > *:nth-child(6){ transition-delay:.43s; }
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  .sh-reveal, .sh-reveal-stagger > *{ opacity:1; transform:none; }
+}

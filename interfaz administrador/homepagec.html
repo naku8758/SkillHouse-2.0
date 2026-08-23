@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.PNG">
+    <title>Panel Administrador | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylec.css">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("administrador");
+    </script>
+</head>
+<body>
+
+<div class="contenedor">
+    <!-- MENÚ LATERAL -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Administrador</p>
+        </div>
+        <ul class="menu">
+            <li><a href="#" class="is-active">🏠 Dashboard</a></li>
+            <li><a href="#">👥 Usuarios</a></li>
+            <li><a href="#">📚 Clases</a></li>
+            <li><a href="#">📝 Materias</a></li>
+            <li><a href="#">📊 Reportes</a></li>
+            <li><a href="#">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <!-- CONTENIDO -->
+    <main class="contenido">
+        <header class="topbar">
+            <h1 id="bienvenida">Panel Administrativo</h1>
+        </header>
+        <!-- TARJETAS -->
+        <section class="cards sh-reveal-stagger">
+            <div class="card">
+                <div class="card-icono">🎓</div>
+                <div>
+                    <h2><span data-count="520">0</span></h2>
+                    <p>Estudiantes Registrados</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icono">👩‍🏫</div>
+                <div>
+                    <h2><span data-count="35">0</span></h2>
+                    <p>Maestros Registrados</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icono">📚</div>
+                <div>
+                    <h2><span data-count="127">0</span></h2>
+                    <p>Clases Activas</p>
+                </div>
+            </div>
+        </section>
+        <!-- ACTIVIDAD -->
+        <section class="actividad sh-reveal">
+            <h2>Actividad Reciente</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Laura Gómez</td>
+                        <td>Envió una sugerencia</td>
+                        <td>04/06/2026</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+<footer>
+    <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+     <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+</footer>
+<script src="../js/ui.js" defer></script>
+</body>
+</html>

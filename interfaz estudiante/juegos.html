@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.PNG">
+    <title>Juegos | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylea.css">
+    <link rel="stylesheet" href="../css/juegos.css">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("estudiante");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <!-- MENÚ LATERAL -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Estudiante</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagea.html">🏠 Materias</a></li>
+            <li><a href="#">📚 Mi Biblioteca</a></li>
+            <li><a href="#">📝 Mis clases</a></li>
+            <li><a href="juegos.html" class="is-active">🎮 Juegos</a></li>
+            <li><a href="#">👥 Mi Perfil</a></li>
+            <li><a href="#">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <h1 id="titulo-pagina">Juegos 🎮</h1>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <h2>Unirme a un grupo</h2>
+            <p class="panel-sub">Pídele a tu profesor el código de la clase y escríbelo aquí para jugar.</p>
+            <form id="form-unirse">
+                <div class="form-fila">
+                    <div class="campo">
+                        <label for="input-codigo">Código del grupo</label>
+                        <input type="text" id="input-codigo" placeholder="Ej. K7P2QX" maxlength="6" style="text-transform:uppercase;" required>
+                    </div>
+                    <div class="campo" style="flex:none;">
+                        <button type="submit" class="btn-accion" id="btn-unirse">Unirme</button>
+                    </div>
+                </div>
+            </form>
+            <p id="unirse-error" class="mensaje-error" style="display:none;"></p>
+            <p id="unirse-exito" class="mensaje-exito" style="display:none;"></p>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Jugar sin grupo (práctica)</h2>
+            <p class="panel-sub">También puedes practicar libremente sin que se guarde el resultado.</p>
+            <div class="grupo-acciones">
+                <a href="../juegos/quiz.html" class="btn-accion" style="text-decoration:none;">🎮 Quiz de Lógica</a>
+                <a href="../juegos/puzzle.html" class="btn-accion" style="text-decoration:none;">🧩 Puzzle de Código</a>
+            </div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Mis grupos</h2>
+            <p class="panel-sub">Grupos a los que ya perteneces.</p>
+            <div class="grupos-grid" id="lista-grupos">
+                <p class="estado-vacio">Cargando tus grupos...</p>
+            </div>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="juegos-panel.js"></script>
+</body>
+</html>

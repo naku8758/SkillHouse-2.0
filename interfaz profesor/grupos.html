@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.PNG">
+    <title>Mis Grupos | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="styleb.css">
+    <link rel="stylesheet" href="../css/juegos.css">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("profesor");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <!-- MENÚ LATERAL -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Maestro</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepageb.html">🏠 Materias</a></li>
+            <li><a href="#">📚 Mi Biblioteca</a></li>
+            <li><a href="#">📝 Mis clases</a></li>
+            <li><a href="grupos.html" class="is-active">🎮 Mis Grupos</a></li>
+            <li><a href="#">👥 Mi Perfil</a></li>
+            <li><a href="#">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <h1 id="titulo-pagina">Mis Grupos 🎮</h1>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <h2>Crear un nuevo grupo</h2>
+            <p class="panel-sub">Elige un juego, ponle un nombre a tu grupo y comparte el código con tus estudiantes para que jueguen en clase.</p>
+
+            <form id="form-crear-grupo">
+                <div class="form-fila">
+                    <div class="campo">
+                        <label for="input-nombre">Nombre del grupo</label>
+                        <input type="text" id="input-nombre" placeholder="Ej. 6-A Matemáticas" required maxlength="60">
+                    </div>
+                    <div class="campo">
+                        <label for="select-juego">Juego</label>
+                        <select id="select-juego" required>
+                            <option value="quiz">🎮 Quiz de Lógica</option>
+                            <option value="puzzle">🧩 Puzzle de Código</option>
+                        </select>
+                    </div>
+                    <div class="campo" style="flex:none;">
+                        <button type="submit" class="btn-accion" id="btn-crear-grupo">Crear grupo</button>
+                    </div>
+                </div>
+            </form>
+            <p id="crear-grupo-error" class="mensaje-error" style="display:none;"></p>
+            <p id="crear-grupo-exito" class="mensaje-exito" style="display:none;"></p>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Grupos activos</h2>
+            <p class="panel-sub">Comparte el código con tus estudiantes desde el panel de "Juegos" en su cuenta.</p>
+            <div class="grupos-grid" id="lista-grupos">
+                <p class="estado-vacio">Cargando tus grupos...</p>
+            </div>
+        </section>
+
+        <!-- Panel de resultados de un grupo (oculto hasta que se seleccione uno) -->
+        <section class="panel-box" id="panel-resultados" style="display:none;">
+            <h2 id="resultados-titulo">Resultados</h2>
+            <p class="panel-sub" id="resultados-sub"></p>
+            <div id="resultados-contenido"></div>
+            <button class="btn-secundario" id="btn-cerrar-resultados" style="margin-top:14px;">Cerrar</button>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="grupos-panel.js"></script>
+</body>
+</html>

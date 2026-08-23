@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.PNG">
+    <title>Mi Panel | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="styleb.css">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("profesor");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <!-- MENÚ LATERAL -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Maestro</p>
+        </div>
+        <ul class="menu">
+            <li><a href="#" class="is-active">🏠 Materias</a></li>
+            <li><a href="#">📚 Mi Biblioteca</a></li>
+            <li><a href="#">📝 Mis clases</a></li>
+            <li><a href="grupos.html">🎮 Mis Grupos</a></li>
+            <li><a href="#">👥 Mi Perfil</a></li>
+            <li><a href="#">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <!-- Barra de busqueda -->
+    <main class="contenido">
+        <header class="topbar">
+            <h1 id="bienvenida">Bienvenid@, profe</h1>
+            <input type="text" class="search-bar" placeholder="Buscar tema...">
+        </header>
+    <!-- CONTENIDO -->
+        <section class="materias-grid sh-reveal-stagger">
+            <div class="materia-card card1"><h3>📐 Matemáticas</h3></div>
+            <div class="materia-card card2"><h3>📖 Español/Lengua Castellana</h3></div>
+            <div class="materia-card card3"><h3>🔬 Ciencias</h3></div>
+            <div class="materia-card card4"><h3>⭐ Inglés</h3></div>
+            <div class="materia-card card5"><h3>🌎 Sociales/Historia</h3></div>
+            <div class="materia-card card6"><h3>💻 Tecnología/Informatica</h3></div>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+</body>
+</html>

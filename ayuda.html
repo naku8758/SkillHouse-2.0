@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="imag/logo.PNG">
+    <title>Centro de Ayuda | SkillHouse</title>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="ayuda.css">
+</head>
+
+<body class="ayuda-body">
+
+    <!-- HEADER -->
+    <header class="dashboard-header">
+        <div class="logo">
+            <img src="imag/logo.PNG" alt="Logo SkillHouse" width="78" height="60">
+            <p class="logoskillhouse">SkillHouse</p>
+        </div>
+        <nav>
+            <a href="index.html" class="btn-volver">
+                ← Volver
+            </a>
+        </nav>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="ayuda-container">
+        <span class="ayuda-eyebrow sh-reveal">💬 Centro de ayuda</span>
+        <h1 class="titulo-principal sh-reveal">
+            ¿En qué podemos ayudarte?
+        </h1>
+        <p class="ayuda-subtitulo sh-reveal">Busca una respuesta rápida abajo o cuéntanos cómo mejorar SkillHouse.</p>
+        <!-- BUSCADOR -->
+        <div class="search-box sh-reveal">
+            <input
+                type="text"
+                placeholder="Describe tu problema..."
+            >
+        </div>
+        <!-- PREGUNTAS FRECUENTES -->
+        <section class="temas-ayuda sh-reveal">
+            <details>
+                <summary><span class="icono-q">📘</span>¿Cómo me uno a un curso?</summary>
+                <p>
+                    Dirígete al catálogo de cursos, selecciona el curso que te
+                    interese y presiona el botón "Inscribirme".
+                </p>
+            </details>
+            <details>
+                <summary><span class="icono-q">👤</span>Problemas con mi perfil</summary>
+                <p>
+                    Verifica que tus datos estén completos y actualizados.
+                    Si el problema continúa, contacta al soporte técnico.
+                </p>
+            </details>
+            <details>
+                <summary><span class="icono-q">🔒</span>¿Cómo cambiar mi contraseña?</summary>
+                <p>
+                    Ve a Configuración → Seguridad →
+                    Cambiar contraseña y sigue las instrucciones.
+                </p>
+            </details>
+            <details>
+                <summary><span class="icono-q">🔑</span>¿Cómo recuperar mi cuenta?</summary>
+                <p>
+                    Utiliza la opción "Olvidé mi contraseña" en la pantalla
+                    de inicio de sesión.
+                </p>
+            </details>
+        </section>
+        <!-- SUGERENCIAS -->
+        <section class="sugerencias-box sh-reveal">
+
+            <h2>Envíanos tus sugerencias</h2>
+            <p class="sugerencias-sub">Tu opinión nos ayuda a hacer SkillHouse cada vez mejor.</p>
+
+            <textarea
+                placeholder="Cuéntanos cómo podemos mejorar SkillHouse..."
+                rows="5"
+            ></textarea>
+
+            <button class="btn-enviar">
+                Enviar sugerencia
+            </button>
+
+        </section>
+    </main>
+    <!-- FOOTER -->
+    <footer>
+            <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+            <a href="ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+
+<script src="js/ui.js" defer></script>
+</body>
+</html>

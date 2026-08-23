@@ -1,0 +1,318 @@
+/* =====================================================================
+   SKILLHOUSE · CENTRO DE AYUDA
+   Requiere tokens.css cargado antes que este archivo.
+   ===================================================================== */
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+    font-family: var(--sh-font-body);
+    background-color: var(--sh-cloud-50);
+    color: var(--sh-ink-900);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.dashboard-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 6%;
+    background-color: var(--sh-navy-950);
+    border-bottom: 1px solid rgba(139,107,255,.35);
+    box-shadow: var(--sh-shadow-lg);
+}
+.dashboard-header .logo{ display:flex; align-items:center; gap:12px; }
+.dashboard-header .logo img{ filter: drop-shadow(0 0 10px rgba(139,107,255,.55)); }
+
+.logoskillhouse{
+    color: #fff;
+    font-family: var(--sh-font-display);
+    font-weight:700;
+    font-size:1.4rem;
+}
+
+/* BOTÓN VOLVER */
+
+.btn-volver{
+    text-decoration:none;
+    background: var(--sh-grad-brand);
+    color:white;
+    padding:12px 24px;
+    border-radius:var(--sh-r-pill);
+    font-weight:600;
+    font-size:.92rem;
+    transition: transform var(--sh-fast) var(--sh-ease), box-shadow var(--sh-fast) var(--sh-ease);
+    display:inline-block;
+    box-shadow: 0 6px 18px rgba(91,46,255,.35);
+}
+
+.btn-volver:hover{
+    transform:translateY(-3px);
+    box-shadow: 0 10px 26px rgba(91,46,255,.5);
+}
+
+/* =========================
+   CONTENIDO PRINCIPAL
+========================= */
+
+.ayuda-container{
+    flex:1;
+    max-width:850px;
+    width:100%;
+    margin:60px auto;
+    padding:20px;
+    text-align:center;
+}
+
+.ayuda-eyebrow{
+    display:inline-block;
+    color: var(--sh-indigo);
+    background: var(--sh-grad-brand-soft);
+    border:1px solid var(--sh-cloud-200);
+    padding:8px 18px;
+    border-radius:var(--sh-r-pill);
+    font-weight:600;
+    font-size:.85rem;
+    margin-bottom:18px;
+}
+
+/* =========================
+   TÍTULO
+========================= */
+
+.titulo-principal{
+    font-family: var(--sh-font-display);
+    font-weight:700;
+    font-size:3rem;
+    line-height:1.15;
+    margin-bottom:14px;
+    background: var(--sh-grad-brand);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+
+.ayuda-subtitulo{
+    color: var(--sh-ink-400);
+    font-size:1.02rem;
+    margin-bottom:30px;
+}
+
+/* =========================
+   BUSCADOR
+========================= */
+
+.search-box{
+    margin-bottom:35px;
+    position:relative;
+}
+
+.search-box input{
+    width:100%;
+    padding:16px 26px;
+    border-radius:var(--sh-r-pill);
+    border:2px solid var(--sh-cloud-200);
+    outline:none;
+    font-size:1rem;
+    font-family: var(--sh-font-body);
+    transition: border-color var(--sh-fast), box-shadow var(--sh-fast);
+    background:#fff;
+    box-shadow: var(--sh-shadow-sm);
+}
+
+.search-box input:focus{
+    box-shadow: 0 0 0 4px rgba(91,46,255,.15);
+    border-color: var(--sh-indigo-light);
+}
+
+/* =========================
+   FAQ / PREGUNTAS
+========================= */
+
+.temas-ayuda{
+    background:#fff;
+    border-radius:var(--sh-r-lg);
+    padding:10px 20px;
+    margin-bottom:40px;
+    box-shadow: var(--sh-shadow-md);
+    text-align:left;
+    border:1px solid var(--sh-cloud-200);
+}
+
+.temas-ayuda details{
+    border-bottom:1px solid var(--sh-cloud-100);
+    padding:18px 6px;
+}
+
+.temas-ayuda details:last-child{
+    border-bottom:none;
+}
+
+.temas-ayuda summary{
+    cursor:pointer;
+    list-style:none;
+    font-weight:600;
+    color: var(--sh-navy-800);
+    position:relative;
+    padding-right:30px;
+    transition: color var(--sh-fast);
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.temas-ayuda summary::-webkit-details-marker{ display:none; }
+
+.temas-ayuda summary .icono-q{
+    width:30px; height:30px;
+    border-radius:50%;
+    background: var(--sh-grad-brand-soft);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.9rem;
+    flex-shrink:0;
+}
+
+.temas-ayuda summary::after{
+    content:"+";
+    position:absolute;
+    right:2px;
+    font-size:1.3rem;
+    color: var(--sh-indigo);
+    transition: transform var(--sh-fast);
+}
+
+.temas-ayuda details[open] summary::after{
+    content:"−";
+}
+
+.temas-ayuda summary:hover{
+    color: var(--sh-indigo);
+}
+
+.temas-ayuda p{
+    margin-top:12px;
+    margin-left:40px;
+    color: var(--sh-ink-400);
+    line-height:1.65;
+}
+
+/* =========================
+   CAJA DE SUGERENCIAS
+========================= */
+
+.sugerencias-box{
+    background: var(--sh-grad-night);
+    color:white;
+    padding:36px;
+    border-radius:var(--sh-r-xl);
+    box-shadow: var(--sh-shadow-glow);
+    text-align:left;
+}
+
+.sugerencias-box h2{
+    margin-bottom:8px;
+    font-size:1.6rem;
+    font-family: var(--sh-font-display);
+}
+.sugerencias-box .sugerencias-sub{
+    color: var(--sh-on-dark-soft);
+    margin-bottom:20px;
+    font-size:.92rem;
+}
+
+.sugerencias-box textarea{
+    width:100%;
+    min-height:140px;
+    padding:16px;
+    border:1px solid rgba(139,107,255,.4);
+    border-radius:var(--sh-r-md);
+    outline:none;
+    resize:none;
+    font-family: var(--sh-font-body);
+    font-size:1rem;
+    background: rgba(255,255,255,.06);
+    color:#fff;
+    transition: border-color var(--sh-fast), box-shadow var(--sh-fast);
+}
+.sugerencias-box textarea::placeholder{ color: rgba(234,235,255,.4); }
+
+.sugerencias-box textarea:focus{
+    border-color: var(--sh-cyan);
+    box-shadow: 0 0 0 3px rgba(34,211,238,.2);
+}
+
+/* =========================
+   BOTÓN ENVIAR
+========================= */
+
+.btn-enviar{
+    margin-top:18px;
+    border:none;
+    background: var(--sh-grad-cyan);
+    color:#06111f;
+    padding:13px 36px;
+    border-radius:var(--sh-r-pill);
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform var(--sh-fast), box-shadow var(--sh-fast);
+}
+
+.btn-enviar:hover{
+    transform:translateY(-3px);
+    box-shadow: 0 10px 24px rgba(34,211,238,.4);
+}
+
+/* =========================
+   FOOTER
+========================= */
+footer {
+    padding: 24px 6%;
+    background-color: var(--sh-navy-950);
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--sh-on-dark-soft);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+footer .link-ayuda,
+.link-ayuda{
+    display:inline-block;
+    color: var(--sh-cyan);
+    text-decoration:none;
+    font-weight:600;
+    transition: color var(--sh-fast);
+}
+.link-ayuda:hover{
+    color:white;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width:768px){
+    .titulo-principal{
+        font-size:2.3rem;
+    }
+    .dashboard-header{
+        padding:14px 5%;
+    }
+    .btn-volver{
+        padding:10px 18px;
+        font-size:.88rem;
+    }
+    .sugerencias-box{
+        padding:22px;
+    }
+    .temas-ayuda p{ margin-left:0; }
+}

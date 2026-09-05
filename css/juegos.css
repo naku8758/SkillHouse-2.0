@@ -819,4 +819,38 @@
     transform: translateY(-1px);
 }
 
+/* =====================================
+    RESPONSIVE PARA MÓVILES (PANTALLAS PEQUEÑAS)
+===================================== */
+@media (max-width: 768px) {
+    .modal-contenido.modal-dos-columnas {
+        flex-direction: column; /* Pone una columna encima de la otra */
+        width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto; /* Permite scroll vertical si la pantalla es muy baja */
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .modal-columna-opciones {
+        width: 100%;
+    }
+
+    .modal-columna-preview {
+        width: 100%;
+        border-top: 1px solid #e2e8f0; /* Línea divisoria sutil */
+        padding-top: 15px;
+    }
+
+    .preview-avatar-grande {
+        width: 110px; /* Reducimos un poco el círculo en móviles */
+        height: 110px;
+        margin-bottom: 15px;
+    }
+
+    .galeria-avatares img {
+        width: 38px; /* Avatares ligeramente más compactos para que no rompan filas */
+        height: 38px;
+    }
+}
 

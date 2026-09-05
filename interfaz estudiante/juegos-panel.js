@@ -7,13 +7,15 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/f
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { unirseAGrupo, obtenerGruposDelEstudiante } from "../js/grupos.js";
 
-const NOMBRE_JUEGO = {
-  quiz: "🎮 Quiz de Lógica",
-  puzzle: "🧩 Puzzle de Código"
+const JUEGOS = {
+  quiz: { icono: "🎮", nombre: "Quiz de Lógica" },
+  puzzle: { icono: "🧩", nombre: "Puzzle de Código" },
+  carrera: { icono: "🚀", nombre: "Carrera Espacial" }
 };
 const RUTA_JUEGO = {
   quiz: "../juegos/quiz.html",
-  puzzle: "../juegos/puzzle.html"
+  puzzle: "../juegos/puzzle.html",
+  carrera: "../juegos/carrera.html"
 };
 
 let usuarioActual = null;
@@ -86,22 +88,23 @@ async function cargarGrupos() {
   listaGrupos.innerHTML = grupos
     .map((g) => {
       const ruta = RUTA_JUEGO[g.juego] || "#";
+      const juego = JUEGOS[g.juego] || { icono: "🎲", nombre: g.juego };
       const puedeJugar = g.activo;
       return `
-      <div class="grupo-card">
+      <div class="grupo-card grupo-card--${g.juego}">
         <div class="grupo-header">
           <h3>${escapeHtml(g.nombre)}</h3>
-          <span class="badge-juego ${puedeJugar ? "" : "badge-inactivo"}">
-            ${puedeJugar ? "Activo" : "Inactivo"}
+          <span class="grupo-estado ${puedeJugar ? "grupo-estado--activo" : "grupo-estado--inactivo"}">
+            <span class="dot"></span>${puedeJugar ? "Activa" : "Inactiva"}
           </span>
         </div>
-        <span class="badge-juego">${NOMBRE_JUEGO[g.juego] || g.juego}</span>
-        <p class="grupo-meta">👩‍🏫 Profesor(a): ${escapeHtml(g.profesorNombre || "")}</p>
+        <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego.icono}</span>${juego.nombre}</span>
+        <p class="grupo-meta">Profesor(a): ${escapeHtml(g.profesorNombre || "—")}</p>
         <div class="grupo-acciones">
           ${
             puedeJugar
-              ? `<a class="btn-accion" style="text-decoration:none;" href="${ruta}?grupo=${g.id}">▶️ Jugar</a>`
-              : `<span class="grupo-meta">Este grupo ya no está activo.</span>`
+              ? `<a class="btn-accion" style="text-decoration:none;" href="${ruta}?grupo=${g.id}">Jugar</a>`
+              : `<span class="grupo-meta">Esta clase ya no está activa.</span>`
           }
         </div>
       </div>`;

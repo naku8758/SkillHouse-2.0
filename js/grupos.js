@@ -32,7 +32,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-const JUEGOS_VALIDOS = ["quiz", "puzzle"];
+const JUEGOS_VALIDOS = ["quiz", "puzzle", "carrera"];
 const CARACTERES_CODIGO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusiones
 
 function generarCodigo(longitud = 6) {
@@ -137,6 +137,37 @@ export async function obtenerResultadosDelGrupo(grupoId) {
   return resultados;
 }
 
+/**
+ * Estadísticas agregadas de todas las clases de un profesor: número de
+ * clases, estudiantes únicos, partidas jugadas en total y el promedio
+ * general de todas esas partidas. Útil para "Mi Perfil" y "Mi Biblioteca".
+ */
+export async function obtenerEstadisticasProfesor(profesorId) {
+  const grupos = await obtenerGruposDelProfesor(profesorId);
+
+  const estudiantesUnicos = new Set();
+  grupos.forEach((g) => (g.miembrosUids || []).forEach((uid) => estudiantesUnicos.add(uid)));
+
+  const resultadosPorGrupo = await Promise.all(
+    grupos.map((g) => obtenerResultadosDelGrupo(g.id).catch(() => []))
+  );
+
+  let totalPartidas = 0;
+  let sumaPorcentajes = 0;
+  resultadosPorGrupo.forEach((resultados) => {
+    totalPartidas += resultados.length;
+    resultados.forEach((r) => (sumaPorcentajes += r.porcentaje || 0));
+  });
+
+  return {
+    totalClases: grupos.length,
+    totalEstudiantes: estudiantesUnicos.size,
+    totalPartidas,
+    promedioGeneral: totalPartidas ? Math.round(sumaPorcentajes / totalPartidas) : 0,
+    grupos
+  };
+}
+
 /* ---------------------- ESTUDIANTE ---------------------- */
 
 /** Obtiene un grupo por su ID (para validar antes de jugar). */
@@ -196,11 +227,25 @@ export async function obtenerGruposDelEstudiante(uid) {
  * Guarda el resultado de una partida. Si grupoId es null/undefined, la
  * partida era "modo práctica" y no se guarda en Firestore (evita ruido de
  * datos de grupos que no existen).
+ *
+ * Además del resultado dentro del grupo, se guarda una copia en el
+ * historial personal del estudiante (estudiantes/{uid}/resultados) para
+ * que "Mi Biblioteca" pueda mostrar todo su progreso sin tener que leer
+ * los resultados de cada grupo por separado.
  */
 export async function guardarResultado({ grupoId, uid, username, juego, puntaje, total }) {
   if (!grupoId) return null;
   const porcentaje = total > 0 ? Math.round((puntaje / total) * 100) : 0;
-  const ref = await addDoc(collection(db, "grupos", grupoId, "resultados"), {
+
+  let nombreGrupo = "";
+  try {
+    const grupoSnap = await getDoc(doc(db, "grupos", grupoId));
+    if (grupoSnap.exists()) nombreGrupo = grupoSnap.data().nombre || "";
+  } catch (err) {
+    nombreGrupo = "";
+  }
+
+  const datosResultado = {
     uid,
     username: username || "",
     juego,
@@ -208,6 +253,33 @@ export async function guardarResultado({ grupoId, uid, username, juego, puntaje,
     total,
     porcentaje,
     fecha: serverTimestamp()
-  });
+  };
+
+  const ref = await addDoc(collection(db, "grupos", grupoId, "resultados"), datosResultado);
+
+  try {
+    await addDoc(collection(db, "estudiantes", uid, "resultados"), {
+      ...datosResultado,
+      grupoId,
+      nombreGrupo
+    });
+  } catch (err) {
+    console.error("No se pudo guardar el historial personal:", err);
+  }
+
   return ref.id;
+}
+
+/** Historial completo de partidas jugadas por un estudiante, más recientes primero. */
+export async function obtenerHistorialEstudiante(uid) {
+  const ref = collection(db, "estudiantes", uid, "resultados");
+  let snap;
+  try {
+    snap = await getDocs(query(ref, orderBy("fecha", "desc")));
+  } catch (err) {
+    snap = await getDocs(ref);
+  }
+  const historial = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  historial.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
+  return historial;
 }

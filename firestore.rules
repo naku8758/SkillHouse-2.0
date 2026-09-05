@@ -18,6 +18,15 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid;
       allow update, delete: if false;
+
+      // Historial personal de partidas jugadas (copia de los resultados
+      // de grupos/{id}/resultados), solo visible/editable por su dueño.
+      match /resultados/{resultadoId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+                      && request.resource.data.uid == uid;
+        allow update, delete: if false;
+      }
     }
 
     match /profesores/{uid} {

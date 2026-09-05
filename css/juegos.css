@@ -1,33 +1,97 @@
 /* =====================================================================
-   SKILLHOUSE · GRUPOS Y JUEGOS
-   Estilos compartidos por:
-     - interfaz profesor/grupos.html
-     - interfaz estudiante/juegos.html
-     - juegos/quiz.html
-     - juegos/puzzle.html
-   Requiere ../css/tokens.css cargado antes que este archivo.
+   SKILLHOUSE · GRUPOS, JUEGOS Y CUENTA
+   Estilos compartidos por las páginas de clases, juegos, biblioteca,
+   perfil y configuración. Requiere ../css/tokens.css cargado antes.
+
+   Reutiliza el mismo lenguaje visual que ../css/style.css (botones
+   píldora con sombra tintada, tipografía y radios de marca) en vez de
+   introducir un sistema de componentes aparte.
    ===================================================================== */
 
 /* =====================================
-   TARJETAS DE CONTENIDO (grupos.html / juegos.html)
+   COLOR DE FIRMA POR JUEGO
+   Cada juego tiene un acento propio y consistente en vez de repetir
+   la misma insignia degradada en todas partes.
+===================================== */
+:root{
+  --sh-juego-quiz: var(--sh-indigo);
+  --sh-juego-puzzle: #0E9E72;
+  --sh-juego-carrera: #D97706;
+}
+
+/* =====================================
+   ENCABEZADO DE PÁGINA (page-hero)
+   Reemplaza el título plano por un bloque con el mismo cielo nocturno
+   del landing (var(--sh-grad-night)), para que estas páginas se
+   distingan claramente del resto del panel sin salirse de la marca.
+===================================== */
+.page-hero{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    background:var(--sh-grad-night);
+    border-radius:var(--sh-r-lg);
+    padding:26px 30px;
+    margin-bottom:26px;
+    overflow:hidden;
+    isolation:isolate;
+}
+.page-hero::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at 88% -20%, rgba(139,107,255,.4), transparent 55%);
+    z-index:-1;
+}
+.page-hero-icon{
+    width:52px;
+    height:52px;
+    border-radius:15px;
+    background:var(--sh-grad-brand);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.5rem;
+    flex-shrink:0;
+    box-shadow:var(--sh-shadow-glow);
+}
+.page-hero-text h1{
+    font-family:var(--sh-font-display);
+    font-size:1.45rem;
+    color:#fff;
+    margin-bottom:4px;
+}
+.page-hero-text p{
+    color:var(--sh-on-dark-soft);
+    font-size:.88rem;
+    max-width:58ch;
+}
+@media(max-width:560px){
+    .page-hero{ flex-direction:column; align-items:flex-start; text-align:left; }
+}
+
+/* =====================================
+   TARJETAS DE CONTENIDO (paneles)
 ===================================== */
 .panel-box{
     background:var(--sh-white);
+    border:1px solid var(--sh-cloud-200);
     border-radius:var(--sh-r-lg);
-    padding:26px 28px;
-    box-shadow:var(--sh-shadow-sm);
-    margin-bottom:26px;
+    padding:28px 30px;
+    margin-bottom:24px;
 }
 .panel-box h2{
     font-family:var(--sh-font-display);
     color:var(--sh-navy-800);
-    font-size:1.3rem;
-    margin-bottom:6px;
+    font-size:1.2rem;
+    margin-bottom:5px;
 }
 .panel-box .panel-sub{
     color:var(--sh-ink-400);
-    font-size:.9rem;
-    margin-bottom:18px;
+    font-size:.88rem;
+    margin-bottom:20px;
+    max-width:62ch;
 }
 
 .form-fila{
@@ -44,92 +108,113 @@
     min-width:180px;
 }
 .form-fila label{
-    font-size:.85rem;
+    font-size:.82rem;
     font-weight:600;
     color:var(--sh-ink-600);
 }
 .form-fila input,
 .form-fila select{
-    padding:12px 14px;
-    border:1px solid var(--sh-cloud-200);
+    padding:11px 14px;
+    border:1.5px solid var(--sh-cloud-200);
     border-radius:var(--sh-r-sm);
     font-family:var(--sh-font-body);
     font-size:.95rem;
+    color:var(--sh-ink-900);
     outline:none;
-    transition:border-color var(--sh-fast), box-shadow var(--sh-fast);
+    transition:border-color var(--sh-fast) var(--sh-ease);
 }
 .form-fila input:focus,
 .form-fila select:focus{
     border-color:var(--sh-indigo-light);
-    box-shadow:0 0 0 4px rgba(91,46,255,.12);
-}
-
-.btn-accion{
-    background:var(--sh-grad-brand);
-    color:#fff;
-    border:none;
-    padding:13px 24px;
-    border-radius:var(--sh-r-pill);
-    font-weight:600;
-    font-size:.95rem;
-    cursor:pointer;
-    box-shadow:var(--sh-shadow-sm);
-    transition:transform var(--sh-fast), box-shadow var(--sh-fast);
-}
-.btn-accion:hover{ transform:translateY(-2px); box-shadow:var(--sh-shadow-md); }
-.btn-accion:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
-
-.btn-secundario{
-    background:var(--sh-cloud-100);
-    color:var(--sh-navy-800);
-    border:1px solid var(--sh-cloud-200);
-    padding:11px 20px;
-    border-radius:var(--sh-r-pill);
-    font-weight:600;
-    font-size:.88rem;
-    cursor:pointer;
-    transition:background var(--sh-fast);
-}
-.btn-secundario:hover{ background:var(--sh-cloud-200); }
-
-.mensaje-error{
-    color:#c0392b;
-    background:rgba(192,57,43,.08);
-    padding:10px 14px;
-    border-radius:var(--sh-r-sm);
-    font-size:.88rem;
-    margin-top:14px;
-}
-.mensaje-exito{
-    color:#0E8F5E;
-    background:rgba(14,143,94,.1);
-    padding:10px 14px;
-    border-radius:var(--sh-r-sm);
-    font-size:.88rem;
-    margin-top:14px;
 }
 
 /* =====================================
-   GRID DE TARJETAS DE GRUPO
+   BOTONES
+   Mismo lenguaje que .btn-registro / .btn-login del sitio: píldora,
+   sombra tintada con el color de marca y una elevación sutil al pasar
+   el cursor — no un botón "SaaS" genérico aparte.
+===================================== */
+.btn-accion{
+    background:var(--sh-grad-brand);
+    color:#fff;
+    border:2px solid transparent;
+    padding:12px 26px;
+    border-radius:var(--sh-r-pill);
+    font-weight:600;
+    font-size:.92rem;
+    font-family:var(--sh-font-body);
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(255,62,165,.28);
+    transition:transform var(--sh-fast) var(--sh-ease), box-shadow var(--sh-fast) var(--sh-ease);
+}
+.btn-accion:hover:not(:disabled){
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px rgba(255,62,165,.38);
+}
+.btn-accion:active:not(:disabled){ transform:translateY(0); }
+.btn-accion:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; transform:none; }
+
+.btn-secundario{
+    background:transparent;
+    color:var(--sh-navy-800);
+    border:2px solid var(--sh-cloud-200);
+    padding:10px 22px;
+    border-radius:var(--sh-r-pill);
+    font-weight:600;
+    font-size:.86rem;
+    font-family:var(--sh-font-body);
+    cursor:pointer;
+    transition:border-color var(--sh-fast) var(--sh-ease), background var(--sh-fast) var(--sh-ease), transform var(--sh-fast) var(--sh-ease);
+}
+.btn-secundario:hover{
+    border-color:var(--sh-indigo-light);
+    background:var(--sh-cloud-50);
+    transform:translateY(-2px);
+}
+.btn-secundario:active{ transform:translateY(0); }
+
+.mensaje-error{
+    color:#B3261E;
+    font-size:.86rem;
+    margin-top:14px;
+    padding-left:14px;
+    border-left:3px solid #B3261E;
+}
+.mensaje-exito{
+    color:#0E7A50;
+    font-size:.86rem;
+    margin-top:14px;
+    padding-left:14px;
+    border-left:3px solid var(--sh-juego-puzzle);
+}
+
+/* =====================================
+   GRID DE TARJETAS DE CLASE/GRUPO
 ===================================== */
 .grupos-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
-    gap:20px;
+    grid-template-columns:repeat(auto-fill, minmax(268px, 1fr));
+    gap:18px;
 }
 
 .grupo-card{
+    position:relative;
     background:var(--sh-white);
-    border-radius:var(--sh-r-md);
-    padding:20px;
-    box-shadow:var(--sh-shadow-sm);
     border:1px solid var(--sh-cloud-200);
+    border-left:6px solid var(--sh-cloud-200);
+    border-radius:var(--sh-r-md);
+    padding:18px 20px;
     display:flex;
     flex-direction:column;
-    gap:10px;
-    transition:box-shadow var(--sh-fast);
+    gap:9px;
+    transition:border-color var(--sh-fast) var(--sh-ease), box-shadow var(--sh-fast) var(--sh-ease), transform var(--sh-fast) var(--sh-ease);
 }
-.grupo-card:hover{ box-shadow:var(--sh-shadow-md); }
+.grupo-card:hover{ box-shadow:var(--sh-shadow-md); transform:translateY(-2px); }
+
+.grupo-card--quiz{ border-left-color:var(--sh-juego-quiz); }
+.grupo-card--puzzle{ border-left-color:var(--sh-juego-puzzle); }
+.grupo-card--carrera{ border-left-color:var(--sh-juego-carrera); }
 
 .grupo-card .grupo-header{
     display:flex;
@@ -138,31 +223,61 @@
     gap:10px;
 }
 .grupo-card h3{
-    font-size:1.05rem;
+    font-size:1.02rem;
+    font-weight:700;
     color:var(--sh-navy-800);
+    line-height:1.3;
 }
-.badge-juego{
+
+.grupo-juego-label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:.82rem;
+    font-weight:600;
+    color:var(--sh-ink-600);
+}
+.grupo-juego-icono{
+    width:26px;
+    height:26px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.95rem;
+    flex-shrink:0;
+    background:rgba(91,46,255,.1);
+}
+.grupo-card--quiz .grupo-juego-icono{ background:rgba(91,46,255,.1); }
+.grupo-card--puzzle .grupo-juego-icono{ background:rgba(14,158,114,.1); }
+.grupo-card--carrera .grupo-juego-icono{ background:rgba(217,119,6,.12); }
+
+.grupo-estado{
     display:inline-flex;
     align-items:center;
     gap:6px;
-    background:var(--sh-grad-brand-soft);
-    color:var(--sh-indigo);
     font-size:.75rem;
-    font-weight:700;
-    padding:5px 10px;
-    border-radius:var(--sh-r-pill);
+    font-weight:600;
+    color:var(--sh-ink-400);
     white-space:nowrap;
+    flex-shrink:0;
 }
-.badge-inactivo{
-    background:rgba(192,57,43,.1);
-    color:#c0392b;
+.grupo-estado .dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--sh-ink-400);
 }
+.grupo-estado--activo{ color:var(--sh-juego-puzzle); }
+.grupo-estado--activo .dot{ background:var(--sh-juego-puzzle); }
+.grupo-estado--inactivo{ color:#B3261E; }
+.grupo-estado--inactivo .dot{ background:#B3261E; }
 
 .grupo-codigo{
     font-family:var(--sh-font-display);
-    font-size:1.6rem;
+    font-size:1.5rem;
+    font-weight:700;
     letter-spacing:3px;
-    color:var(--sh-indigo);
+    color:var(--sh-navy-800);
     background:var(--sh-cloud-50);
     border-radius:var(--sh-r-sm);
     padding:8px 12px;
@@ -170,7 +285,7 @@
 }
 
 .grupo-meta{
-    font-size:.85rem;
+    font-size:.84rem;
     color:var(--sh-ink-400);
 }
 
@@ -178,11 +293,11 @@
     display:flex;
     gap:8px;
     flex-wrap:wrap;
-    margin-top:6px;
+    margin-top:4px;
 }
 .grupo-acciones button, .grupo-acciones a{
     font-size:.8rem;
-    padding:8px 14px;
+    padding:8px 16px;
 }
 
 /* =====================================
@@ -191,28 +306,103 @@
 .tabla-resultados{
     width:100%;
     border-collapse:collapse;
-    margin-top:12px;
-    font-size:.9rem;
+    margin-top:8px;
+    font-size:.88rem;
 }
 .tabla-resultados th, .tabla-resultados td{
     text-align:left;
-    padding:10px 12px;
+    padding:11px 12px;
     border-bottom:1px solid var(--sh-cloud-200);
 }
 .tabla-resultados th{
-    color:var(--sh-ink-600);
-    font-weight:700;
+    color:var(--sh-ink-400);
+    font-weight:600;
+    font-size:.78rem;
 }
+.tabla-resultados tbody tr:hover{ background:var(--sh-cloud-50); }
 
 .estado-vacio{
     color:var(--sh-ink-400);
-    font-size:.9rem;
-    padding:20px 0;
+    font-size:.88rem;
+    padding:22px 4px;
     text-align:center;
+}
+.estado-vacio a{ color:var(--sh-indigo); font-weight:600; text-decoration:none; }
+.estado-vacio a:hover{ text-decoration:underline; }
+
+/* =====================================
+   ESTADÍSTICAS (biblioteca / perfil)
+===================================== */
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:1px;
+    background:var(--sh-cloud-200);
+    border:1px solid var(--sh-cloud-200);
+    border-radius:var(--sh-r-md);
+    overflow:hidden;
+    margin-bottom:4px;
+}
+.stat-card{
+    background:var(--sh-white);
+    padding:18px 14px;
+    text-align:center;
+}
+.stat-card .stat-valor{
+    font-family:var(--sh-font-display);
+    font-size:1.6rem;
+    color:var(--sh-navy-800);
+    font-weight:700;
+}
+.stat-card .stat-label{
+    font-size:.78rem;
+    color:var(--sh-ink-400);
+    margin-top:4px;
 }
 
 /* =====================================
-   PANTALLA DE JUEGO (quiz / puzzle)
+   PERFIL
+===================================== */
+.perfil-header{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+}
+.perfil-avatar{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:var(--sh-grad-brand);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--sh-font-display);
+    font-size:1.3rem;
+    font-weight:700;
+    flex-shrink:0;
+}
+.perfil-nombre{
+    font-family:var(--sh-font-display);
+    font-size:1.2rem;
+    color:var(--sh-navy-800);
+}
+.perfil-meta{
+    color:var(--sh-ink-400);
+    font-size:.86rem;
+}
+.perfil-rol-badge{
+    display:inline-block;
+    margin-top:6px;
+    color:var(--sh-indigo);
+    font-size:.78rem;
+    font-weight:700;
+}
+
+/* =====================================
+   PANTALLA DE JUEGO (quiz / puzzle / carrera)
 ===================================== */
 .juego-body{
     background:var(--sh-grad-night);
@@ -230,7 +420,7 @@
     max-width:640px;
     width:100%;
     padding:34px 36px;
-    box-shadow:var(--sh-shadow-lg);
+    box-shadow:var(--sh-shadow-glow);
     animation:sh-pop-in .5s var(--sh-ease) both;
 }
 
@@ -238,21 +428,21 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:18px;
+    margin-bottom:16px;
     gap:12px;
 }
 .juego-topbar h1{
     font-family:var(--sh-font-display);
-    font-size:1.4rem;
+    font-size:1.3rem;
     color:var(--sh-navy-800);
 }
 .juego-topbar .juego-grupo-nombre{
-    font-size:.82rem;
+    font-size:.8rem;
     color:var(--sh-ink-400);
 }
 
 .juego-progreso{
-    height:8px;
+    height:6px;
     background:var(--sh-cloud-200);
     border-radius:var(--sh-r-pill);
     overflow:hidden;
@@ -266,54 +456,57 @@
 
 .pregunta-categoria{
     display:inline-block;
-    font-size:.75rem;
+    font-size:.76rem;
     font-weight:700;
-    letter-spacing:.5px;
-    text-transform:uppercase;
     color:var(--sh-indigo);
-    background:var(--sh-grad-brand-soft);
-    padding:4px 12px;
-    border-radius:var(--sh-r-pill);
-    margin-bottom:12px;
+    margin-bottom:10px;
 }
 
 .pregunta-texto{
-    font-size:1.2rem;
+    font-size:1.18rem;
     font-weight:600;
     color:var(--sh-ink-900);
-    margin-bottom:22px;
+    margin-bottom:20px;
     line-height:1.4;
 }
 
 .opciones-lista{
     display:flex;
     flex-direction:column;
-    gap:12px;
+    gap:10px;
+}
+.opciones-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+}
+@media(max-width:480px){
+    .opciones-grid{ grid-template-columns:1fr; }
 }
 .opcion-btn{
     text-align:left;
-    padding:14px 18px;
-    border-radius:var(--sh-r-md);
-    border:2px solid var(--sh-cloud-200);
+    padding:13px 16px;
+    border-radius:var(--sh-r-sm);
+    border:1.5px solid var(--sh-cloud-200);
     background:var(--sh-white);
     font-family:var(--sh-font-body);
-    font-size:.98rem;
+    font-size:.96rem;
     color:var(--sh-ink-900);
     cursor:pointer;
-    transition:border-color var(--sh-fast), background var(--sh-fast), transform var(--sh-fast);
+    transition:border-color var(--sh-fast) var(--sh-ease), background var(--sh-fast) var(--sh-ease);
 }
 .opcion-btn:hover:not(:disabled){
     border-color:var(--sh-indigo-light);
-    transform:translateX(4px);
+    background:var(--sh-cloud-50);
 }
 .opcion-btn:disabled{ cursor:default; }
 .opcion-correcta{
-    border-color:var(--sh-mint) !important;
-    background:rgba(52,211,153,.12) !important;
+    border-color:var(--sh-juego-puzzle) !important;
+    background:rgba(14,158,114,.08) !important;
 }
 .opcion-incorrecta{
-    border-color:#c0392b !important;
-    background:rgba(192,57,43,.08) !important;
+    border-color:#B3261E !important;
+    background:rgba(179,38,30,.06) !important;
 }
 
 /* =====================================
@@ -321,40 +514,40 @@
 ===================================== */
 .puzzle-descripcion{
     color:var(--sh-ink-600);
-    margin-bottom:18px;
-    font-size:.95rem;
+    margin-bottom:16px;
+    font-size:.93rem;
 }
 .puzzle-lista{
     list-style:none;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:8px;
     margin-bottom:20px;
 }
 .puzzle-item{
     display:flex;
     align-items:center;
     gap:12px;
-    padding:14px 16px;
-    border-radius:var(--sh-r-md);
-    border:2px solid var(--sh-cloud-200);
-    background:var(--sh-cloud-50);
+    padding:12px 14px;
+    border-radius:var(--sh-r-sm);
+    border:1.5px solid var(--sh-cloud-200);
+    background:var(--sh-white);
     cursor:grab;
-    font-size:.94rem;
+    font-size:.92rem;
     color:var(--sh-ink-900);
-    transition:box-shadow var(--sh-fast), border-color var(--sh-fast);
+    transition:border-color var(--sh-fast) var(--sh-ease);
 }
 .puzzle-item:active{ cursor:grabbing; }
 .puzzle-item.arrastrando{ opacity:.4; }
 .puzzle-item.zona-drop{ border-color:var(--sh-indigo-light); }
 .puzzle-item .puzzle-num{
     flex-shrink:0;
-    width:26px; height:26px;
+    width:24px; height:24px;
     border-radius:50%;
-    background:var(--sh-grad-brand);
-    color:#fff;
+    background:var(--sh-cloud-100);
+    color:var(--sh-navy-800);
     font-weight:700;
-    font-size:.8rem;
+    font-size:.76rem;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -365,30 +558,63 @@
     gap:4px;
 }
 .btn-flecha{
-    background:var(--sh-cloud-100);
-    border:1px solid var(--sh-cloud-200);
+    background:transparent;
+    border:1.5px solid var(--sh-cloud-200);
     color:var(--sh-ink-600);
     border-radius:6px;
     width:26px;
     height:26px;
-    font-size:.75rem;
+    font-size:.72rem;
     cursor:pointer;
-    transition:background var(--sh-fast);
+    transition:border-color var(--sh-fast), color var(--sh-fast);
 }
-.btn-flecha:hover{ background:var(--sh-cloud-200); }
-.puzzle-item.correcto{ border-color:var(--sh-mint); background:rgba(52,211,153,.1); }
-.puzzle-item.incorrecto{ border-color:#c0392b; background:rgba(192,57,43,.07); }
+.btn-flecha:hover{ border-color:var(--sh-indigo-light); color:var(--sh-indigo); }
+.puzzle-item.correcto{ border-color:var(--sh-juego-puzzle); background:rgba(14,158,114,.07); }
+.puzzle-item.incorrecto{ border-color:#B3261E; background:rgba(179,38,30,.05); }
+
+/* =====================================
+   CARRERA ESPACIAL (pista de progreso)
+===================================== */
+.carrera-pista{
+    position:relative;
+    height:40px;
+    background:var(--sh-navy-950);
+    border-radius:var(--sh-r-pill);
+    margin-bottom:16px;
+    overflow:visible;
+}
+.carrera-meta{
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:1.2rem;
+}
+.carrera-rocket{
+    position:absolute;
+    top:50%;
+    transform:translate(-50%,-50%);
+    font-size:1.4rem;
+    transition:left .5s var(--sh-ease);
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));
+}
+.carrera-enunciado{
+    text-align:center;
+    font-size:1.55rem;
+    font-family:var(--sh-font-display);
+    color:var(--sh-navy-800);
+}
 
 /* =====================================
    PANTALLA FINAL DE JUEGO
 ===================================== */
 .resultado-final{ text-align:center; }
-.resultado-final .resultado-emoji{ font-size:3rem; margin-bottom:10px; }
+.resultado-final .resultado-emoji{ font-size:2.6rem; margin-bottom:8px; }
 .resultado-final h2{
     font-family:var(--sh-font-display);
     color:var(--sh-navy-800);
-    font-size:1.6rem;
-    margin-bottom:8px;
+    font-size:1.45rem;
+    margin-bottom:6px;
 }
 .resultado-final p{ color:var(--sh-ink-600); margin-bottom:22px; }
 .resultado-acciones{
@@ -404,4 +630,5 @@
 @media(max-width:640px){
     .juego-caja{ padding:26px 20px; }
     .form-fila{ flex-direction:column; align-items:stretch; }
+    .panel-box{ padding:22px 18px; }
 }

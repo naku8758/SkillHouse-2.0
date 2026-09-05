@@ -1,32 +1,11 @@
 // js/games/puzzle-data.js
-// Banco de retos para "Puzzle de Código" (nivel grado 6º).
-// Cada reto tiene una lista de pasos EN EL ORDEN CORRECTO. El juego los
-// desordena y el estudiante debe reconstruir la secuencia lógica correcta,
-// pensando como un programador (sin necesidad de conocer sintaxis real).
+// Banco de retos para "Puzzle de Código", parte del área de Matemáticas
+// (nivel grado 6º). Cada reto tiene una lista de pasos EN EL ORDEN
+// CORRECTO de un algoritmo matemático sencillo. El juego los desordena y
+// el estudiante debe reconstruir la secuencia lógica correcta, pensando
+// como un programador (sin necesidad de conocer sintaxis real).
 
 export const RETOS = [
-  {
-    titulo: "Preparar un sándwich",
-    descripcion: "Ordena los pasos del algoritmo para preparar un sándwich.",
-    pasos: [
-      "Sacar el pan de la bolsa",
-      "Untar mantequilla en una rebanada",
-      "Agregar el relleno (jamón y queso)",
-      "Cubrir con la otra rebanada de pan",
-      "Cortar el sándwich por la mitad"
-    ]
-  },
-  {
-    titulo: "Encender una linterna",
-    descripcion: "Ordena los pasos del algoritmo para que la linterna encienda.",
-    pasos: [
-      "Abrir el compartimento de las pilas",
-      "Colocar las pilas respetando la polaridad",
-      "Cerrar el compartimento",
-      "Presionar el botón de encendido",
-      "Comprobar que la luz esté encendida"
-    ]
-  },
   {
     titulo: "Sumar dos números (algoritmo)",
     descripcion: "Ordena los pasos de un algoritmo simple para sumar dos números.",
@@ -36,17 +15,6 @@ export const RETOS = [
       "Sumar ambos números",
       "Guardar el resultado en una variable",
       "Mostrar el resultado en pantalla"
-    ]
-  },
-  {
-    titulo: "Buscar un libro en la biblioteca",
-    descripcion: "Ordena los pasos del algoritmo para encontrar un libro.",
-    pasos: [
-      "Buscar el título en el catálogo",
-      "Anotar el código del estante",
-      "Ir hasta el estante indicado",
-      "Revisar los libros hasta encontrar el título",
-      "Tomar el libro y llevarlo a préstamo"
     ]
   },
   {
@@ -72,25 +40,58 @@ export const RETOS = [
     ]
   },
   {
-    titulo: "Cepillarse los dientes",
-    descripcion: "Ordena los pasos de esta rutina diaria como si fuera un algoritmo.",
+    titulo: "Calcular el promedio de tres notas",
+    descripcion: "Ordena los pasos del algoritmo para calcular un promedio.",
     pasos: [
-      "Tomar el cepillo de dientes",
-      "Poner pasta dental sobre el cepillo",
-      "Cepillar los dientes durante 2 minutos",
-      "Enjuagar la boca con agua",
-      "Guardar el cepillo en su lugar"
+      "Pedir la primera nota",
+      "Pedir la segunda nota",
+      "Pedir la tercera nota",
+      "Sumar las tres notas",
+      "Dividir la suma entre 3 para obtener el promedio"
     ]
   },
   {
-    titulo: "Cruzar la calle de forma segura",
-    descripcion: "Ordena los pasos del algoritmo para cruzar la calle sin riesgo.",
+    titulo: "Revisar si un número es múltiplo de 3",
+    descripcion: "Ordena los pasos de este algoritmo de decisión.",
     pasos: [
-      "Llegar hasta la esquina o el cruce peatonal",
-      "Mirar hacia ambos lados de la calle",
-      "Esperar a que no vengan carros o a que el semáforo lo permita",
-      "Cruzar caminando, sin correr",
-      "Seguir mirando a los lados mientras se cruza"
+      "Pedir un número al usuario",
+      "Dividir el número entre 3",
+      "Revisar si el residuo de la división es 0",
+      "Si el residuo es 0, decir 'es múltiplo de 3'",
+      "Si el residuo no es 0, decir 'no es múltiplo de 3'"
+    ]
+  },
+  {
+    titulo: "Calcular el área de un rectángulo",
+    descripcion: "Ordena los pasos del algoritmo para hallar un área.",
+    pasos: [
+      "Pedir la medida de la base",
+      "Pedir la medida de la altura",
+      "Multiplicar la base por la altura",
+      "Guardar el resultado como el área",
+      "Mostrar el área en pantalla"
+    ]
+  },
+  {
+    titulo: "Ordenar tres números de menor a mayor",
+    descripcion: "Ordena los pasos de este algoritmo de comparación (como lo haría una computadora).",
+    pasos: [
+      "Pedir los tres números",
+      "Comparar el primero con el segundo y ordenarlos entre sí",
+      "Comparar el segundo con el tercero y ordenarlos entre sí",
+      "Comparar el primero con el segundo otra vez, por si cambió",
+      "Mostrar los tres números ya ordenados"
+    ]
+  },
+  {
+    titulo: "Convertir minutos a horas y minutos",
+    descripcion: "Ordena los pasos del algoritmo para convertir un total de minutos.",
+    pasos: [
+      "Pedir la cantidad total de minutos",
+      "Dividir el total entre 60 para obtener las horas completas",
+      "Calcular el residuo de esa división",
+      "Ese residuo son los minutos restantes",
+      "Mostrar el resultado como 'horas y minutos'"
     ]
   }
 ];

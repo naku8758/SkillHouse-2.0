@@ -7,7 +7,7 @@
     <title>Mis Grupos | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
     <link rel="stylesheet" href="styleb.css">
-    <link rel="stylesheet" href="../css/juegos.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("profesor");
@@ -24,18 +24,23 @@
         </div>
         <ul class="menu">
             <li><a href="homepageb.html">🏠 Materias</a></li>
-            <li><a href="#">📚 Mi Biblioteca</a></li>
-            <li><a href="#">📝 Mis clases</a></li>
-            <li><a href="grupos.html" class="is-active">🎮 Mis Grupos</a></li>
-            <li><a href="#">👥 Mi Perfil</a></li>
-            <li><a href="#">⚙️ Configuración</a></li>
+            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
+            <li><a href="grupos.html" class="is-active">📝 Mis clases</a></li>
+            <li><a href="perfil.html">👥 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
             <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
         </ul>
     </aside>
 
     <main class="contenido">
         <header class="topbar">
-            <h1 id="titulo-pagina">Mis Grupos 🎮</h1>
+            <div class="page-hero">
+                <div class="page-hero-icon">📝</div>
+                <div class="page-hero-text">
+                    <h1 id="titulo-pagina">Mis Clases de Matemáticas</h1>
+                    <p>Crea clases, comparte el código con tus estudiantes y sigue sus resultados.</p>
+                </div>
+            </div>
         </header>
 
         <section class="panel-box sh-reveal">
@@ -53,6 +58,7 @@
                         <select id="select-juego" required>
                             <option value="quiz">🎮 Quiz de Lógica</option>
                             <option value="puzzle">🧩 Puzzle de Código</option>
+                            <option value="carrera">🚀 Carrera Espacial</option>
                         </select>
                     </div>
                     <div class="campo" style="flex:none;">
@@ -66,7 +72,7 @@
 
         <section class="panel-box sh-reveal">
             <h2>Grupos activos</h2>
-            <p class="panel-sub">Comparte el código con tus estudiantes desde el panel de "Juegos" en su cuenta.</p>
+            <p class="panel-sub">Comparte el código con tus estudiantes: lo ingresan desde la materia de Matemáticas en su cuenta.</p>
             <div class="grupos-grid" id="lista-grupos">
                 <p class="estado-vacio">Cargando tus grupos...</p>
             </div>
@@ -78,6 +84,15 @@
             <p class="panel-sub" id="resultados-sub"></p>
             <div id="resultados-contenido"></div>
             <button class="btn-secundario" id="btn-cerrar-resultados" style="margin-top:14px;">Cerrar</button>
+        </section>
+
+        <h2 class="materias-proximamente-titulo">Otras materias (próximamente)</h2>
+        <section class="materias-grid sh-reveal-stagger">
+            <div class="materia-card card2 materia-card--proximamente"><h3>📖 Español/Lengua Castellana</h3><span class="materia-tag">Próximamente</span></div>
+            <div class="materia-card card3 materia-card--proximamente"><h3>🔬 Ciencias</h3><span class="materia-tag">Próximamente</span></div>
+            <div class="materia-card card4 materia-card--proximamente"><h3>⭐ Inglés</h3><span class="materia-tag">Próximamente</span></div>
+            <div class="materia-card card5 materia-card--proximamente"><h3>🌎 Sociales/Historia</h3><span class="materia-tag">Próximamente</span></div>
+            <div class="materia-card card6 materia-card--proximamente"><h3>💻 Tecnología/Informatica</h3><span class="materia-tag">Próximamente</span></div>
         </section>
     </main>
 </div>

@@ -113,3 +113,365 @@
     });
   }
 })();
+
+
+// AVATAR
+// =====================================================
+// 1. VARIABLES DEFINITIVAS
+// =====================================================
+
+// Lo que está guardado actualmente en tu perfil real
+let avatarActual = "";
+let colorFondoActual = "";
+
+
+// =====================================================
+// 2. VARIABLES TEMPORALES
+// =====================================================
+
+// Lo que pruebas dentro del modal sin aplicarlo aún
+let avatarTemporal = "";
+let colorFondoTemporal = "";
+
+
+// =====================================================
+// 3. REFERENCIAS DEL DOM
+// =====================================================
+
+const perfilAvatar = document.getElementById("perfil-avatar");
+const modalAvatar = document.getElementById("modal-avatar");
+const btnCerrarX = document.getElementById("btn-cerrar-x");
+const opcionesAvatares = document.querySelectorAll(".opcion-avatar");
+const selectorColor = document.getElementById("selector-color");
+const btnGuardar = document.getElementById("btn-guardar");
+const previewAvatarGrande = document.getElementById("preview-avatar-grande");
+
+
+// =====================================================
+// 4. FUNCIÓN PARA ACTUALIZAR LA VISTA PREVIA
+// =====================================================
+
+function actualizarVistaPrevia() {
+
+    // Limpiamos solamente el contenido de la imagen.
+    // NO eliminamos el color de fondo.
+    previewAvatarGrande.innerHTML = "";
+
+
+    // -----------------------------------------------
+    // COLOR DE FONDO
+    // -----------------------------------------------
+
+    if (colorFondoTemporal) {
+
+        previewAvatarGrande.style.background =
+            colorFondoTemporal;
+
+    } else {
+
+        // Si no existe color, vuelve al fondo definido
+        // originalmente por tu CSS.
+        previewAvatarGrande.style.background = "";
+    }
+
+
+    // -----------------------------------------------
+    // AVATAR
+    // -----------------------------------------------
+
+    if (avatarTemporal) {
+
+        // La imagen queda ENCIMA del color
+        previewAvatarGrande.innerHTML = `
+            <img
+                src="${avatarTemporal}"
+                alt="Avatar"
+            >
+        `;
+
+    } else {
+
+        // Si no hay imagen, mostramos ?
+        previewAvatarGrande.innerHTML = "?";
+    }
+}
+
+
+// =====================================================
+// 5. FUNCIÓN PARA ACTUALIZAR EL AVATAR PRINCIPAL
+// =====================================================
+
+function actualizarAvatarPrincipal() {
+
+    // Limpiamos el contenido anterior
+    perfilAvatar.innerHTML = "";
+
+
+    // -----------------------------------------------
+    // COLOR DE FONDO
+    // -----------------------------------------------
+
+    if (colorFondoActual) {
+
+        perfilAvatar.style.background =
+            colorFondoActual;
+
+    } else {
+
+        // Si no hay color, utiliza el CSS original
+        perfilAvatar.style.background = "";
+    }
+
+
+    // -----------------------------------------------
+    // AVATAR ENCIMA DEL COLOR
+    // -----------------------------------------------
+
+    if (avatarActual) {
+
+        perfilAvatar.innerHTML = `
+            <img
+                src="${avatarActual}"
+                alt="Avatar"
+            >
+        `;
+
+    } else {
+
+        // Si no hay avatar mostramos ?
+        perfilAvatar.innerHTML = "?";
+    }
+}
+
+
+// =====================================================
+// 6. ABRIR EL MODAL AL HACER CLIC EN EL AVATAR
+// =====================================================
+
+if (perfilAvatar) {
+
+    perfilAvatar.addEventListener("click", () => {
+
+        // -------------------------------------------
+        // CARGAR VALORES ACTUALES
+        // -------------------------------------------
+
+        avatarTemporal = avatarActual;
+        colorFondoTemporal = colorFondoActual;
+
+
+        // -------------------------------------------
+        // CARGAR COLOR EN EL SELECTOR
+        // -------------------------------------------
+
+        if (selectorColor) {
+
+            if (colorFondoTemporal) {
+
+                selectorColor.value =
+                    colorFondoTemporal;
+
+            } else {
+
+                selectorColor.value = "#ffffff";
+            }
+        }
+
+
+        // -------------------------------------------
+        // ACTUALIZAR VISTA PREVIA
+        // -------------------------------------------
+
+        actualizarVistaPrevia();
+
+
+        // -------------------------------------------
+        // MOSTRAR MODAL
+        // -------------------------------------------
+
+        modalAvatar.style.display = "flex";
+    });
+}
+
+
+// =====================================================
+// 7. FUNCIÓN PARA CERRAR EL MODAL
+// =====================================================
+
+function cerrarModal() {
+
+    modalAvatar.style.display = "none";
+}
+
+
+// =====================================================
+// 8. BOTÓN X PARA CERRAR
+// =====================================================
+
+if (btnCerrarX) {
+
+    btnCerrarX.addEventListener("click", cerrarModal);
+}
+
+
+// =====================================================
+// 9. CERRAR HACIENDO CLIC FUERA DEL MODAL
+// =====================================================
+
+if (modalAvatar) {
+
+    modalAvatar.addEventListener("click", (e) => {
+
+        // Solo cierra si se hace clic en el fondo oscuro,
+        // no dentro de la caja blanca.
+
+        if (e.target === modalAvatar) {
+
+            cerrarModal();
+        }
+    });
+}
+
+
+// =====================================================
+// 10. SELECCIONAR UN AVATAR
+// =====================================================
+
+opcionesAvatares.forEach(img => {
+
+    img.addEventListener("click", (e) => {
+
+        // -------------------------------------------
+        // GUARDAR AVATAR TEMPORAL
+        // -------------------------------------------
+
+        avatarTemporal = e.target.src;
+
+
+        // IMPORTANTE:
+        // NO hacemos esto:
+        //
+        // colorFondoTemporal = "";
+        //
+        // porque queremos conservar el color.
+
+
+        // -------------------------------------------
+        // ACTUALIZAR VISTA PREVIA
+        // -------------------------------------------
+
+        actualizarVistaPrevia();
+    });
+});
+
+
+// =====================================================
+// 11. SELECCIONAR COLOR DE FONDO
+// =====================================================
+
+if (selectorColor) {
+
+    selectorColor.addEventListener("input", (e) => {
+
+        // -------------------------------------------
+        // GUARDAR COLOR TEMPORAL
+        // -------------------------------------------
+
+        colorFondoTemporal = e.target.value;
+
+
+        // IMPORTANTE:
+        // NO hacemos esto:
+        //
+        // avatarTemporal = "";
+        //
+        // porque queremos conservar el avatar.
+
+
+        // -------------------------------------------
+        // ACTUALIZAR VISTA PREVIA
+        // -------------------------------------------
+
+        actualizarVistaPrevia();
+    });
+}
+
+
+// =====================================================
+// 12. BOTÓN GUARDAR CAMBIOS
+// =====================================================
+
+if (btnGuardar) {
+
+    btnGuardar.addEventListener("click", async () => {
+
+
+        // -------------------------------------------
+        // A. PASAR TEMPORAL → DEFINITIVO
+        // -------------------------------------------
+
+        avatarActual = avatarTemporal;
+        colorFondoActual = colorFondoTemporal;
+
+
+        // -------------------------------------------
+        // B. ACTUALIZAR AVATAR PRINCIPAL
+        // -------------------------------------------
+
+        actualizarAvatarPrincipal();
+
+
+        // -------------------------------------------
+        // C. OBTENER ID DEL USUARIO
+        // -------------------------------------------
+
+        const USUARIO_ID =
+            typeof idUsuarioActual !== "undefined"
+                ? idUsuarioActual
+                : null;
+
+
+        // -------------------------------------------
+        // D. GUARDAR EN FIREBASE FIRESTORE
+        // -------------------------------------------
+
+        try {
+
+            if (
+                USUARIO_ID &&
+                typeof db !== "undefined" &&
+                typeof updateDoc !== "undefined"
+            ) {
+
+                /*
+                // DESCOMENTA ESTO SI UTILIZAS FIRESTORE MODULAR:
+
+                await updateDoc(
+                    doc(db, "usuarios", USUARIO_ID),
+                    {
+                        avatar: avatarActual,
+                        colorFondo: colorFondoActual
+                    }
+                );
+                */
+            }
+
+
+            // ---------------------------------------
+            // E. CERRAR MODAL
+            // ---------------------------------------
+
+            modalAvatar.style.display = "none";
+
+
+        } catch (error) {
+
+            console.error(
+                "Error al guardar el avatar en la base de datos: ",
+                error
+            );
+        }
+    });
+}
+
+

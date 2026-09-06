@@ -79,5 +79,47 @@
     </footer>
 <script src="../js/ui.js" defer></script>
 <script type="module" src="perfil-panel.js"></script>
+
+    <!-- Ventana emergente (Modal) -->
+<div class="modal-avatar" id="modal-avatar" style="display: none;">
+    <div class="modal-contenido modal-dos-columnas">
+        <button class="modal-cerrar-x" id="btn-cerrar-x">&times;</button>
+
+        <!-- Columna Izquierda: Opciones -->
+        <div class="modal-columna-opciones">
+            <h3>Personaliza tu perfil</h3>
+            <p>Elige un avatar</p>
+
+            <div class="galeria-avatares">
+                <img src="/imag/ardilla_1.png" class="opcion-avatar" alt="Avatar 1">
+                <img src="/imag/buho_1.png" class="opcion-avatar" alt="Avatar 2">
+                <img src="/imag/cocodrilo_1.png" class="opcion-avatar" alt="Avatar 3">
+                <img src="/imag/elefante_1.png" class="opcion-avatar" alt="Avatar 4">
+                <img src="/imag/jirafa_1.png" class="opcion-avatar" alt="Avatar 5">
+                <img src="/imag/osopanda_1.png" class="opcion-avatar" alt="Avatar 6">
+                <img src="/imag/raton_1.png" class="opcion-avatar" alt="Avatar 7">
+                <img src="/imag/sapo_1.png" class="opcion-avatar" alt="Avatar 8">
+                <img src="/imag/zorrillo_1.png" class="opcion-avatar" alt="Avatar 9">
+                <img src="/imag/zorro_1.png" class="opcion-avatar" alt="Avatar 10">
+            </div>
+
+            <p>Color de fondo</p>
+            <input type="color" id="selector-color" value="#ffffff">
+        </div>
+
+        <!-- Columna Derecha: Círculo grande de vista previa -->
+        
+        <div class="modal-columna-preview">
+            <p class="preview-titulo">Vista previa</p>
+            <div class="preview-avatar-grande" id="preview-avatar-grande">?</div>
+        
+            <div class="modal-acciones">
+                <button id="btn-guardar">Guardar cambios</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+    
 </body>
 </html>

@@ -138,28 +138,6 @@ body{
 }
 
 /* =====================================
-   BARRA DE BÚSQUEDA
-===================================== */
-
-.search-bar{
-    width:320px;
-    max-width:100%;
-    padding:14px 20px;
-    border:1px solid var(--sh-cloud-200);
-    border-radius:var(--sh-r-pill);
-    background:white;
-    font-size:1rem;
-    font-family:var(--sh-font-body);
-    box-shadow: var(--sh-shadow-sm);
-    outline:none;
-    transition: box-shadow var(--sh-fast), border-color var(--sh-fast);
-}
-.search-bar:focus{
-    box-shadow: 0 0 0 4px rgba(14,143,94,.15);
-    border-color: #0E8F5E;
-}
-
-/* =====================================
    GRID DE MATERIAS
 ===================================== */
 .materias-grid{

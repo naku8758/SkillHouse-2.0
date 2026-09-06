@@ -13,9 +13,10 @@ import {
   obtenerResultadosDelGrupo
 } from "../js/grupos.js";
 
-const NOMBRE_JUEGO = {
-  quiz: "🎮 Quiz de Lógica",
-  puzzle: "🧩 Puzzle de Código"
+const JUEGOS = {
+  quiz: { icono: "🎮", nombre: "Quiz de Lógica" },
+  puzzle: { icono: "🧩", nombre: "Puzzle de Código" },
+  carrera: { icono: "🚀", nombre: "Carrera Espacial" }
 };
 
 let usuarioActual = null;
@@ -51,6 +52,15 @@ onAuthStateChanged(auth, async (user) => {
   } catch (err) {
     usuarioNombre = user.email;
   }
+
+  // Si se llegó desde "Mi Biblioteca" con un juego elegido (?juego=quiz),
+  // se preselecciona en el formulario de creación.
+  const juegoPreseleccionado = new URLSearchParams(window.location.search).get("juego");
+  const selectJuego = document.getElementById("select-juego");
+  if (juegoPreseleccionado && selectJuego.querySelector(`option[value="${juegoPreseleccionado}"]`)) {
+    selectJuego.value = juegoPreseleccionado;
+  }
+
   await cargarGrupos();
 });
 
@@ -92,30 +102,31 @@ async function cargarGrupos() {
   }
 
   if (!grupos.length) {
-    listaGrupos.innerHTML = `<p class="estado-vacio">Aún no has creado ningún grupo. Crea el primero arriba 👆</p>`;
+    listaGrupos.innerHTML = `<p class="estado-vacio">Aún no has creado ninguna clase. Crea la primera arriba.</p>`;
     return;
   }
 
   listaGrupos.innerHTML = grupos
-    .map(
-      (g) => `
-      <div class="grupo-card">
+    .map((g) => {
+      const juego = JUEGOS[g.juego] || { icono: "🎲", nombre: g.juego };
+      return `
+      <div class="grupo-card grupo-card--${g.juego}">
         <div class="grupo-header">
           <h3>${escapeHtml(g.nombre)}</h3>
-          <span class="badge-juego ${g.activo ? "" : "badge-inactivo"}">
-            ${g.activo ? "Activo" : "Inactivo"}
+          <span class="grupo-estado ${g.activo ? "grupo-estado--activo" : "grupo-estado--inactivo"}">
+            <span class="dot"></span>${g.activo ? "Activa" : "Inactiva"}
           </span>
         </div>
-        <span class="badge-juego">${NOMBRE_JUEGO[g.juego] || g.juego}</span>
+        <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego.icono}</span>${juego.nombre}</span>
         <div class="grupo-codigo">${escapeHtml(g.codigo)}</div>
-        <p class="grupo-meta">👥 ${(g.miembrosUids || []).length} estudiante(s) unido(s)</p>
+        <p class="grupo-meta">${(g.miembrosUids || []).length} estudiante(s) unido(s)</p>
         <div class="grupo-acciones">
-          <button class="btn-secundario" data-accion="resultados" data-id="${g.id}" data-nombre="${escapeHtml(g.nombre)}">📊 Resultados</button>
-          <button class="btn-secundario" data-accion="alternar" data-id="${g.id}" data-activo="${g.activo}">${g.activo ? "⏸️ Desactivar" : "▶️ Activar"}</button>
-          <button class="btn-secundario" data-accion="eliminar" data-id="${g.id}">🗑️ Eliminar</button>
+          <button class="btn-secundario" data-accion="resultados" data-id="${g.id}" data-nombre="${escapeHtml(g.nombre)}">Ver resultados</button>
+          <button class="btn-secundario" data-accion="alternar" data-id="${g.id}" data-activo="${g.activo}">${g.activo ? "Desactivar" : "Activar"}</button>
+          <button class="btn-secundario" data-accion="eliminar" data-id="${g.id}">Eliminar</button>
         </div>
-      </div>`
-    )
+      </div>`;
+    })
     .join("");
 
   listaGrupos.querySelectorAll("[data-accion]").forEach((btn) => {

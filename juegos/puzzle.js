@@ -128,7 +128,7 @@ function renderRonda() {
     <ul class="puzzle-lista" id="puzzle-lista"></ul>
 
     <div class="resultado-acciones" id="puzzle-acciones">
-      <button class="btn-accion" id="btn-comprobar">✅ Comprobar orden</button>
+      <button class="btn-accion" id="btn-comprobar">Comprobar orden</button>
       <button class="btn-secundario" id="btn-rendirse">Mostrar solución</button>
     </div>
   `;
@@ -219,7 +219,7 @@ function comprobarOrden() {
     puntaje++;
     rondaResuelta = true;
     document.getElementById("puzzle-acciones").innerHTML = `
-      <button class="btn-accion" id="btn-siguiente">Siguiente →</button>
+      <button class="btn-accion" id="btn-siguiente">Siguiente</button>
     `;
     document.getElementById("btn-siguiente").addEventListener("click", avanzar);
     document.querySelectorAll(".puzzle-item").forEach((item) => (item.draggable = false));
@@ -232,7 +232,7 @@ function rendirse() {
   renderLista();
   document.querySelectorAll(".puzzle-item").forEach((item) => item.classList.add("correcto"));
   document.getElementById("puzzle-acciones").innerHTML = `
-    <button class="btn-accion" id="btn-siguiente">Siguiente →</button>
+    <button class="btn-accion" id="btn-siguiente">Siguiente</button>
   `;
   document.getElementById("btn-siguiente").addEventListener("click", avanzar);
 }
@@ -279,7 +279,7 @@ async function terminarJuego() {
       <h2>Resolviste ${puntaje} de ${total} retos (${porcentaje}%)</h2>
       <p>${mensaje}</p>
       <div class="resultado-acciones">
-        <button class="btn-accion" id="btn-jugar-de-nuevo">🔁 Jugar de nuevo</button>
+        <button class="btn-accion" id="btn-jugar-de-nuevo">Jugar de nuevo</button>
         <button class="btn-secundario" id="btn-volver">Volver</button>
       </div>
     </div>`;

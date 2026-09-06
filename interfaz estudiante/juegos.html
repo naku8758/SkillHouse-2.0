@@ -7,7 +7,7 @@
     <title>Juegos | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
     <link rel="stylesheet" href="stylea.css">
-    <link rel="stylesheet" href="../css/juegos.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("estudiante");
@@ -24,19 +24,25 @@
         </div>
         <ul class="menu">
             <li><a href="homepagea.html">🏠 Materias</a></li>
-            <li><a href="#">📚 Mi Biblioteca</a></li>
-            <li><a href="#">📝 Mis clases</a></li>
-            <li><a href="juegos.html" class="is-active">🎮 Juegos</a></li>
-            <li><a href="#">👥 Mi Perfil</a></li>
-            <li><a href="#">⚙️ Configuración</a></li>
+            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
+            <li><a href="mis-clases.html">📝 Mis clases</a></li>
+            <li><a href="perfil.html">👥 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
             <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
         </ul>
     </aside>
 
     <main class="contenido">
         <header class="topbar">
-            <h1 id="titulo-pagina">Juegos 🎮</h1>
+            <div class="page-hero">
+                <div class="page-hero-icon">🎮</div>
+                <div class="page-hero-text">
+                    <h1 id="titulo-pagina">Juegos de Matemáticas</h1>
+                    <p>Únete a una clase con el código de tu profesor o practica libremente.</p>
+                </div>
+            </div>
         </header>
+        <p class="panel-sub" style="margin:-14px 0 22px;"><a href="homepagea.html">← Volver a Materias</a></p>
 
         <section class="panel-box sh-reveal">
             <h2>Unirme a un grupo</h2>
@@ -62,6 +68,7 @@
             <div class="grupo-acciones">
                 <a href="../juegos/quiz.html" class="btn-accion" style="text-decoration:none;">🎮 Quiz de Lógica</a>
                 <a href="../juegos/puzzle.html" class="btn-accion" style="text-decoration:none;">🧩 Puzzle de Código</a>
+                <a href="../juegos/carrera.html" class="btn-accion" style="text-decoration:none;">🚀 Carrera Espacial</a>
             </div>
         </section>
 

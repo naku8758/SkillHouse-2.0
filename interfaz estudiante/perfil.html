@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.PNG">
+    <title>Mi Perfil | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylea.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("estudiante");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Estudiante</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagea.html">🏠 Materias</a></li>
+            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
+            <li><a href="mis-clases.html">📝 Mis clases</a></li>
+            <li><a href="perfil.html" class="is-active">👥 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">🎓</div>
+                <div class="page-hero-text">
+                    <h1 id="titulo-pagina">Mi Perfil</h1>
+                    <p>Tu información y un resumen de tu actividad en SkillHouse.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <div class="perfil-header">
+                <div class="perfil-avatar" id="perfil-avatar">?</div>
+                <div>
+                    <div class="perfil-nombre" id="perfil-nombre">Cargando...</div>
+                    <div class="perfil-meta" id="perfil-correo"></div>
+                    <span class="perfil-rol-badge">🎓 Estudiante</span>
+                </div>
+            </div>
+            <p class="perfil-meta" id="perfil-desde"></p>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Resumen</h2>
+            <div class="stats-grid" id="perfil-stats">
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Clases inscritas</div></div>
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Partidas jugadas</div></div>
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Promedio general</div></div>
+            </div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Mis clases</h2>
+            <p class="panel-sub">Vista rápida — para más detalle ve a "Mis clases".</p>
+            <div class="grupos-grid" id="perfil-clases">
+                <p class="estado-vacio">Cargando...</p>
+            </div>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="perfil-panel.js"></script>
+
+    <!-- Ventana emergente (Modal) -->
+<div class="modal-avatar" id="modal-avatar" style="display: none;">
+    <div class="modal-contenido modal-dos-columnas">
+        <button class="modal-cerrar-x" id="btn-cerrar-x">&times;</button>
+
+        <!-- Columna Izquierda: Opciones -->
+        <div class="modal-columna-opciones">
+            <h3>Personaliza tu perfil</h3>
+            <p>Elige un avatar</p>
+
+            <div class="galeria-avatares">
+                <img src="/imag/ardilla_1.png" class="opcion-avatar" alt="Avatar 1">
+                <img src="/imag/buho_1.png" class="opcion-avatar" alt="Avatar 2">
+                <img src="/imag/cocodrilo_1.png" class="opcion-avatar" alt="Avatar 3">
+                <img src="/imag/elefante_1.png" class="opcion-avatar" alt="Avatar 4">
+                <img src="/imag/jirafa_1.png" class="opcion-avatar" alt="Avatar 5">
+                <img src="/imag/osopanda_1.png" class="opcion-avatar" alt="Avatar 6">
+                <img src="/imag/raton_1.png" class="opcion-avatar" alt="Avatar 7">
+                <img src="/imag/sapo_1.png" class="opcion-avatar" alt="Avatar 8">
+                <img src="/imag/zorrillo_1.png" class="opcion-avatar" alt="Avatar 9">
+                <img src="/imag/zorro_1.png" class="opcion-avatar" alt="Avatar 10">
+            </div>
+
+            <p>Color de fondo</p>
+            <input type="color" id="selector-color" value="#ffffff">
+        </div>
+
+        <!-- Columna Derecha: Círculo grande de vista previa -->
+        
+        <div class="modal-columna-preview">
+            <p class="preview-titulo">Vista previa</p>
+            <div class="preview-avatar-grande" id="preview-avatar-grande">?</div>
+        
+            <div class="modal-acciones">
+                <button id="btn-guardar">Guardar cambios</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+    
+</body>
+</html>

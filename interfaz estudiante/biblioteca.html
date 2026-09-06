@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.PNG">
+    <title>Mi Biblioteca | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylea.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("estudiante");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Estudiante</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagea.html">🏠 Materias</a></li>
+            <li><a href="biblioteca.html" class="is-active">📚 Mi Biblioteca</a></li>
+            <li><a href="mis-clases.html">📝 Mis clases</a></li>
+            <li><a href="perfil.html">👥 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">📚</div>
+                <div class="page-hero-text">
+                    <h1 id="titulo-pagina">Mi Biblioteca</h1>
+                    <p>Tu historial de partidas y tu progreso en cada clase.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <h2>Mi progreso</h2>
+            <p class="panel-sub">Un resumen de todas las partidas que has jugado dentro de tus clases.</p>
+            <div class="stats-grid" id="stats-resumen">
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Partidas jugadas</div></div>
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Promedio general</div></div>
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Mejor puntaje</div></div>
+            </div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Historial de puntajes</h2>
+            <p class="panel-sub">Ordenado del más reciente al más antiguo.</p>
+            <div id="tabla-historial">
+                <p class="estado-vacio">Cargando tu historial...</p>
+            </div>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="biblioteca-panel.js"></script>
+</body>
+</html>

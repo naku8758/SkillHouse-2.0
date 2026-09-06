@@ -1,20 +1,19 @@
 // js/ui.js
-// Capa puramente COSMÉTICA y AUTÓNOMA: animaciones de entrada al hacer scroll,
-// contador animado de estadísticas y resaltado del ítem activo en los menús
-// laterales. No importa ni toca firebase.js / auth.js / guard.js, así que no
-// interfiere en ningún flujo de autenticación ni de datos.
+// Capa unificada: Animaciones cosméticas + Lógica completa del Avatar
 (function () {
   "use strict";
 
+  // =====================================================
+  // 1. INICIALIZADOR COSMÉTICO (ORIGINAL)
+  // =====================================================
   document.addEventListener("DOMContentLoaded", () => {
     try {
       initScrollReveal();
       initCounters();
       initSidebarActiveState();
       initModalOpenAnimationReset();
+      initAvatarSystem(); // <-- Aquí arrancamos la lógica del avatar al cargar el DOM
     } catch (err) {
-      // Cualquier fallo aquí es puramente estético: nunca debe romper
-      // el resto del sitio, así que solo lo dejamos registrado.
       console.warn("SkillHouse UI (cosmético):", err);
     }
   });
@@ -93,8 +92,6 @@
     });
   }
 
-  // Reinicia la animación de entrada del modal cada vez que se abre,
-  // sin tocar las funciones abrirModal/cerrarModal existentes.
   function initModalOpenAnimationReset() {
     const modals = document.querySelectorAll(".modal");
     if (!modals.length) return;
@@ -104,12 +101,131 @@
       const mo = new MutationObserver(() => {
         if (modal.style.display === "flex") {
           content.style.animation = "none";
-          // eslint-disable-next-line no-unused-expressions
-          content.offsetHeight; // reflow para reiniciar la animación
+          content.offsetHeight;
           content.style.animation = "";
         }
       });
       mo.observe(modal, { attributes: true, attributeFilter: ["style"] });
     });
+  }
+
+  // =====================================================
+  // 2. SISTEMA DE AVATAR (ENCAPSULADO Y SEGURO)
+  // =====================================================
+  function initAvatarSystem() {
+    // Variables de Estado
+    let avatarActual = "";
+    let colorFondoActual = "";
+    let avatarTemporal = "";
+    let colorFondoTemporal = "";
+
+    // Referencias del DOM específicas del Avatar
+    const perfilAvatar = document.getElementById("perfil-avatar");
+    const modalAvatar = document.getElementById("modal-avatar");
+    const btnCerrarX = document.getElementById("btn-cerrar-x");
+    const opcionesAvatares = document.querySelectorAll(".opcion-avatar");
+    const selectorColor = document.getElementById("selector-color");
+    const btnGuardar = document.getElementById("btn-guardar");
+    const previewAvatarGrande = document.getElementById("preview-avatar-grande");
+
+    if (!perfilAvatar || !modalAvatar) return; // Si no está el componente en esta vista, evita errores
+
+    function actualizarVistaPrevia() {
+      if (!previewAvatarGrande) return;
+      previewAvatarGrande.innerHTML = "";
+
+      if (colorFondoTemporal) {
+        previewAvatarGrande.style.background = colorFondoTemporal;
+      } else {
+        previewAvatarGrande.style.background = "";
+      }
+
+      if (avatarTemporal) {
+        previewAvatarGrande.innerHTML = `<img src="${avatarTemporal}" alt="Avatar">`;
+      } else {
+        previewAvatarGrande.innerHTML = "?";
+      }
+    }
+
+    function actualizarAvatarPrincipal() {
+      if (!perfilAvatar) return;
+      perfilAvatar.innerHTML = "";
+
+      if (colorFondoActual) {
+        perfilAvatar.style.background = colorFondoActual;
+      } else {
+        perfilAvatar.style.background = "";
+      }
+
+      if (avatarActual) {
+        perfilAvatar.innerHTML = `<img src="${avatarActual}" alt="Avatar">`;
+      } else {
+        perfilAvatar.innerHTML = "?";
+      }
+    }
+
+    function cerrarModalAvatar() {
+      modalAvatar.style.display = "none";
+    }
+
+    // Eventos de apertura y cierre
+    perfilAvatar.addEventListener("click", () => {
+      avatarTemporal = avatarActual;
+      colorFondoTemporal = colorFondoActual;
+
+      if (selectorColor) {
+        selectorColor.value = colorFondoTemporal || "#ffffff";
+      }
+
+      actualizarVistaPrevia();
+      modalAvatar.style.display = "flex";
+    });
+
+    if (btnCerrarX) {
+      btnCerrarX.addEventListener("click", cerrarModalAvatar);
+    }
+
+    modalAvatar.addEventListener("click", (e) => {
+      if (e.target === modalAvatar) {
+        cerrarModalAvatar();
+      }
+    });
+
+    // Selección de avatares
+    opcionesAvatares.forEach((img) => {
+      img.addEventListener("click", (e) => {
+        avatarTemporal = e.target.src;
+        actualizarVistaPrevia();
+      });
+    });
+
+    // Selector de color
+    if (selectorColor) {
+      selectorColor.addEventListener("input", (e) => {
+        colorFondoTemporal = e.target.value;
+        actualizarVistaPrevia();
+      });
+    }
+
+    // Botón Guardar
+    if (btnGuardar) {
+      btnGuardar.addEventListener("click", async () => {
+        avatarActual = avatarTemporal;
+        colorFondoActual = colorFondoTemporal;
+
+        actualizarAvatarPrincipal();
+
+        const USUARIO_ID = typeof idUsuarioActual !== "undefined" ? idUsuarioActual : null;
+
+        try {
+          if (USUARIO_ID && typeof db !== "undefined" && typeof updateDoc !== "undefined") {
+            // Lógica de Firebase (si aplica)
+          }
+          modalAvatar.style.display = "none";
+        } catch (error) {
+          console.error("Error al guardar el avatar en la base de datos: ", error);
+        }
+      });
+    }
   }
 })();

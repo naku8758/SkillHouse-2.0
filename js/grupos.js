@@ -68,13 +68,35 @@ async function generarCodigoUnico() {
  * @param {{profesorId:string, profesorNombre:string, nombre:string, juego:string}} datos
  * @returns {Promise<{grupoId:string, codigo:string}>}
  */
-export async function crearGrupo({ profesorId, profesorNombre, nombre, juego }) {
+export async function crearGrupo({
+  profesorId,
+  profesorNombre,
+  nombre,
+  juego,
+  materia,
+  tema,
+  dificultad
+}) {
   if (!JUEGOS_VALIDOS.includes(juego)) {
     throw new Error("Selecciona un juego válido.");
   }
+
   const nombreLimpio = (nombre || "").trim();
+
   if (!nombreLimpio) {
-    throw new Error("Ponle un nombre al grupo (ej. '6-A Matemáticas').");
+    throw new Error("Ponle un nombre al grupo.");
+  }
+
+  if (!materia) {
+    throw new Error("Selecciona una materia.");
+  }
+
+  if (!tema) {
+    throw new Error("Selecciona un tema.");
+  }
+
+  if (![1, 2, 3].includes(Number(dificultad))) {
+    throw new Error("Selecciona una dificultad válida.");
   }
 
   const codigo = await generarCodigoUnico();
@@ -82,6 +104,9 @@ export async function crearGrupo({ profesorId, profesorNombre, nombre, juego }) 
   const ref = await addDoc(collection(db, "grupos"), {
     nombre: nombreLimpio,
     juego,
+    materia,
+    tema,
+    dificultad: Number(dificultad),
     profesorId,
     profesorNombre: profesorNombre || "",
     codigo,
@@ -90,8 +115,12 @@ export async function crearGrupo({ profesorId, profesorNombre, nombre, juego }) 
     creadoEn: serverTimestamp()
   });
 
-  return { grupoId: ref.id, codigo };
+  return {
+    grupoId: ref.id,
+    codigo
+  };
 }
+
 
 /** Devuelve todos los grupos creados por un profesor, más recientes primero. */
 export async function obtenerGruposDelProfesor(profesorId) {

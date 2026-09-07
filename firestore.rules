@@ -17,7 +17,12 @@ service cloud.firestore {
     match /estudiantes/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid;
-      allow update, delete: if false;
+      // Solo se permite actualizar los campos de personalización del
+      // perfil (avatar y color de fondo) — nada más se puede modificar
+      // después de creado el documento.
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']);
+      allow delete: if false;
 
       // Historial personal de partidas jugadas (copia de los resultados
       // de grupos/{id}/resultados), solo visible/editable por su dueño.
@@ -32,7 +37,9 @@ service cloud.firestore {
     match /profesores/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid;
-      allow update, delete: if false;
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']);
+      allow delete: if false;
     }
 
     match /administradores/{uid} {

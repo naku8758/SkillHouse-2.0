@@ -4,7 +4,7 @@
 
 import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { obtenerGruposDelEstudiante, obtenerHistorialEstudiante } from "../js/grupos.js";
 
 const JUEGOS = {
@@ -51,12 +51,20 @@ onAuthStateChanged(auth, async (user) => {
   const correo = datos?.email || user.email;
   const fechaRegistro = formatearFecha(datos?.creadoEn);
 
-  document.getElementById("perfil-avatar").textContent = iniciales(nombre);
+  const circuloAvatar = document.getElementById("perfil-avatar");
   document.getElementById("perfil-nombre").textContent = nombre;
   document.getElementById("perfil-correo").textContent = correo;
   document.getElementById("perfil-desde").textContent = fechaRegistro
     ? `Miembro desde el ${fechaRegistro}`
     : "";
+
+  inicializarSelectorAvatar({
+    circuloAvatar,
+    docRef: doc(db, "estudiantes", user.uid),
+    avatarInicial: datos?.avatar || "",
+    colorInicial: datos?.colorFondo || "",
+    textoPorDefecto: iniciales(nombre)
+  });
 
   const [grupos, historial] = await Promise.all([
     obtenerGruposDelEstudiante(user.uid).catch(() => []),
@@ -94,3 +102,78 @@ onAuthStateChanged(auth, async (user) => {
     })
     .join("");
 });
+
+/**
+ * Conecta el círculo de avatar con el modal de selección: al hacer clic se
+ * abre el modal, al elegir una imagen/color se actualiza la vista previa, y
+ * "Guardar cambios" persiste { avatar, colorFondo } en el documento del
+ * usuario en Firestore (y solo se cierra/actualiza si el guardado tuvo éxito).
+ */
+function inicializarSelectorAvatar({ circuloAvatar, docRef, avatarInicial, colorInicial, textoPorDefecto }) {
+  const modal = document.getElementById("modal-avatar");
+  const btnCerrarX = document.getElementById("btn-cerrar-x");
+  const opcionesAvatares = document.querySelectorAll(".opcion-avatar");
+  const selectorColor = document.getElementById("selector-color");
+  const btnGuardar = document.getElementById("btn-guardar");
+  const previewGrande = document.getElementById("preview-avatar-grande");
+
+  let avatarActual = avatarInicial;
+  let colorFondoActual = colorInicial;
+  let avatarTemporal = avatarInicial;
+  let colorFondoTemporal = colorInicial;
+
+  function pintar(elemento, avatarUrl, color) {
+    if (!elemento) return;
+    elemento.style.background = color || "";
+    elemento.innerHTML = avatarUrl ? `<img src="${avatarUrl}" alt="Avatar">` : "";
+    if (!avatarUrl) elemento.textContent = textoPorDefecto;
+  }
+
+  pintar(circuloAvatar, avatarActual, colorFondoActual);
+
+  if (!circuloAvatar || !modal) return; // esta vista no tiene selector de avatar
+
+  circuloAvatar.addEventListener("click", () => {
+    avatarTemporal = avatarActual;
+    colorFondoTemporal = colorFondoActual;
+    if (selectorColor) selectorColor.value = colorFondoTemporal || "#ffffff";
+    pintar(previewGrande, avatarTemporal, colorFondoTemporal);
+    modal.style.display = "flex";
+  });
+
+  btnCerrarX?.addEventListener("click", () => (modal.style.display = "none"));
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  opcionesAvatares.forEach((img) => {
+    img.addEventListener("click", () => {
+      avatarTemporal = img.getAttribute("src");
+      pintar(previewGrande, avatarTemporal, colorFondoTemporal);
+    });
+  });
+
+  selectorColor?.addEventListener("input", (e) => {
+    colorFondoTemporal = e.target.value;
+    pintar(previewGrande, avatarTemporal, colorFondoTemporal);
+  });
+
+  btnGuardar?.addEventListener("click", async () => {
+    btnGuardar.disabled = true;
+    try {
+      await updateDoc(docRef, {
+        avatar: avatarTemporal,
+        colorFondo: colorFondoTemporal
+      });
+      avatarActual = avatarTemporal;
+      colorFondoActual = colorFondoTemporal;
+      pintar(circuloAvatar, avatarActual, colorFondoActual);
+      modal.style.display = "none";
+    } catch (error) {
+      console.error("No se pudo guardar el avatar:", error);
+      alert("No se pudo guardar tu avatar. Intenta de nuevo.");
+    } finally {
+      btnGuardar.disabled = false;
+    }
+  });
+}

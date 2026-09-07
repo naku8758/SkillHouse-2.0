@@ -37,42 +37,15 @@
             <div class="page-hero">
                 <div class="page-hero-icon">📝</div>
                 <div class="page-hero-text">
-                    <h1 id="titulo-pagina">Mis Clases de Matemáticas</h1>
+                    <h1 id="titulo-pagina">Mis Clases</h1>
                     <p>Crea clases, comparte el código con tus estudiantes y sigue sus resultados.</p>
                 </div>
             </div>
         </header>
 
         <section class="panel-box sh-reveal">
-            <h2>Crear un nuevo grupo</h2>
-            <p class="panel-sub">Elige un juego, ponle un nombre a tu grupo y comparte el código con tus estudiantes para que jueguen en clase.</p>
-
-            <form id="form-crear-grupo">
-                <div class="form-fila">
-                    <div class="campo">
-                        <label for="input-nombre">Nombre del grupo</label>
-                        <input type="text" id="input-nombre" placeholder="Ej. 6-A Matemáticas" required maxlength="60">
-                    </div>
-                    <div class="campo">
-                        <label for="select-juego">Juego</label>
-                        <select id="select-juego" required>
-                            <option value="quiz">🎮 Quiz de Lógica</option>
-                            <option value="puzzle">🧩 Puzzle de Código</option>
-                            <option value="carrera">🚀 Carrera Espacial</option>
-                        </select>
-                    </div>
-                    <div class="campo" style="flex:none;">
-                        <button type="submit" class="btn-accion" id="btn-crear-grupo">Crear grupo</button>
-                    </div>
-                </div>
-            </form>
-            <p id="crear-grupo-error" class="mensaje-error" style="display:none;"></p>
-            <p id="crear-grupo-exito" class="mensaje-exito" style="display:none;"></p>
-        </section>
-
-        <section class="panel-box sh-reveal">
             <h2>Grupos activos</h2>
-            <p class="panel-sub">Comparte el código con tus estudiantes: lo ingresan desde la materia de Matemáticas en su cuenta.</p>
+            <p class="panel-sub">Comparte el código con tus estudiantes y ellos lo ingresan desde su cuenta.</p>
             <div class="grupos-grid" id="lista-grupos">
                 <p class="estado-vacio">Cargando tus grupos...</p>
             </div>
@@ -84,6 +57,34 @@
             <p class="panel-sub" id="resultados-sub"></p>
             <div id="resultados-contenido"></div>
             <button class="btn-secundario" id="btn-cerrar-resultados" style="margin-top:14px;">Cerrar</button>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Juegos disponibles</h2>
+            <p class="panel-sub">Estos son los juegos que puedes asignar a tus clases de grado 6º.</p>
+            <div class="grupos-grid">
+                <div class="grupo-card grupo-card--quiz">
+                    <div class="grupo-header"><h3>🎮 Quiz de Lógica</h3></div>
+                    <p class="grupo-meta">Preguntas de opción múltiple: razonamiento, operaciones, fracciones, porcentajes, geometría y medidas.</p>
+                    <div class="grupo-acciones">
+                        <a class="btn-secundario" style="text-decoration:none;" href="matematicas.html?juego=quiz">Crear clase con este juego</a>
+                    </div>
+                </div>
+                <div class="grupo-card grupo-card--puzzle">
+                    <div class="grupo-header"><h3>🧩 Puzzle de Código</h3></div>
+                    <p class="grupo-meta">Los estudiantes ordenan los pasos de algoritmos matemáticos sencillos (promedios, múltiplos, áreas, etc.).</p>
+                    <div class="grupo-acciones">
+                        <a class="btn-secundario" style="text-decoration:none;" href="matematicas.html?juego=puzzle">Crear clase con este juego</a>
+                    </div>
+                </div>
+                <div class="grupo-card grupo-card--carrera">
+                    <div class="grupo-header"><h3>🚀 Carrera Espacial</h3></div>
+                    <p class="grupo-meta">Problemas de matemáticas contrarreloj: cada respuesta correcta avanza el cohete por la pista.</p>
+                    <div class="grupo-acciones">
+                        <a class="btn-secundario" style="text-decoration:none;" href="matematicas.html?juego=carrera">Crear clase con este juego</a>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <h2 class="materias-proximamente-titulo">Otras materias (próximamente)</h2>

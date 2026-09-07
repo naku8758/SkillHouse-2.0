@@ -6,6 +6,8 @@ import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { obtenerGruposDelEstudiante } from "../js/grupos.js";
+import { obtenerMateria, obtenerTema } from "../js/catalogo.js";
+
 
 const JUEGOS = {
   quiz: { icono: "🎮", nombre: "Quiz de Lógica" },
@@ -61,6 +63,8 @@ async function cargarClases(uid) {
 
   listaClases.innerHTML = grupos
     .map((g) => {
+      const materia = obtenerMateria(g.materia);
+      const tema = obtenerTema(g.materia, g.tema);
       const ruta = RUTA_JUEGO[g.juego] || "#";
       const juego = JUEGOS[g.juego] || { icono: "🎲", nombre: g.juego };
       return `
@@ -74,10 +78,12 @@ async function cargarClases(uid) {
         <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego.icono}</span>${juego.nombre}</span>
         <p class="grupo-meta">Profesor(a): ${escapeHtml(g.profesorNombre || "Sin nombre")}</p>
         <p class="grupo-meta">Clase creada: ${formatearFecha(g.creadoEn) || "—"}</p>
+        <p class="grupo-meta">Tema: ${escapeHtml(tema?.nombre || "Sin tema")}</p>
+        <p class="grupo-meta">Dificultad: ${g.dificultad || "—"}</p>
         <div class="grupo-acciones">
           ${
             g.activo
-              ? `<a class="btn-accion" style="text-decoration:none;" href="${ruta}?grupo=${g.id}">Jugar</a>`
+              ? `<a class="btn-accion" style="text-decoration:none;" href="${ruta}?grupo=${encodeURIComponent(g.id)}&juego=${encodeURIComponent(g.juego)}">Jugar</a>`
               : ""
           }
         </div>

@@ -377,6 +377,35 @@ portada.
   `js/games/contenido-temas.js`: son parte del código, no datos que un usuario
   pueda cargar desde la interfaz.
 
+## 9. Repositorio y trabajo en pareja
+
+El proyecto está en `github.com/naku8758/SkillHouse-2.0`. La carpeta de trabajo
+es un clon del repositorio, así que se puede editar y commitear sin mover
+archivos de sitio.
+
+- Las carpetas del repositorio se renombraron con guiones
+  (`interfaz administrador/` → `interfaz-administrador/`) porque todo el código
+  enlaza con guiones. Git lo registra como renombrado, no como borrado.
+- Desaparecieron, reemplazadas por páginas generales: `matematicas.html` (ahora
+  `materia.html?m=matematicas`), `grupos.html`/`juegos-panel.js` del profesor y
+  `juegos-panel.js` del estudiante.
+- `js/games/quiz-data.js`, `puzzle-data.js` y `carrera-data.js` se unificaron en
+  `js/games/contenido-temas.js`, que es la única fuente de preguntas.
+
+Para la pareja que sigue trabajando:
+
+```bash
+git clone https://github.com/naku8758/SkillHouse-2.0.git
+cd SkillHouse-2.0
+git checkout skillhouse-2.0-mejorado   # la rama con estas mejoras
+python3 -m http.server 5500            # y abrir http://127.0.0.1:5500
+```
+
+Antes de tocar nada, `git pull`. Para subir cambios hace falta un token de
+acceso personal (GitHub ya no acepta la contraseña de la cuenta):
+*Settings → Developer settings → Personal access tokens → Fine-grained token*,
+con permiso de escritura sobre este repositorio.
+
 ---
 
 Desarrollado por Aprendiz Garzón Juan y Tovar Sara — Técnico de Programación de

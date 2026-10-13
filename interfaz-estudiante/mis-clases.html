@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Mis Clases | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylea.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("estudiante");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Estudiante</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagea.html">🏠 Materias</a></li>
+            <li><a href="mis-clases.html" class="is-active">📝 Mis clases</a></li>
+            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
+            <li><a href="perfil.html">👤 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">📝</div>
+                <div class="page-hero-text">
+                    <h1 id="titulo-pagina">Mis Clases</h1>
+                    <p>Todas las clases a las que te has unido, de cualquier materia, con el profesor que las creó.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <h2>Tus clases</h2>
+            <p class="panel-sub">Aquí aparecen todas las clases (grupos) a las que te has unido con un código, junto con el profesor que las creó.</p>
+            <div class="grupos-grid" id="lista-clases">
+                <p class="estado-vacio">Cargando tus clases...</p>
+            </div>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="mis-clases-panel.js"></script>
+</body>
+</html>

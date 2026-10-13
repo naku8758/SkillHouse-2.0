@@ -1,92 +1,315 @@
 rules_version = '2';
 
-// Reglas recomendadas para Firestore (Consola Firebase > Firestore Database > Reglas).
-// Permiten que cada usuario autenticado cree/lea SU PROPIO documento
-// (necesario para el registro y para validar el rol al iniciar sesión),
-// pero nadie puede leer ni modificar los datos de otros usuarios.
+// Reglas de Firestore para SkillHouse.
+// (Consola de Firebase > Firestore Database > Reglas > pegar y publicar)
+//
+// Roles:
+//   administrador  -> crea profesores y cursos; lee y escribe todo lo suyo.
+//   profesor       -> dicta solo las materias que se le asignaron, en cualquier
+//                     curso existente.
+//     tipoProfesor == "director" -> además dirige un curso, crea las cuentas de
+//     los estudiantes de ESE curso y solo puede abrir clases de él.
+//   estudiante     -> se une a clases de SU curso y juega en las aceptadas.
+//
+// Estas reglas están escritas a la par que js/grupos.js, js/cursos.js y
+// js/credenciales.js: cada escritura que hace el código tiene su permiso aquí,
+// y cada permiso corresponde a una llamada real. Si se cambia una de las dos
+// partes, hay que volver a publicar este archivo.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /usuarios/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update, delete: if false;
+    function estaAutenticado() {
+      return request.auth != null;
     }
 
+    // Es administrador si tiene su documento en /administradores.
+    function esAdmin() {
+      return estaAutenticado()
+        && exists(/databases/$(database)/documents/administradores/$(request.auth.uid));
+    }
+
+    function docProfesor() {
+      return get(/databases/$(database)/documents/profesores/$(request.auth.uid)).data;
+    }
+
+    function esProfesor() {
+      return estaAutenticado()
+        && exists(/databases/$(database)/documents/profesores/$(request.auth.uid));
+    }
+
+    // Profesor con tipoProfesor == "director": puede crear y ver a los
+    // estudiantes del curso que dirige.
+    function esDirector() {
+      return esProfesor() && docProfesor().tipoProfesor == 'director';
+    }
+
+    function docCurso(codigo) {
+      return get(/databases/$(database)/documents/cursos/$(codigo)).data;
+    }
+
+    // El curso existe y quien escribe es su director. Se admiten las dos formas
+    // en que el panel lo registra —que el curso apunte al profesor
+    // (cursos.directorUid) o que la ficha del profesor apunte al curso
+    // (profesores.curso)— porque el administrador pudo haber asignado solo una
+    // de las dos. js/cursos.js:asignarDirector ya las escribe ambas en el mismo
+    // lote, así que las dos caras coinciden con lo que ve el cliente.
+    function dirigeEseCurso(codigo) {
+      return esDirector()
+        && codigo != ''
+        && exists(/databases/$(database)/documents/cursos/$(codigo))
+        && (docCurso(codigo).directorUid == request.auth.uid || docProfesor().curso == codigo);
+    }
+
+    function docGrupo(grupoId) {
+      return get(/databases/$(database)/documents/grupos/$(grupoId)).data;
+    }
+
+    function esDuenoDelGrupo(grupoId) {
+      return estaAutenticado() && docGrupo(grupoId).profesorId == request.auth.uid;
+    }
+
+    function esMiembro(grupoId, uid) {
+      return estaAutenticado() && request.auth.uid in docGrupo(grupoId).miembrosUids;
+    }
+
+    // El estudiante está matriculado en el curso de esa clase: es lo que hace
+    // que un código de 602 no sirva en 601, ahora exigido también en el servidor
+    // y no solo en la interfaz.
+    function comparteCursoConElGrupo(grupoId, uid) {
+      return exists(/databases/$(database)/documents/estudiantes/$(uid))
+        && docGrupo(grupoId).curso == get(/databases/$(database)/documents/estudiantes/$(uid)).data.curso;
+    }
+
+    // ------------------- Índice ligero de cada cuenta -------------------
+
+    match /usuarios/{uid} {
+      // El admin lista la colección para saber a quién crear y para sus
+      // tablas; un usuario normal solo lee su propio documento.
+      allow get: if estaAutenticado() && (request.auth.uid == uid || esAdmin());
+      allow list: if esAdmin();
+
+      // Un estudiante o profesor puede crearse su índice solo si acaba de
+      // registrarse con ese uid. El admin crea el de cualquiera. El director
+      // crea únicamente el de sus estudiantes.
+      allow create: if estaAutenticado() && (
+        (request.auth.uid == uid && request.resource.data.rol in ['estudiante', 'profesor'])
+        || esAdmin()
+        || (esDirector() && request.resource.data.rol == 'estudiante')
+      );
+
+      // Único campo que puede cambiar una vez creada la cuenta: el PIN
+      // registrado. El administrador lo cambia al restablecer una clave, y el
+      // dueño de la cuenta cuando él mismo se pone una nueva desde su
+      // Configuración. Cambiar rol, correo o nombre desde el cliente sería
+      // escalar privilegios, y por eso sigue prohibido.
+      allow update: if estaAutenticado()
+                    && (esAdmin() || request.auth.uid == uid)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clave']);
+      allow delete: if false;
+    }
+
+    // ------------------- Estudiantes -------------------
+
     match /estudiantes/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid;
-      // Solo se permite actualizar los campos de personalización del
-      // perfil (avatar y color de fondo) — nada más se puede modificar
-      // después de creado el documento.
-      allow update: if request.auth != null && request.auth.uid == uid
+      // El dueño, el administrador y el director que lo matriculó.
+      allow get: if estaAutenticado() && (
+        request.auth.uid == uid
+        || esAdmin()
+        || (esDirector() && resource.data.creadoPorUid == request.auth.uid)
+      );
+      // El admin lista a todos. Un director solo puede listar filtrando por
+      // creadoPorUid: la condición se revalida documento a documento, así
+      // que una consulta sin ese filtro devuelve "permission denied" en vez
+      // de revelarle los estudiantes de otros directores.
+      allow list: if estaAutenticado() && (
+        esAdmin()
+        || (esDirector() && resource.data.creadoPorUid == request.auth.uid)
+      );
+
+      // El director solo matricula estudiantes del curso que dirige, y siempre
+      // a nombre de nadie más que él (creadoPorUid).
+      allow create: if estaAutenticado() && (
+        esAdmin()
+        || (esDirector()
+            && request.resource.data.rol == 'estudiante'
+            && request.resource.data.creadoPorUid == request.auth.uid
+            && dirigeEseCurso(request.resource.data.curso))
+      );
+
+      // Personalización del perfil: avatar y color. Nada más.
+      allow update: if estaAutenticado() && request.auth.uid == uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']);
       allow delete: if false;
 
-      // Historial personal de partidas jugadas (copia de los resultados
-      // de grupos/{id}/resultados), solo visible/editable por su dueño.
+      // Historial personal de partidas (copia de grupos/*/resultados).
       match /resultados/{resultadoId} {
-        allow read: if request.auth != null && request.auth.uid == uid;
-        allow create: if request.auth != null && request.auth.uid == uid
+        allow read: if estaAutenticado() && request.auth.uid == uid;
+        allow create: if estaAutenticado() && request.auth.uid == uid
                       && request.resource.data.uid == uid;
         allow update, delete: if false;
       }
     }
 
+    // ------------------- Profesores -------------------
+
     match /profesores/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']);
+      allow get: if estaAutenticado() && (request.auth.uid == uid || esAdmin());
+      // El admin lista los profesores para sus informes y para elegir el
+      // director de un curso.
+      allow list: if esAdmin();
+
+      allow create: if esAdmin();
+
+      // El dueño solo se personaliza el avatar. El administrador corrige el
+      // alta: qué materia dicta, si es director y de qué curso. Esos tres
+      // campos son los que escribe interfaz-administrador/cursos.js al mover
+      // un director; sin este permiso el cambio quedaba a medias y el profesor
+      // seguía viendo el curso viejo.
+      allow update: if estaAutenticado() && (
+        (request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']))
+        || (esAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso', 'materias', 'tipoProfesor']))
+      );
       allow delete: if false;
     }
 
     match /administradores/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update, delete: if false;
+      allow read, write: if esAdmin();
     }
 
-    // Grupos de juego: un profesor crea un grupo (elige un juego y obtiene
-    // un código); los estudiantes se unen con ese código y juegan.
-    // Nota de seguridad: para que un estudiante pueda "unirse por código"
-    // sin conocer antes el ID del grupo, la lectura se deja abierta a
-    // cualquier usuario autenticado (adecuado para una herramienta de aula
-    // de bajo riesgo; no se exponen datos personales sensibles). Las
-    // escrituras sí quedan restringidas al dueño del grupo o al propio
-    // estudiante que se une.
-    match /grupos/{grupoId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.resource.data.profesorId == request.auth.uid
-                    && request.resource.data.miembrosUids == [];
-      allow update: if request.auth != null && (
-        // El profesor dueño puede modificar cualquier campo (activar/desactivar, etc.)
-        resource.data.profesorId == request.auth.uid
-        ||
-        // Un estudiante solo puede agregarse a sí mismo a miembrosUids
-        (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['miembrosUids'])
-          && request.resource.data.miembrosUids == resource.data.miembrosUids.concat([request.auth.uid])
-        )
-      );
-      allow delete: if request.auth != null && resource.data.profesorId == request.auth.uid;
+    // ------------------- Cursos -------------------
 
+    match /cursos/{codigo} {
+      // Cualquier usuario autenticado necesita la lista de cursos: el
+      // profesor al crear una clase y el estudiante para saber a cuál
+      // pertenece. Un curso solo expone código, nombre, año y director.
+      allow read: if estaAutenticado();
+
+      // Solo el administrador da de alta y baja cursos.
+      allow create, update, delete: if esAdmin();
+    }
+
+    // ------------------- Clases (grupos) -------------------
+
+    // Un profesor crea una clase para un curso y una materia; los
+    // estudiantes se unen con el código y juegan.
+    //
+    // Nota de seguridad: para poder "unirse por código" sin conocer antes el
+    // ID del documento, la lectura de grupos está abierta a cualquier usuario
+    // autenticado. Es un dato de aula (nombre de la clase, código, lista de
+    // miembros), no información personal sensible, y cerrarla al dueño rompería
+    // tanto el ingreso por código como la comprobación de código libre.
+    // Lo que sí se estrecha son las escrituras y los subdocumentos.
+    match /grupos/{grupoId} {
+      allow read: if estaAutenticado();
+
+      allow create: if esProfesor()
+        && request.resource.data.profesorId == request.auth.uid
+        && request.resource.data.miembrosUids == []
+        // Solo materias que tiene asignadas: un profesor de Inglés no puede
+        // abrir una clase de Matemáticas.
+        && request.resource.data.materia in docProfesor().materias
+        // Debe indicar curso, y si es director de curso, ese curso debe ser
+        // el suyo.
+        && request.resource.data.curso is string
+        && request.resource.data.curso != ''
+        && (docProfesor().tipoProfesor != 'director' || dirigeEseCurso(request.resource.data.curso));
+
+      // Solo el profesor dueño puede modificar o borrar su clase.
+      allow update: if esDuenoDelGrupo(grupoId);
+      allow delete: if esDuenoDelGrupo(grupoId);
+
+      // Ficha del estudiante dentro de la clase. La escribe solo el profesor al
+      // aceptar; el alumno puede sacarse a sí mismo de ella.
+      //
+      // setDoc() sobre un miembro que ya existe cuenta como UPDATE, no como
+      // create, así que el permiso tiene que cubrir los dos: con
+      // "allow update: if false" re-aceptar a un estudiante que ya estaba
+      // rechazado devolvía permission-denied y dejaba la clase a medias
+      // (miembrosUids actualizado, ficha sin escribir).
       match /miembros/{uid} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null && request.auth.uid == uid;
-        allow update, delete: if false;
+        allow get, list: if esDuenoDelGrupo(grupoId) || esAdmin();
+        allow create, update: if esDuenoDelGrupo(grupoId);
+        allow delete: if esDuenoDelGrupo(grupoId) || request.auth.uid == uid;
+      }
+
+      // Solicitudes de ingreso: el estudiante crea la suya, el profesor la
+      // resuelve (aceptar = crear miembro + borrar solicitud).
+      match /solicitudes/{uid} {
+        allow get: if estaAutenticado() && (request.auth.uid == uid || esDuenoDelGrupo(grupoId) || esAdmin());
+        allow list: if esDuenoDelGrupo(grupoId) || esAdmin();
+
+        // Aquí se cierra el hueco que solo existía en la interfaz: sin estas
+        // condiciones, cualquier estudiante autenticado podía escribir una
+        // solicitud en cualquier clase con curl, saltándose el filtro de curso
+        // y el de clase activa.
+        allow create, update: if estaAutenticado() && request.auth.uid == uid
+          && request.resource.data.uid == uid
+          && request.resource.data.estado == 'pendiente'
+          && docGrupo(grupoId).activo == true
+          && comparteCursoConElGrupo(grupoId, uid);
+        allow delete: if estaAutenticado() && (request.auth.uid == uid || esDuenoDelGrupo(grupoId));
       }
 
       match /resultados/{resultadoId} {
-        allow read: if request.auth != null && (
-          get(/databases/$(database)/documents/grupos/$(grupoId)).data.profesorId == request.auth.uid
-          || resource.data.uid == request.auth.uid
-        );
-        allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+        allow get: if esDuenoDelGrupo(grupoId) || esAdmin()
+                   || (estaAutenticado() && resource.data.uid == request.auth.uid);
+        allow list: if esDuenoDelGrupo(grupoId) || esAdmin()
+                    || (estaAutenticado() && esMiembro(grupoId, request.auth.uid));
+        // Antes bastaba con conocer el ID de una clase para meterle resultados
+        // falsos desde la consola: la pertenencia se comprobaba solo en el
+        // cliente. Ahora también aquí, y el código sigue comprobándola para dar
+        // un mensaje claro.
+        allow create: if estaAutenticado()
+          && request.resource.data.uid == request.auth.uid
+          && esMiembro(grupoId, request.auth.uid);
         allow update, delete: if false;
       }
+    }
+
+    // ------------------- Sugerencias de "Ayuda" -------------------
+
+    match /sugerencias/{id} {
+      // Cualquiera puede opinar, incluso sin cuenta (los invitados), pero solo
+      // con la forma real que escribe js/ayuda.js y con el texto acotado: sin
+      // límite, un único visitante podía llenar la colección.
+      allow create: if request.resource.data.keys().hasOnly(['mensaje', 'nombre', 'atendida', 'fecha'])
+                    && request.resource.data.mensaje is string
+                    && request.resource.data.mensaje.size() > 0
+                    && request.resource.data.mensaje.size() <= 1000
+                    && request.resource.data.atendida == false;
+      allow read: if esAdmin();
+      // El admin solo marca la sugerencia como atendida; no reescribe el
+      // texto de quien opinó.
+      allow update: if esAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['atendida']);
+      allow delete: if false;
+    }
+
+    // ------------------- Solicitudes de cambio de contraseña -------------------
+
+    // Las abre estudiante, profesor o director cuando no recuerdan su PIN.
+    // Nadie escribe ahí una contraseña: es un pedido, y el administrador lo
+    // resuelve desde su panel de Claves.
+    match /solicitudes_clave/{id} {
+      allow get: if estaAutenticado() && (esAdmin() || resource.data.uid == request.auth.uid);
+      allow list: if estaAutenticado() && (esAdmin() || resource.data.uid == request.auth.uid);
+
+      // Campos fijos y motivo acotado: un pedido no puede llevar datos ajenos
+      // (una clave, por ejemplo) ni ocupar la base de datos a texto libre.
+      allow create: if estaAutenticado()
+                    && request.resource.data.keys().hasOnly(['uid', 'nombre', 'email', 'rol', 'motivo', 'estado', 'creadoEn'])
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.estado == 'pendiente'
+                    && request.resource.data.motivo is string
+                    && request.resource.data.motivo.size() <= 300;
+
+      // El administrador solo mueve el estado; el texto del pedido no se reescribe.
+      allow update: if esAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'resueltaEn']);
+      allow delete: if false;
     }
   }
 }

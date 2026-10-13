@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Claves | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylec.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("administrador");
+    </script>
+</head>
+<body>
+
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Administrador</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagec.html">🏠 Dashboard</a></li>
+            <li><a href="crear-cuenta.html">👥 Usuarios</a></li>
+            <li><a href="claves.html" class="is-active">🔑 Claves</a></li>
+            <li><a href="cursos.html">🎓 Cursos</a></li>
+            <li><a href="clases.html">📚 Clases</a></li>
+            <li><a href="materias.html">📝 Materias</a></li>
+            <li><a href="reportes.html">📊 Reportes</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">🔑</div>
+                <div class="page-hero-text">
+                    <h1>Contraseñas</h1>
+                    <p>Los PINes de todas las cuentas y las solicitudes de cambio que te han enviado.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="panel-box sh-reveal" id="caja-solicitudes">
+            <h2 id="titulo-solicitudes">Solicitudes de cambio</h2>
+            <p class="panel-sub">Un estudiante, profesor o director que no recuerda su clave pide desde su Configuración que le generes una nueva.</p>
+            <div id="lista-solicitudes"><p class="estado-vacio">Cargando solicitudes...</p></div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2 id="titulo-credenciales">Claves de la plataforma</h2>
+            <p class="panel-sub">
+                Aquí ves el PIN con el que entra cada cuenta. "Nueva clave" le pone uno distinto
+                al instante y no pide el anterior: la plataforma ya lo tiene registrado.
+                Anota la nueva y pásasela al interesado, porque solo se muestra en esta pantalla.
+            </p>
+            <div class="form-fila" style="margin-bottom:14px;">
+                <div class="campo">
+                    <label for="filtro-rol">Filtrar por rol</label>
+                    <select id="filtro-rol">
+                        <option value="">Todos</option>
+                        <option value="estudiante">Estudiantes</option>
+                        <option value="profesor">Profesores y directores</option>
+                        <option value="administrador">Administradores</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="filtro-buscar">Buscar por nombre o correo</label>
+                    <input type="text" id="filtro-buscar" placeholder="Ej. Maria" autocomplete="off">
+                </div>
+                <div class="campo" style="flex:none;">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn-secundario" id="btn-descargar-claves">Descargar CSV</button>
+                </div>
+            </div>
+            <p id="claves-aviso" class="mensaje-exito" style="display:none;"></p>
+            <p id="claves-error" class="mensaje-error" style="display:none;"></p>
+            <div id="lista-claves"><p class="estado-vacio">Cargando cuentas...</p></div>
+        </section>
+
+    </main>
+</div>
+<footer>
+    <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+    <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias &#8599;</a>
+</footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="claves.js"></script>
+</body>
+</html>

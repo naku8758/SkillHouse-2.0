@@ -8,32 +8,47 @@
 import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-import { obtenerGrupo, guardarResultado } from "../js/grupos.js";
-import { generarProblemas } from "../js/games/carrera-data.js";
-
-const CANTIDAD_PREGUNTAS = 10;
-const TIEMPO_POR_PREGUNTA_MS = 12000;
+import { guardarResultado, grupoJugable } from "../js/grupos.js";
+import { obtenerPreguntasPorTema, nombreDelTema, temaAleatorio, tiempoPorPregunta } from "../js/games/contenido-temas.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
 const grupoId = params.get("grupo");
+const esInvitado = params.get("invitado") === "1";
 
 let usuarioActual = null;
 let usuarioNombre = "";
 let grupoActual = null;
+let temaId = "";
+let dificultad = 2;
+let tiempoPorPreguntaMs = 12000;
 let problemasRonda = [];
 let indiceActual = 0;
 let puntaje = 0;
 let respondida = false;
 let intervaloTiempo = null;
 let inicioPregunta = 0;
+// Firebase re-emite onAuthStateChanged al refrescar el token, con el MISMO
+// usuario: sin este candado la segunda emisión reiniciaba la carrera a mitad de
+// la partida y se perdía el puntaje.
+let uidEnJuego = null;
 
 function volverA(url) {
   window.location.href = url;
 }
 
 function rutaVolver() {
-  return grupoId ? "../interfaz estudiante/juegos.html" : "../interfaz estudiante/homepagea.html";
+  if (esInvitado) return "../invitado.html";
+  // Dentro de una clase se vuelve a la página de ESA materia; en práctica, a la
+  // materia desde la que se entró (?m=) o al panel del estudiante si no se sabe.
+  if (grupoId && grupoActual) return rutaMateria(grupoActual.materia);
+  return rutaMateria(params.get("m"));
+}
+
+function rutaMateria(materiaId) {
+  return materiaId
+    ? `../interfaz-estudiante/materia.html?m=${encodeURIComponent(materiaId)}`
+    : "../interfaz-estudiante/homepagea.html";
 }
 
 function escapeHtml(texto) {
@@ -43,11 +58,22 @@ function escapeHtml(texto) {
 }
 
 async function iniciar() {
+  if (esInvitado) {
+    temaId = params.get("tema") || temaAleatorio();
+    dificultad = Number(params.get("dificultad")) || 2;
+    tiempoPorPreguntaMs = tiempoPorPregunta(dificultad);
+    prepararRonda();
+    renderPregunta();
+    return;
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       volverA("../index.html");
       return;
     }
+    if (user.uid === uidEnJuego) return;
+    uidEnJuego = user.uid;
     usuarioActual = user;
 
     try {
@@ -58,16 +84,18 @@ async function iniciar() {
     }
 
     if (grupoId) {
-      try {
-        grupoActual = await obtenerGrupo(grupoId);
-      } catch (err) {
-        grupoActual = null;
-      }
-      if (!grupoActual || grupoActual.juego !== "carrera") {
-        mostrarErrorGrupo();
+      grupoActual = await grupoJugable(grupoId, user.uid, "carrera");
+      if (!grupoActual) {
+        mostrarAviso(AVISO_ACCESO);
         return;
       }
+      temaId = grupoActual.tema;
+      dificultad = grupoActual.dificultad || 2;
+    } else {
+      temaId = params.get("tema") || temaAleatorio();
+      dificultad = Number(params.get("dificultad")) || 2;
     }
+    tiempoPorPreguntaMs = tiempoPorPregunta(dificultad);
 
     prepararRonda();
     renderPregunta();
@@ -75,17 +103,27 @@ async function iniciar() {
 }
 
 function prepararRonda() {
-  problemasRonda = generarProblemas(CANTIDAD_PREGUNTAS);
+  problemasRonda = obtenerPreguntasPorTema(temaId, dificultad);
   indiceActual = 0;
   puntaje = 0;
 }
 
-function mostrarErrorGrupo() {
+const AVISO_ACCESO = {
+  titulo: "No puedes jugar esta clase",
+  texto: "La clase no existe, tu profesor aún no acepta tu solicitud o ya no está activa. Pide el código otra vez en la página de la materia."
+};
+
+const AVISO_CONTENIDO = {
+  titulo: "Este tema no tiene preguntas en este nivel",
+  texto: "Cambia de tema o de dificultad en la página de la materia y vuelve a intentarlo."
+};
+
+function mostrarAviso(aviso) {
   contenedor.innerHTML = `
     <div class="resultado-final">
       <div class="resultado-emoji">⚠️</div>
-      <h2>No se pudo cargar este grupo</h2>
-      <p>El grupo no existe, ya no está activo o no corresponde a este juego.</p>
+      <h2>${aviso.titulo}</h2>
+      <p>${aviso.texto}</p>
       <div class="resultado-acciones">
         <button class="btn-accion" id="btn-volver">Volver</button>
       </div>
@@ -93,9 +131,17 @@ function mostrarErrorGrupo() {
   document.getElementById("btn-volver").addEventListener("click", () => volverA(rutaVolver()));
 }
 
+const NOMBRES_DIFICULTAD = { 1: "Fácil", 2: "Intermedio", 3: "Difícil" };
+
 function renderPregunta() {
   respondida = false;
   const total = problemasRonda.length;
+
+  if (!total) {
+    mostrarAviso(AVISO_CONTENIDO);
+    return;
+  }
+
   const p = problemasRonda[indiceActual];
   const progresoPista = Math.round((puntaje / total) * 100);
 
@@ -103,7 +149,7 @@ function renderPregunta() {
     <div class="juego-topbar">
       <div>
         <h1>🚀 Carrera Espacial</h1>
-        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : "Modo práctica"}</p>
+        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"} · ${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}</p>
       </div>
       <div class="juego-grupo-nombre">Problema ${indiceActual + 1} de ${total}</div>
     </div>
@@ -143,8 +189,8 @@ function iniciarTemporizador() {
   clearInterval(intervaloTiempo);
   intervaloTiempo = setInterval(() => {
     const transcurrido = Date.now() - inicioPregunta;
-    const restante = Math.max(0, TIEMPO_POR_PREGUNTA_MS - transcurrido);
-    const pct = (restante / TIEMPO_POR_PREGUNTA_MS) * 100;
+    const restante = Math.max(0, tiempoPorPreguntaMs - transcurrido);
+    const pct = (restante / tiempoPorPreguntaMs) * 100;
     if (barra) barra.style.width = pct + "%";
     if (restante <= 0) {
       clearInterval(intervaloTiempo);

@@ -134,6 +134,13 @@ body{
     border-color: var(--sh-indigo-light);
 }
 
+.estado-vacio{
+    text-align:center;
+    color:var(--sh-ink-400);
+    font-size:.92rem;
+    padding:18px 0;
+}
+
 /* =========================
    FAQ / PREGUNTAS
 ========================= */

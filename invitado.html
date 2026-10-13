@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="imag/logo.png">
+    <title>Jugar como invitado | SkillHouse</title>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/juegos.css?v=2">
+    <style>
+        /* Ajustes puntuales solo de esta página, sin tocar style.css */
+        .hero.hero--invitado{ padding-bottom:40px; }
+        .hero--invitado .titulo-principal{ font-size:2.6rem; }
+        .selector-card{
+            background:var(--sh-white);
+            border-radius:var(--sh-r-xl);
+            padding:32px 30px;
+            box-shadow:var(--sh-shadow-lg);
+            margin-top:-46px;
+            position:relative;
+            z-index:3;
+        }
+        .juego-card{ cursor:pointer; border:none; text-align:left; width:100%; font-family:var(--sh-font-body); }
+        .juego-card:focus-visible{ outline:2px solid var(--sh-cyan); outline-offset:3px; }
+        .juego-card .juego-cta{
+            display:inline-flex; align-items:center; gap:6px;
+            margin-top:14px; font-weight:700; font-size:.85rem;
+            color:var(--sh-cyan);
+        }
+        .invitado-aviso{
+            text-align:center;
+            color:var(--sh-ink-400);
+            font-size:.9rem;
+            margin-top:10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="imag/logo.png" alt="logo" width="78" height="60">
+            <p class="logoskillhouse">SkillHouse</p>
+        </div>
+        <nav>
+            <a href="index.html" class="nav-link">← Volver al inicio</a>
+            <a href="#" onclick="abrirModal('modal-login'); return false;" class="btn-login">Ingreso</a>
+        </nav>
+    </header>
+
+    <main class="hero hero--invitado">
+        <div class="hero-text" style="max-width:640px; margin:0 auto; text-align:center;">
+            <span class="badge">🕹️ Sin necesidad de cuenta</span>
+            <h1 class="titulo-principal">Juega como invitado</h1>
+            <div class="text">
+                <p>Elige materia, tema y dificultad, y entra directo a jugar. No necesitas cuenta — aunque tampoco se guarda tu resultado.</p>
+            </div>
+        </div>
+    </main>
+
+    <main class="secciones" style="padding:0 6% 70px;">
+        <section class="selector-card sh-reveal">
+            <h2 style="margin-bottom:6px;">🎯 Elige qué practicar</h2>
+            <p class="section-intro" style="margin-bottom:22px;">Selecciona la materia, el tema y el nivel antes de escoger un juego.</p>
+            <div class="form-fila">
+                <div class="campo">
+                    <label for="select-materia-invitado">Materia</label>
+                    <select id="select-materia-invitado"></select>
+                </div>
+                <div class="campo">
+                    <label for="select-tema-invitado">Tema</label>
+                    <select id="select-tema-invitado"></select>
+                </div>
+                <div class="campo">
+                    <label for="select-dificultad-invitado">Dificultad</label>
+                    <select id="select-dificultad-invitado">
+                        <option value="1">Nivel 1 - ⭐</option>
+                        <option value="2" selected>Nivel 2 - ⭐⭐</option>
+                        <option value="3">Nivel 3 - ⭐⭐⭐</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding-top:50px;">
+            <h2>🎮 Elige tu juego</h2>
+            <p class="section-intro">Los tres juegos usan el tema y la dificultad que elegiste arriba.</p>
+            <div class="grid-container">
+                <button type="button" class="juego-card sh-reveal" data-juego-invitado="quiz">
+                    <div class="juego-icono">🎮</div>
+                    <h3>Quiz de Lógica</h3>
+                    <p>Preguntas de opción múltiple, a tu ritmo y sin cronómetro.</p>
+                    <span class="juego-cta">Jugar →</span>
+                </button>
+                <button type="button" class="juego-card sh-reveal" data-juego-invitado="puzzle">
+                    <div class="juego-icono">🧩</div>
+                    <h3>Puzzle de Código</h3>
+                    <p>Ordena los pasos correctos de un proceso paso a paso.</p>
+                    <span class="juego-cta">Jugar →</span>
+                </button>
+                <button type="button" class="juego-card sh-reveal" data-juego-invitado="carrera">
+                    <div class="juego-icono">🚀</div>
+                    <h3>Carrera Espacial</h3>
+                    <p>Responde rápido: cada acierto avanza tu cohete en la pista.</p>
+                    <span class="juego-cta">Jugar →</span>
+                </button>
+            </div>
+            <p class="invitado-aviso">¿Quieres guardar tu progreso y que tu profesor vea tus resultados? Pídele a tu profesor o a tu institución el correo y la contraseña de tu cuenta.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+
+    <div id="modal-login" class="modal">
+        <div class="modal-content">
+        <span class="close" onclick="cerrarModal('modal-login')">&times;</span>
+        <h2 style="margin-bottom: 20px;">Iniciar Sesión</h2>
+
+        <form id="form-login" action="#" method="POST">
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" name="email" placeholder="ejemplo@correo.com" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" name="password" placeholder="********" required>
+            </div>
+            <p id="login-error" style="color:#c0392b; display:none; margin-top:10px; font-size:0.9rem;"></p>
+            <button type="submit" class="btn-login" style="width: 100%; margin-top: 20px; cursor: pointer; border: none; font-size: 1rem;">Entrar</button>
+        </form>
+        </div>
+    </div>
+
+<script src="js/scripts.js"></script>
+<script src="js/ui.js" defer></script>
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/auth.js"></script>
+<script type="module" src="js/invitado.js"></script>
+</body>
+</html>

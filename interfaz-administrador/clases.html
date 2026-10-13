@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Clases | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylec.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("administrador");
+    </script>
+</head>
+<body>
+
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Administrador</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagec.html">🏠 Dashboard</a></li>
+            <li><a href="crear-cuenta.html">👥 Usuarios</a></li>
+            <li><a href="claves.html">🔑 Claves</a></li>
+            <li><a href="cursos.html">🎓 Cursos</a></li>
+            <li><a href="clases.html" class="is-active">📚 Clases</a></li>
+            <li><a href="materias.html">📝 Materias</a></li>
+            <li><a href="reportes.html">📊 Reportes</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">📚</div>
+                <div class="page-hero-text">
+                    <h1>Clases</h1>
+                    <p>Todas las clases que existen en la plataforma, de todos los profesores y cursos.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <h2>Filtrar</h2>
+            <div class="form-fila">
+                <div class="campo">
+                    <label for="filtro-materia">Materia</label>
+                    <select id="filtro-materia"><option value="">Todas</option></select>
+                </div>
+                <div class="campo">
+                    <label for="filtro-curso">Curso</label>
+                    <select id="filtro-curso"><option value="">Todos</option></select>
+                </div>
+                <div class="campo">
+                    <label for="filtro-estado">Estado</label>
+                    <select id="filtro-estado">
+                        <option value="">Todos</option>
+                        <option value="activos">Solo activas</option>
+                        <option value="inactivos">Solo inactivas</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="filtro-buscar">Buscar por nombre o código</label>
+                    <input type="text" id="filtro-buscar" placeholder="Ej. 601 Mate" autocomplete="off">
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2 id="titulo-clases">Clases</h2>
+            <div id="lista-clases-admin"><p class="estado-vacio">Cargando clases...</p></div>
+        </section>
+
+    </main>
+</div>
+<footer>
+    <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+    <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias &#8599;</a>
+</footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="clases.js"></script>
+</body>
+</html>

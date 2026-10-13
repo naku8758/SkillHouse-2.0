@@ -4,27 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SkillHouse: la plataforma gratuita que ayuda a los estudiantes de sexto grado a dar el salto de primaria a secundaria aprendiendo jugando.">
-    <link rel="icon" type="image/png" href="imag/logo.PNG">
+    <link rel="icon" type="image/png" href="imag/logo.png">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/style.css">
     <title>SkillHouse | Aprende jugando</title>
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/portada.js"></script>
 </head>
 <body>
 
     <header>
         <div class="logo">
-            <img src="imag/logo.PNG" alt="logo" width="78" height="60">
+            <img src="imag/logo.png" alt="logo" width="78" height="60">
             <p class="logoskillhouse">SkillHouse</p>
         </div>
         <nav>
             <a href="#niveles" class="nav-link">Temas</a>
             <a href="#juegos" class="nav-link">Juegos</a>
             <a href="#aprendizaje" class="nav-link">Aprendizaje</a>
+            <a href="invitado.html" class="nav-link">Jugar como invitado</a>
 
             <a href="#" onclick="abrirModal('modal-login'); return false;" class="btn-login">Ingreso</a>
-            <a href="#" onclick="abrirModal('modal-registro'); return false;" class="btn-registro">Registro</a>
         </nav>
     </header>
 
@@ -42,18 +43,21 @@
             </div>
 
             <div class="hero-cta">
-                <a href="#" onclick="abrirModal('modal-registro'); return false;" class="btn-registro">🚀 Comenzar gratis</a>
+                <a href="invitado.html" class="btn-registro">🎮 Jugar como invitado</a>
                 <a href="#niveles" class="btn-login">Ver temas</a>
             </div>
 
-            <div class="stats">
+            <!-- js/portada.js llena estas cifras desde el catálogo real. El
+                 guion es el marcador de posición: un "0" leído a tiempo parece
+                 una cifra verdadera cuando todavía no hay nada en pantalla. -->
+            <div class="stats" id="stats-portada">
                 <div>
-                    <h3><span data-count="20" data-suffix="+">0+</span></h3>
-                    <p>Maestros</p>
+                    <h3><span>—</span></h3>
+                    <p>Materias con juegos</p>
                 </div>
                 <div>
-                    <h3><span data-count="150" data-suffix="+">0+</span></h3>
-                    <p>Estudiantes</p>
+                    <h3><span>—</span></h3>
+                    <p>Temas para practicar</p>
                 </div>
             </div>
         </div>
@@ -69,46 +73,26 @@
         <section id="segunda" class="segunda">
         <section id="niveles" class="section">
             <h2>⭐ Temas</h2>
-            <p class="section-intro">Explora los temas clave de sexto grado con nuestro enfoque interactivo y divetido.</p>
-            <div class="grid-container sh-reveal-stagger">
+            <p class="section-intro">Explora los temas clave de sexto grado con nuestro enfoque interactivo y divertido.</p>
+            <!-- js/portada.js genera una tarjeta por materia del catálogo. -->
+            <div class="grid-container sh-reveal-stagger" id="grid-temas">
                 <div class="nivel-card">
                     <div class="nivel-icono">📐</div>
                     <h3>Matemáticas</h3>
-                    <p>Operaciones básicas con naturales, fraccionarios, áreas y perímetros.</p>
-                    <div class="nivel-estrellas">★★★</div>
-                </div>
-                <div class="nivel-card">
-                    <div class="nivel-icono">🌱</div>
-                    <h3>Ciencia</h3>
-                    <p>La célula, reinos de la naturaleza, el cuerpo humano y la materia.</p>
-                    <div class="nivel-estrellas">★★★</div>
-                </div>
-                <div class="nivel-card">
-                    <div class="nivel-icono">📖</div>
-                    <h3>Español</h3>
-                    <p>Análisis de textos, gramática, literatura y tipos de texto.</p>
-                    <div class="nivel-estrellas">★★★</div>
+                    <p>Productos notables, factorización, ecuaciones y sistemas, funciones, potenciación, Pitágoras y probabilidad.</p>
+                    <div class="nivel-estrellas">9 temas · 3 niveles</div>
                 </div>
             </div>
         </section>
         <section id="juegos" class="section">
             <h2>🎮 Juegos</h2>
             <p class="section-intro">Practica lo aprendido con retos cortos y divertidos, pensados para que la lógica, el código y la exploración se sientan como un juego.</p>
-            <div class="grid-container sh-reveal-stagger">
+            <!-- js/portada.js genera una tarjeta por juego. -->
+            <div class="grid-container sh-reveal-stagger" id="grid-juegos">
                 <div class="juego-card">
                     <div class="juego-icono">🎮</div>
                     <h3>Quiz de Lógica</h3>
                     <p>Pon a prueba tu razonamiento con preguntas rápidas y desafiantes.</p>
-                </div>
-                <div class="juego-card">
-                    <div class="juego-icono">🧩</div>
-                    <h3>Puzzle de Código</h3>
-                    <p>Ordena las piezas correctas y descubre cómo piensan los programadores.</p>
-                </div>
-                <div class="juego-card">
-                    <div class="juego-icono">🚀</div>
-                    <h3>Carrera Espacial</h3>
-                    <p>Compite contra el reloj resolviendo retos antes de que despegue tu nave.</p>
                 </div>
             </div>
         </section>
@@ -118,8 +102,8 @@
             <div class="content-box sh-reveal">
                 <div class="icono-grande">👩‍🏫</div>
                 <div class="content-box-text">
-                    <h3>Siempre acompañado</h3>
-                    <p>Aquí podrás estar conectado directamente con tus profesores: resuelve dudas, entrega actividades y sigue tu avance en cada materia.</p>
+                    <h3>Clases con código, como en tu colegio</h3>
+                    <p>Tu profesor crea la clase de su materia y su curso, te da un código y tú entras desde esa materia. Ahí tus partidas quedan guardadas: el profesor ve tu puntaje y tú ves tu avance en Mi Biblioteca.</p>
                 </div>
             </div>
         </section>
@@ -144,56 +128,12 @@
                     <label>Contraseña</label>
                     <input type="password" name="password" placeholder="********" required>
                 </div>
-                <div class="form-group">
-                    <label>¿Con qué rol quieres ingresar?</label>
-                    <select name="rol" required>
-                        <option value="" disabled selected>Selecciona tu rol</option>
-                        <option value="estudiante">Estudiante</option>
-                        <option value="profesor">Profesor</option>
-                        <option value="administrador">Administrador</option>
-                    </select>
-                </div>
                 <p id="login-error" style="color:#c0392b; display:none; margin-top:10px; font-size:0.9rem;"></p>
                 <button type="submit" class="btn-login" style="width: 100%; margin-top: 20px; cursor: pointer; border: none; font-size: 1rem;">Entrar</button>
             </form>
         </div>
     </div>
 
-    <div id="modal-registro" class="modal">
-        <div class="modal-content">
-        <span class="close" onclick="cerrarModal('modal-registro')">&times;</span>
-        <h2 style="margin-bottom: 20px;">Crear Cuenta</h2>
-
-    <form id="form-registro" action="#" method="POST">
-        <div class="form-group">
-            <label>Nombre de Usuario</label>
-            <input type="text" name="username" placeholder="Tu nombre" required>
-        </div>
-
-        <div class="form-group">
-            <label>Correo Electrónico</label>
-            <input type="email" name="email" placeholder="ejemplo@correo.com" required>
-        </div>
-
-        <div class="form-group">
-            <label>Contraseña</label>
-            <input type="password" name="password" placeholder="********" required>
-        </div>
-
-        <div class="form-group">
-            <label>¿Quién eres?</label>
-            <select name="rol" required>
-                <option value="" disabled selected>Selecciona tu rol</option>
-                <option value="estudiante">Estudiante</option>
-                <option value="profesor">Profesor</option>
-            </select>
-        </div>
-
-        <p id="registro-error" style="color:#c0392b; display:none; margin-top:10px; font-size:0.9rem;"></p>
-        <button type="submit" class="btn-registro" style="width: 100%; margin-top: 15px;">Registrarse</button>
-    </form>
-    </div>
-    </div>
 <script src="js/scripts.js"></script>
 <script src="js/ui.js" defer></script>
 </body>

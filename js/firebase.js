@@ -9,7 +9,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 // Configuración de tu app web de Firebase
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyD_Eie3fdJPEnwofBC9vwgQML_kwLgWIh8",
   authDomain: "skillhouse-64b02.firebaseapp.com",
   projectId: "skillhouse-64b02",
@@ -19,6 +19,6 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);

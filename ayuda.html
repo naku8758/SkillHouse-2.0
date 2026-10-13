@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="imag/logo.PNG">
+    <link rel="icon" type="image/png" href="imag/logo.png">
     <title>Centro de Ayuda | SkillHouse</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="ayuda.css">
@@ -14,11 +14,11 @@
     <!-- HEADER -->
     <header class="dashboard-header">
         <div class="logo">
-            <img src="imag/logo.PNG" alt="Logo SkillHouse" width="78" height="60">
+            <img src="imag/logo.png" alt="Logo SkillHouse" width="78" height="60">
             <p class="logoskillhouse">SkillHouse</p>
         </div>
         <nav>
-            <a href="index.html" class="btn-volver">
+            <a href="index.html" class="btn-volver" id="link-volver">
                 ← Volver
             </a>
         </nav>
@@ -35,48 +35,103 @@
         <div class="search-box sh-reveal">
             <input
                 type="text"
+                id="buscador-ayuda"
                 placeholder="Describe tu problema..."
             >
         </div>
         <!-- PREGUNTAS FRECUENTES -->
-        <section class="temas-ayuda sh-reveal">
+        <section class="temas-ayuda sh-reveal" id="lista-preguntas">
             <details>
-                <summary><span class="icono-q">🏫</span>¿Qué es Skill House?</summary>
+                <summary><span class="icono-q">🏫</span>¿Qué es SkillHouse?</summary>
                 <p>
-                    Una plataforma interactiva diseñada para ayudarte a dar 
-                    el salto de la primaria a la secundaria sin estrés, especialmente
-                    desarrollada para estudiantes de grado sexto.
+                    Una plataforma interactiva de Matemáticas, Inglés y Español pensada
+                    para ayudarte a repasar jugando, con retos que se adaptan a la
+                    dificultad que elijas. Funciona en cursos de sexto grado: cada curso
+                    tiene su director, y cada clase pertenece a una materia y a un curso.
                 </p>
             </details>
             <details>
-                <summary><span class="icono-q">📘</span>¿Cómo me uno a un curso?</summary>
+                <summary><span class="icono-q">🔑</span>¿Cómo consigo una cuenta?</summary>
                 <p>
-                    Dirígete al catálogo de cursos, selecciona el curso que te
-                    interese y presiona el botón "Inscribirme".
+                    Las cuentas no se registran solas: el administrador crea a los
+                    profesores y a los estudiantes que no tienen director de curso, y el
+                    director de curso crea a los estudiantes de su grado. Cada cuenta
+                    nace con un correo <strong>@skillhouse.edu.co</strong> generado a
+                    partir del nombre y una contraseña de 6 dígitos que se muestra una
+                    sola vez, al crearla. Guárdala.
                 </p>
             </details>
             <details>
-                <summary><span class="icono-q">🔑</span>¿Cómo cambiar mi contraseña?</summary>
+                <summary><span class="icono-q">🎓</span>¿Qué es el director de curso?</summary>
                 <p>
-                    Ve a Configuración → Seguridad →
-                    Cambiar contraseña y sigue las instrucciones.
+                    Es el profesor responsable de un grado (601, 602, etc.). Desde su
+                    panel "Estudiantes" crea las cuentas de los estudiantes de ese grado y ve
+                    quiénes tiene a cargo. Solo él puede crear clases del curso que
+                    dirige, y sus estudiantes solo pueden unirse a las clases de su propio
+                    curso. Si un estudiante suyo olvida la contraseña, el director manda
+                    el pedido al administrador, que es quien genera una nueva.
                 </p>
             </details>
             <details>
-                <summary><span class="icono-q">👨‍🏫</span>¿Cómo agregan clases los profesores?</summary>
+                <summary><span class="icono-q">📘</span>¿Cómo me uno a una clase?</summary>
                 <p>
-                    Ve a al menú lateral → mis clases → crear nuevo grupo.
-                    Edita el nombre del grupo, escoge el juego, materia, tema y dificultad. 
+                    Inicia sesión, entra a la materia correspondiente (Matemáticas,
+                    Inglés o Español) y usa "Unirme a una clase" con el código que te dio
+                    tu profesor. La plataforma rechaza el código si es de otra materia o
+                    de otro curso, así que pide siempre el código de TU curso. Tu
+                    profesor debe aceptar la solicitud antes de que puedas jugar en esa
+                    clase.
                 </p>
             </details>
             <details>
-                <summary><span class="icono-q">👤</span>¿Quien hizo esta página?</summary>
+                <summary><span class="icono-q">🔒</span>¿Cómo cambio mi contraseña?</summary>
                 <p>
-                    Un proyecto creado por Aprendiz Juan Garzon y Sara Tovar
+                    Ve a Configuración y usa el formulario "Cambiar mi contraseña":
+                    escribe la actual, la nueva (6 dígitos) y repítela.
+                </p>
+                <p>
+                    Si <strong>no recuerdas la actual</strong>, en esa misma página está
+                    "No recuerdo mi contraseña": mandas un pedido al administrador y él
+                    genera un PIN nuevo sin pedirte la anterior. El pedido queda bloqueado
+                    hasta que lo atienda, para no mandar varios iguales.
+                </p>
+                <p>
+                    El administrador no pide nada: desde su página <strong>Claves</strong>
+                    ve el PIN de todas las cuentas y cambia el de cualquiera cuando
+                    quiere. Por eso los profesores y los estudiantes sí tienen que
+                    solicitarlo.
+                </p>
+            </details>
+            <details>
+                <summary><span class="icono-q">👨‍🏫</span>¿Cómo crean clases los profesores?</summary>
+                <p>
+                    Tu materia ya está asignada, así que no se te pregunta por ella: en
+                    "Inicio" se abre tu materia y <strong>dentro salen los
+                    cursos</strong> (601, 602...). Entra al tuyo, escribe un nombre, un
+                    tema, una dificultad y un juego, y presiona "Crear clase"; el curso
+                    viene elegido por el sitio desde el que entraste. Se genera un código
+                    de 6 caracteres: compártelo con tus estudiantes. Desde ahí puedes
+                    editar la clase, aceptar solicitudes de ingreso, ver resultados,
+                    desactivarla o eliminarla.
+                </p>
+            </details>
+            <details>
+                <summary><span class="icono-q">🕹️</span>¿Qué juegos hay disponibles?</summary>
+                <p>
+                    Tres: Quiz de Lógica (preguntas de opción múltiple), Puzzle de
+                    Código (ordenar los pasos de un proceso) y Carrera Espacial
+                    (preguntas contrarreloj). Los tres usan el tema y la dificultad de
+                    la clase.
+                </p>
+            </details>
+            <details>
+                <summary><span class="icono-q">👤</span>¿Quién hizo esta página?</summary>
+                <p>
+                    Un proyecto creado por el Aprendiz Juan Garzón y Sara Tovar
                     para acompañarte en esta nueva etapa.
                 </p>
             </details>
-
+            <p class="estado-vacio" id="sin-resultados-busqueda" style="display:none;">No encontramos nada con esas palabras. Prueba con otros términos o mándanos tu pregunta abajo.</p>
         </section>
         <!-- SUGERENCIAS -->
         <section class="sugerencias-box sh-reveal">
@@ -85,22 +140,25 @@
             <p class="sugerencias-sub">Tu opinión nos ayuda a hacer SkillHouse cada vez mejor.</p>
 
             <textarea
+                id="texto-sugerencia"
                 placeholder="Cuéntanos cómo podemos mejorar SkillHouse..."
                 rows="5"
+                maxlength="1000"
             ></textarea>
 
-            <button class="btn-enviar">
+            <button class="btn-enviar" id="btn-enviar-sugerencia">
                 Enviar sugerencia
             </button>
+            <p id="sugerencia-mensaje" style="margin-top:10px; font-size:.9rem; display:none;"></p>
 
         </section>
     </main>
     <!-- FOOTER -->
     <footer>
             <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
-            <a href="ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
     </footer>
 
 <script src="js/ui.js" defer></script>
+<script type="module" src="js/ayuda.js"></script>
 </body>
 </html>

@@ -6,48 +6,63 @@
 import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-import { obtenerGrupo, guardarResultado } from "../js/grupos.js";
-import { PREGUNTAS } from "../js/games/quiz-data.js";
-
-const CANTIDAD_PREGUNTAS = 8;
+import { guardarResultado, grupoJugable } from "../js/grupos.js";
+import { obtenerPreguntasPorTema, nombreDelTema, temaAleatorio } from "../js/games/contenido-temas.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
 const grupoId = params.get("grupo");
+const esInvitado = params.get("invitado") === "1";
 
 let usuarioActual = null;
 let usuarioNombre = "";
 let grupoActual = null;
+let temaId = "";
+let dificultad = 2;
 let preguntasRonda = [];
 let indiceActual = 0;
 let puntaje = 0;
 let respondida = false;
-
-function mezclar(arreglo) {
-  const copia = [...arreglo];
-  for (let i = copia.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copia[i], copia[j]] = [copia[j], copia[i]];
-  }
-  return copia;
-}
+// Firebase re-emite onAuthStateChanged al refrescar el token, con el MISMO
+// usuario. Sin este candado esa segunda emisión volvía a llamar prepararRonda()
+// a mitad de una partida: se reiniciaban las preguntas y se perdía el puntaje.
+let uidEnJuego = null;
 
 function volverA(url) {
   window.location.href = url;
 }
 
 function rutaVolver() {
-  // Si venimos desde un grupo, lo natural es volver a la lista de grupos
-  // del estudiante; si no, al panel de estudiante.
-  return grupoId ? "../interfaz estudiante/juegos.html" : "../interfaz estudiante/homepagea.html";
+  if (esInvitado) return "../invitado.html";
+  // Dentro de una clase se vuelve a la página de ESA materia; en práctica, a la
+  // materia desde la que se entró (?m=) o al panel del estudiante si no se sabe.
+  if (grupoId && grupoActual) return rutaMateria(grupoActual.materia);
+  return rutaMateria(params.get("m"));
+}
+
+function rutaMateria(materiaId) {
+  return materiaId
+    ? `../interfaz-estudiante/materia.html?m=${encodeURIComponent(materiaId)}`
+    : "../interfaz-estudiante/homepagea.html";
 }
 
 async function iniciar() {
+  if (esInvitado) {
+    // Modo invitado: sin sesión, sin grupo, nunca se guarda resultado.
+    temaId = params.get("tema") || temaAleatorio();
+    dificultad = Number(params.get("dificultad")) || 2;
+    prepararRonda();
+    renderPregunta();
+    return;
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       volverA("../index.html");
       return;
     }
+    if (user.uid === uidEnJuego) return;
+    uidEnJuego = user.uid;
     usuarioActual = user;
 
     try {
@@ -58,15 +73,19 @@ async function iniciar() {
     }
 
     if (grupoId) {
-      try {
-        grupoActual = await obtenerGrupo(grupoId);
-      } catch (err) {
-        grupoActual = null;
-      }
-      if (!grupoActual || grupoActual.juego !== "quiz") {
-        mostrarErrorGrupo();
+      grupoActual = await grupoJugable(grupoId, user.uid, "quiz");
+      if (!grupoActual) {
+        mostrarAviso(AVISO_ACCESO);
         return;
       }
+      temaId = grupoActual.tema;
+      dificultad = grupoActual.dificultad || 2;
+    } else {
+      // Modo práctica: si viene con ?tema= y ?dificultad= (desde el selector
+      // de práctica libre), se usan esos; si no, se elige un tema al azar
+      // en dificultad media.
+      temaId = params.get("tema") || temaAleatorio();
+      dificultad = Number(params.get("dificultad")) || 2;
     }
 
     prepararRonda();
@@ -75,18 +94,27 @@ async function iniciar() {
 }
 
 function prepararRonda() {
-  const cantidad = Math.min(CANTIDAD_PREGUNTAS, PREGUNTAS.length);
-  preguntasRonda = mezclar(PREGUNTAS).slice(0, cantidad);
+  preguntasRonda = obtenerPreguntasPorTema(temaId, dificultad);
   indiceActual = 0;
   puntaje = 0;
 }
 
-function mostrarErrorGrupo() {
+const AVISO_ACCESO = {
+  titulo: "No puedes jugar esta clase",
+  texto: "La clase no existe, tu profesor aún no acepta tu solicitud o ya no está activa. Pide el código otra vez en la página de la materia."
+};
+
+const AVISO_CONTENIDO = {
+  titulo: "Este tema no tiene preguntas en este nivel",
+  texto: "Cambia de tema o de dificultad en la página de la materia y vuelve a intentarlo."
+};
+
+function mostrarAviso(aviso) {
   contenedor.innerHTML = `
     <div class="resultado-final">
       <div class="resultado-emoji">⚠️</div>
-      <h2>No se pudo cargar este grupo</h2>
-      <p>El grupo no existe, ya no está activo o no corresponde a este juego.</p>
+      <h2>${aviso.titulo}</h2>
+      <p>${aviso.texto}</p>
       <div class="resultado-acciones">
         <button class="btn-accion" id="btn-volver">Volver</button>
       </div>
@@ -94,9 +122,17 @@ function mostrarErrorGrupo() {
   document.getElementById("btn-volver").addEventListener("click", () => volverA(rutaVolver()));
 }
 
+const NOMBRES_DIFICULTAD = { 1: "Fácil", 2: "Intermedio", 3: "Difícil" };
+
 function renderPregunta() {
   respondida = false;
   const total = preguntasRonda.length;
+
+  if (!total) {
+    mostrarAviso(AVISO_CONTENIDO);
+    return;
+  }
+
   const p = preguntasRonda[indiceActual];
   const progreso = Math.round((indiceActual / total) * 100);
 
@@ -104,14 +140,14 @@ function renderPregunta() {
     <div class="juego-topbar">
       <div>
         <h1>🎮 Quiz de Lógica</h1>
-        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : "Modo práctica"}</p>
+        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"}</p>
       </div>
       <div class="juego-grupo-nombre">Pregunta ${indiceActual + 1} de ${total}</div>
     </div>
     <div class="juego-progreso"><div class="juego-progreso-relleno" style="width:${progreso}%"></div></div>
 
-    <span class="pregunta-categoria">${escapeHtml(p.categoria)}</span>
-    <p class="pregunta-texto">${escapeHtml(p.pregunta)}</p>
+    <span class="pregunta-categoria">${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}</span>
+    <p class="pregunta-texto">${escapeHtml(p.enunciado)}</p>
 
     <div class="opciones-lista" id="opciones-lista">
       ${p.opciones

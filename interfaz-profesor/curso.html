@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Estudiantes de mi curso | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="styleb.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("profesor");
+    </script>
+</head>
+<body>
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Maestro</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepageb.html">🏠 Inicio</a></li>
+            <li data-solo="director"><a href="curso.html" class="is-active">👥 Estudiantes</a></li>
+            <li><a href="materia.html">📝 Mis clases</a></li>
+            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
+            <li><a href="perfil.html">👤 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+<main class="contenido">
+
+    <header class="topbar">
+        <div class="page-hero">
+            <div class="page-hero-icon">🎓</div>
+            <div class="page-hero-text">
+                <h1 id="titulo-curso">Estudiantes de mi curso</h1>
+                <p id="subtitulo-curso">Tú creas las cuentas de los estudiantes de tu curso; el administrador solo crea profesores.</p>
+            </div>
+        </div>
+    </header>
+
+    <section class="panel-box sh-reveal" id="caja-sin-curso" style="display:none;">
+        <p class="estado-vacio">El administrador no te ha asignado ningún curso. Esta pantalla se activa en cuanto te ponga al frente de uno.</p>
+    </section>
+
+    <section class="panel-box sh-reveal">
+        <h2>Estudiantes del curso</h2>
+        <div class="stats-grid" id="stats-curso"></div>
+    </section>
+
+    <section class="panel-box sh-reveal" id="caja-alta">
+        <h2>Crear cuenta de estudiante</h2>
+        <p class="panel-sub">
+            Escribe el nombre completo y la cuenta sale sola: correo derivado del nombre y contraseña de 6 dígitos.
+            El estudiante queda matriculado en <strong><span id="etiqueta-curso">tu curso</span></strong> y solo podrá
+            entrar a las clases de ese curso.
+        </p>
+        <form id="form-crear-estudiante">
+            <div class="form-fila">
+                <div class="campo">
+                    <label for="input-nombre-estudiante">Nombre completo</label>
+                    <input type="text" id="input-nombre-estudiante" placeholder="Ej. Maria Fernanda Ruiz" required maxlength="60" autocomplete="off">
+                </div>
+                <div class="campo">
+                    <label for="input-email-estudiante">Correo (se genera solo)</label>
+                    <input type="text" id="input-email-estudiante" placeholder="Escribe primero el nombre" readonly>
+                </div>
+                <div class="campo">
+                    <label for="input-clave-estudiante">Contraseña (se genera sola)</label>
+                    <div class="grupo-acciones" style="gap:8px;">
+                        <input type="text" id="input-clave-estudiante" readonly style="flex:1; min-width:110px;">
+                        <button type="button" class="btn-secundario" id="btn-regenerar" title="Generar otra contraseña">↻</button>
+                    </div>
+                </div>
+                <div class="campo" style="flex:none;">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-accion" id="btn-crear-estudiante">Crear estudiante</button>
+                </div>
+            </div>
+        </form>
+        <p id="alta-error" class="mensaje-error" style="display:none;"></p>
+        <p id="alta-exito" class="mensaje-exito" style="display:none;"></p>
+    </section>
+
+    <section class="panel-box sh-reveal">
+        <h2>Credenciales de esta sesión</h2>
+        <p class="panel-sub">Descárgalas o imprímelas y repártelas. Al cerrar esta sesión la lista desaparece de tu pantalla: si un estudiante pierde su PIN, el administrador lo consulta y le genera uno nuevo desde su panel de Claves.</p>
+        <div class="grupo-acciones" style="margin-bottom:14px;">
+            <button class="btn-secundario" id="btn-descargar">⬇ Descargar CSV</button>
+            <button class="btn-secundario" id="btn-copiar">⧉ Copiar</button>
+        </div>
+        <div id="lista-credenciales">
+            <p class="estado-vacio">Aún no has creado ninguna cuenta en esta sesión.</p>
+        </div>
+    </section>
+
+    <section class="panel-box sh-reveal">
+        <h2>¿Un estudiante no recuerda su clave?</h2>
+        <p class="panel-sub">
+            Tú creas las cuentas de tu curso, pero las contraseñas las maneja el administrador:
+            él ve el PIN de cualquiera y le genera uno nuevo sin pasos intermedios. Pídele el
+            cambio desde <strong>Configuración → Solicitar cambio de contraseña</strong>, o dile
+            que lo haga él mismo. El PIN original de cada cuenta también lo tienes tú en la tabla
+            de credenciales del momento en que la creaste, y en el CSV que descargues.
+        </p>
+        <a class="btn-accion" href="configuracion.html" style="text-decoration:none;">Ir a Configuración</a>
+    </section>
+
+    <section class="panel-box sh-reveal">
+        <h2 id="titulo-estudiantes">Mis estudiantes</h2>
+        <p class="panel-sub">Solo ves los que creaste tú, no los de otros cursos.</p>
+        <div id="lista-estudiantes"><p class="estado-vacio">Cargando...</p></div>
+    </section>
+
+    <section class="panel-box sh-reveal">
+        <h2 id="titulo-clases">Clases de mi curso</h2>
+        <p class="panel-sub">Todas las clases abiertas para este curso, las cree quien las cree.</p>
+        <div id="lista-clases-curso"><p class="estado-vacio">Cargando...</p></div>
+    </section>
+</main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias &#8599;</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="panel-curso.js"></script>
+</body>
+</html>

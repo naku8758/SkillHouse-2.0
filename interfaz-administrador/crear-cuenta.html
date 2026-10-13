@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Usuarios | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylec.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=2">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("administrador");
+    </script>
+</head>
+<body>
+
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Administrador</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagec.html">🏠 Dashboard</a></li>
+            <li><a href="crear-cuenta.html" class="is-active">👥 Usuarios</a></li>
+            <li><a href="claves.html">🔑 Claves</a></li>
+            <li><a href="cursos.html">🎓 Cursos</a></li>
+            <li><a href="clases.html">📚 Clases</a></li>
+            <li><a href="materias.html">📝 Materias</a></li>
+            <li><a href="reportes.html">📊 Reportes</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">👥</div>
+                <div class="page-hero-text">
+                    <h1>Crear cuenta</h1>
+                    <p>Tú escribes el nombre y el rol. El correo y la contraseña de seis dígitos se generan solos.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="panel-box sh-reveal">
+            <h2>Nueva cuenta</h2>
+            <p class="panel-sub">
+                El correo sale del nombre (por ejemplo <strong>Andrés Perdomo</strong> → <code>AndresP@skillhouse.edu.co</code>);
+                si ya está ocupado, se le añade un número. La contraseña es un PIN de 6 dígitos: anótala o descarga la
+                lista de credenciales, porque no queda guardada en ningún lado y no se puede volver a mostrar.
+            </p>
+
+            <form id="form-crear-cuenta">
+                <div class="form-fila">
+                    <div class="campo">
+                        <label for="input-username">Nombre completo</label>
+                        <input type="text" id="input-username" placeholder="Ej. Juan Pérez" required maxlength="60" autocomplete="off">
+                    </div>
+                    <div class="campo">
+                        <label for="input-rol">Tipo de cuenta</label>
+                        <select id="input-rol" required>
+                            <option value="">Selecciona un rol</option>
+                            <option value="estudiante">Estudiante</option>
+                            <option value="profesor">Profesor</option>
+                            <option value="director">Director de curso</option>
+                            <option value="administrador">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="campo" id="campo-curso-estudiante" style="display:none;">
+                        <label for="select-curso-estudiante">Curso</label>
+                        <select id="select-curso-estudiante"></select>
+                    </div>
+                </div>
+
+                <!-- Solo con rol profesor o director de curso -->
+                <div class="form-fila" id="fila-profesor" style="display:none;">
+                    <div class="campo">
+                        <label for="select-materia">Materia que dicta</label>
+                        <select id="select-materia">
+                            <option value="">Selecciona una materia</option>
+                        </select>
+                    </div>
+                    <div class="campo" id="campo-curso-dirigido" style="display:none;">
+                        <label for="select-curso-dirigido">Curso a cargo</label>
+                        <select id="select-curso-dirigido"></select>
+                    </div>
+                </div>
+
+                <div class="form-fila">
+                    <div class="campo">
+                        <label for="input-email">Correo (se genera solo)</label>
+                        <input type="text" id="input-email" placeholder="Escribe primero el nombre completo" readonly>
+                    </div>
+                    <div class="campo">
+                        <label for="input-password">Contraseña (se genera sola)</label>
+                        <div class="grupo-acciones" style="gap:8px;">
+                            <input type="text" id="input-password" readonly style="flex:1; min-width:120px;">
+                            <button type="button" class="btn-secundario" id="btn-regenerar-clave" title="Generar otra contraseña">↻</button>
+                        </div>
+                    </div>
+                    <div class="campo" style="flex:none;">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn-accion" id="btn-crear-cuenta">Crear cuenta</button>
+                    </div>
+                </div>
+            </form>
+            <p id="crear-cuenta-error" class="mensaje-error" style="display:none;"></p>
+            <p id="crear-cuenta-exito" class="mensaje-exito" style="display:none;"></p>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Credenciales de esta sesión</h2>
+            <p class="panel-sub">
+                Esta lista se borra al recargar la página, pero las claves no se pierden: cada PIN queda
+                anotado en su cuenta y lo vuelves a ver en 🔑 <a href="claves.html">Claves</a>.
+                Descarga el archivo antes de irte y repártelo.
+            </p>
+            <div class="grupo-acciones" style="margin-bottom:14px;">
+                <button class="btn-secundario" id="btn-descargar-credenciales">⬇ Descargar CSV</button>
+                <button class="btn-secundario" id="btn-copiar-credenciales">⧉ Copiar al portapapeles</button>
+            </div>
+            <div id="lista-cuentas-creadas">
+                <p class="estado-vacio">Aún no has creado ninguna cuenta en esta sesión.</p>
+            </div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>¿Olvidaron su contraseña?</h2>
+            <p class="panel-sub">
+                Ya no hace falta escribir la clave actual: las tienes todas en <strong>Claves</strong>,
+                desde ahí generas una nueva con un click y atiendes las solicitudes que te manden
+                estudiantes, profesores y directores.
+            </p>
+            <a class="btn-accion" href="claves.html" style="text-decoration:none;">Ir a Contraseñas</a>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2>Usuarios registrados</h2>
+            <p class="panel-sub">Todas las cuentas que existen en la plataforma.</p>
+            <div class="stats-grid" id="stats-usuarios">
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Estudiantes</div></div>
+                <div class="stat-card"><div class="stat-valor">—</div><div class="stat-label">Profesores</div></div>
+            </div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2 id="titulo-estudiantes">Estudiantes</h2>
+            <div id="lista-estudiantes"><p class="estado-vacio">Cargando...</p></div>
+        </section>
+
+        <section class="panel-box sh-reveal">
+            <h2 id="titulo-profesores">Profesores y directores</h2>
+            <div id="lista-profesores"><p class="estado-vacio">Cargando...</p></div>
+        </section>
+    </main>
+</div>
+    <footer>
+        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+        <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    </footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="crear-cuenta.js"></script>
+</body>
+</html>

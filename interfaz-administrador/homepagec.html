@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Panel Administrador | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylec.css">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("administrador");
+    </script>
+</head>
+<body>
+
+<div class="contenedor">
+    <!-- MENÚ LATERAL -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Administrador</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagec.html" class="is-active">🏠 Dashboard</a></li>
+            <li><a href="crear-cuenta.html">👥 Usuarios</a></li>
+            <li><a href="claves.html">🔑 Claves</a></li>
+            <li><a href="cursos.html">🎓 Cursos</a></li>
+            <li><a href="clases.html">📚 Clases</a></li>
+            <li><a href="materias.html">📝 Materias</a></li>
+            <li><a href="reportes.html">📊 Reportes</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <!-- CONTENIDO -->
+    <main class="contenido">
+        <header class="topbar">
+            <h1 id="bienvenida">Panel Administrativo</h1>
+        </header>
+        <!-- TARJETAS -->
+        <section class="cards sh-reveal-stagger">
+            <div class="card">
+                <div class="card-icono">🎓</div>
+                <div>
+                    <h2 id="conteo-estudiantes">—</h2>
+                    <p>Estudiantes Registrados</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icono">👩‍🏫</div>
+                <div>
+                    <h2 id="conteo-profesores">—</h2>
+                    <p>Profesores Registrados</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icono">📚</div>
+                <div>
+                    <h2 id="conteo-clases-activas">—</h2>
+                    <p>Clases Activas</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icono">🎓</div>
+                <div>
+                    <h2 id="conteo-cursos">—</h2>
+                    <p>Cursos Creados</p>
+                </div>
+            </div>
+        </section>
+        <!-- ACTIVIDAD -->
+        <section class="actividad sh-reveal">
+            <h2>Sugerencias recientes</h2>
+            <p class="panel-sub" style="margin:-6px 0 14px; color:var(--sh-ink-400); font-size:.88rem;">Enviadas desde "Ayuda y Sugerencias" por estudiantes, profesores o invitados.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Sugerencia</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-actividad-reciente">
+                    <tr><td colspan="4">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+<footer>
+    <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+     <a href="../ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+</footer>
+<script src="../js/ui.js" defer></script>
+<script type="module" src="dashboard.js"></script>
+</body>
+</html>

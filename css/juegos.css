@@ -854,3 +854,203 @@
     }
 }
 
+/* ============================================================
+   Nota de 1,0 a 5,0 (js/nota.js)
+   ============================================================ */
+
+.resultado-nota{
+    font-size:1.15rem;
+    color:var(--sh-ink-900);
+    background:var(--sh-grad-brand-soft);
+    border-radius:var(--sh-r-md);
+    padding:12px 18px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px !important;
+}
+.resultado-nota strong{ font-size:1.7rem; letter-spacing:.02em; }
+
+.nota-nivel{
+    font-size:.78rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    padding:4px 10px;
+    border-radius:var(--sh-r-pill);
+}
+.nota-nivel--superior{ background:#DCFCE7; color:#166534; }
+.nota-nivel--alto{ background:#DBEAFE; color:#1E40AF; }
+.nota-nivel--basico{ background:#FEF3C7; color:#92400E; }
+.nota-nivel--inferior{ background:#FEE2E2; color:#991B1B; }
+.nota-nivel--sin-nota{ background:var(--sh-cloud-100); color:var(--sh-ink-400); }
+
+/* Celdas de nota en tablas (resultados del profe, historial, reportes). */
+.nota-celda{ font-weight:800; font-variant-numeric:tabular-nums; }
+
+/* ============================================================
+   Sala de espera estilo Kahoot (js/sala.js)
+   La pantalla del profesor se proyecta: fondo oscuro, letras
+   grandes y todo legible desde el último pupitre.
+   ============================================================ */
+
+.sala-pantalla{
+    background:var(--sh-grad-night);
+    color:var(--sh-on-dark);
+    border-radius:var(--sh-r-lg);
+    padding:28px clamp(18px, 3vw, 40px) 34px;
+    box-shadow:var(--sh-shadow-md);
+}
+.sala-cabecera{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:22px;
+}
+.sala-cabecera h1{ font-size:clamp(1.5rem, 3.4vw, 2.3rem); margin:0 0 6px; }
+.sala-meta{ color:var(--sh-on-dark-soft); font-size:.95rem; margin:0; }
+
+.sala-pin{
+    text-align:center;
+    background:rgba(255,255,255,.06);
+    border:1px dashed rgba(255,255,255,.28);
+    border-radius:var(--sh-r-md);
+    padding:16px 26px;
+    min-width:230px;
+}
+.sala-pin-label{
+    display:block;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.7rem;
+    color:var(--sh-on-dark-soft);
+    margin-bottom:4px;
+}
+.sala-pin-valor{
+    font-size:clamp(2.4rem, 7vw, 4.2rem);
+    font-weight:900;
+    letter-spacing:.16em;
+    line-height:1.05;
+    background:linear-gradient(115deg, var(--sh-cyan), var(--sh-pink));
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.sala-estado{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    font-weight:800;
+    font-size:1rem;
+    padding:9px 18px;
+    border-radius:var(--sh-r-pill);
+}
+.sala-estado--esperando{ background:rgba(255,193,69,.16); color:var(--sh-amber); }
+.sala-estado--abierta{ background:rgba(52,211,153,.16); color:var(--sh-mint); }
+.sala-estado--cerrada{ background:rgba(255,62,165,.16); color:var(--sh-pink); }
+.sala-estado .dot{ width:10px; height:10px; border-radius:50%; background:currentColor; }
+.sala-estado--esperando .dot{ animation:sala-latido 1.4s ease-in-out infinite; }
+
+@keyframes sala-latido{
+    0%,100%{ opacity:.35; transform:scale(.85); }
+    50%{ opacity:1; transform:scale(1.15); }
+}
+
+.sala-asistentes{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(118px, 1fr));
+    gap:12px;
+    margin:6px 0 20px;
+}
+.sala-asistente{
+    background:rgba(255,255,255,.07);
+    border-radius:var(--sh-r-md);
+    padding:12px 8px;
+    text-align:center;
+}
+.sala-asistente-inicial{
+    width:42px; height:42px;
+    margin:0 auto 7px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    font-weight:900;
+    font-size:1.1rem;
+    color:var(--sh-navy-950);
+    background:var(--sh-grad-brand);
+}
+.sala-asistente-nombre{
+    font-size:.85rem;
+    font-weight:600;
+    word-break:break-word;
+    margin:0;
+}
+.sala-vacio{
+    grid-column:1/-1;
+    text-align:center;
+    color:var(--sh-on-dark-soft);
+    padding:26px 10px;
+    font-size:.95rem;
+}
+
+.sala-controles{ display:flex; flex-wrap:wrap; gap:10px; }
+.sala-controles button{
+    border:none;
+    border-radius:var(--sh-r-sm);
+    padding:12px 20px;
+    font-weight:800;
+    font-size:.95rem;
+    cursor:pointer;
+    transition:transform .15s ease, opacity .15s ease;
+}
+.sala-controles button:hover:not(:disabled){ transform:translateY(-2px); }
+.sala-controles button:disabled{ opacity:.45; cursor:not-allowed; }
+.sala-btn-iniciar{ background:var(--sh-mint); color:#04352A; }
+.sala-btn-esperar{ background:var(--sh-amber); color:#4A2E00; }
+.sala-btn-cerrar{ background:var(--sh-pink); color:#3D0021; }
+.sala-btn-secundario{
+    background:transparent;
+    color:var(--sh-on-dark);
+    border:1px solid rgba(255,255,255,.3) !important;
+}
+
+.sala-marcador{ margin-top:24px; }
+.sala-marcador h2{
+    font-size:.8rem;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    color:var(--sh-on-dark-soft);
+    margin:0 0 10px;
+}
+.sala-tabla{ width:100%; border-collapse:collapse; font-size:.95rem; }
+.sala-tabla th{
+    text-align:left;
+    color:var(--sh-on-dark-soft);
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:6px 10px;
+    border-bottom:1px solid rgba(255,255,255,.16);
+}
+.sala-tabla td{ padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.08); overflow-wrap:anywhere; }
+.sala-tabla tr:first-child td{ font-weight:800; }
+
+/* Tarjeta de sala en las listas de clase (profesor y estudiante). */
+.grupo-sala{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-size:.78rem;
+    font-weight:800;
+    padding:5px 12px;
+    border-radius:var(--sh-r-pill);
+    margin-bottom:10px;
+}
+.grupo-sala--esperando{ background:#FEF3C7; color:#92400E; }
+.grupo-sala--abierta{ background:#DCFCE7; color:#166534; }
+.grupo-sala--cerrada{ background:#FEE2E2; color:#991B1B; }
+
+

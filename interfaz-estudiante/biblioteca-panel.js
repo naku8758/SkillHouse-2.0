@@ -5,6 +5,7 @@
 import { suscribirSesion } from "../js/sesion.js";
 import { obtenerHistorialEstudiante } from "../js/grupos.js";
 import { obtenerMateria, obtenerJuego } from "../js/catalogo.js";
+import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
 
 const statsResumen = document.getElementById("stats-resumen");
 const tablaHistorial = document.getElementById("tabla-historial");
@@ -56,7 +57,7 @@ async function cargarHistorial(uid) {
   tablaHistorial.innerHTML = `
     <table class="tabla-resultados">
       <thead>
-        <tr><th>Fecha</th><th>Clase</th><th>Materia</th><th>Juego</th><th>Puntaje</th><th>%</th></tr>
+        <tr><th>Fecha</th><th>Clase</th><th>Materia</th><th>Juego</th><th>Puntaje</th><th>%</th><th>Nota</th></tr>
       </thead>
       <tbody>
         ${historial
@@ -69,6 +70,7 @@ async function cargarHistorial(uid) {
               <td>${escapeHtml(etiquetaJuego(r.juego))}</td>
               <td>${escapeHtml(r.puntaje ?? "—")} / ${escapeHtml(r.total ?? "—")}</td>
               <td>${escapeHtml(r.porcentaje ?? "—")}%</td>
+              <td class="nota-celda">${formatearNota(notaDeResultado(r))}</td>
             </tr>`
           )
           .join("")}
@@ -83,9 +85,14 @@ function renderResumen(historial) {
     ? Math.round(historial.reduce((suma, r) => suma + (r.porcentaje || 0), 0) / total)
     : 0;
   const mejor = total ? Math.max(...historial.map((r) => r.porcentaje || 0)) : 0;
+  // La nota definitiva es el promedio de las notas de cada partida, no el
+  // promedio de porcentajes convertido después: así coincide con lo que ve el
+  // profesor en "Mis clases".
+  const nota = promedioDeNotas(historial.map((r) => notaDeResultado(r)));
 
   statsResumen.innerHTML = `
     <div class="stat-card"><div class="stat-valor">${total}</div><div class="stat-label">Partidas jugadas</div></div>
+    <div class="stat-card"><div class="stat-valor">${nota == null ? "—" : formatearNota(nota)}</div><div class="stat-label">Nota definitiva (1 a 5)</div></div>
     <div class="stat-card"><div class="stat-valor">${total ? promedio + "%" : "—"}</div><div class="stat-label">Promedio general</div></div>
     <div class="stat-card"><div class="stat-valor">${total ? mejor + "%" : "—"}</div><div class="stat-label">Mejor puntaje</div></div>
   `;

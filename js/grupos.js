@@ -9,12 +9,13 @@
 // Estructura en Firestore:
 //   grupos/{grupoId}
 //     { nombre, juego, materia, curso, tema, dificultad,
-//       profesorId, profesorNombre, codigo, activo, miembrosUids, creadoEn }
+//       profesorId, profesorNombre, codigo, activo, sala, miembrosUids, creadoEn }
 //
 //   grupos/{grupoId}/miembros/{uid}     { uid, username, unidoEn }
 //   grupos/{grupoId}/solicitudes/{uid}  { uid, username, estado, solicitadoEn }
+//   grupos/{grupoId}/sala/{uid}         { uid, nombre, desde }   -> ver js/sala.js
 //   grupos/{grupoId}/resultados/{autoId}{ uid, username, juego, puntaje,
-//                                          total, porcentaje, fecha }
+//                                          total, porcentaje, nota, fecha }
 
 import { db } from "./firebase.js";
 import {
@@ -28,12 +29,15 @@ import {
   query,
   where,
   orderBy,
+  limit,
   setDoc,
   arrayUnion,
   arrayRemove,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { MATERIAS } from "./catalogo.js";
+import { SALA, salaBloqueaJuego, salaCerroClase } from "./sala.js";
+import { notaDesdeFraccion, notaDeResultado } from "./nota.js";
 
 const JUEGOS_VALIDOS = ["quiz", "puzzle", "carrera"];
 const MATERIAS_VALIDAS = MATERIAS.map((m) => m.id);
@@ -123,6 +127,9 @@ export async function crearGrupo({
     profesorNombre: profesorNombre || "",
     codigo,
     activo: true,
+    // La clase nace en espera: el profesor la abre cuando está frente al
+    // curso. Así nadie juega por adelantado ni desde la casa.
+    sala: SALA.ESPERANDO,
     miembrosUids: [],
     creadoEn: serverTimestamp()
   });
@@ -234,16 +241,24 @@ export async function responderSolicitud({ grupoId, uid, username, aceptar }) {
   await deleteDoc(doc(db, "grupos", grupoId, "solicitudes", uid));
 }
 
-/** Resultados de partidas jugadas dentro de un grupo, más recientes primero. */
-export async function obtenerResultadosDelGrupo(grupoId) {
+/**
+ * Resultados de partidas jugadas dentro de una clase, más recientes primero.
+ *
+ * `limite` existe por escala: una clase de 30 estudiantes a 10 partidas por
+ * niño llega rápido a miles de documentos, y leerlos todos en una sola
+ * llamada es lo que hace que el panel del profesor tarde segundos en un
+ * colegio con conectividad débil. Con 500 se ve el curso completo en la
+ * pantalla y el historial largo queda en Firestore.
+ */
+export async function obtenerResultadosDelGrupo(grupoId, { limite = 500 } = {}) {
   const ref = collection(db, "grupos", grupoId, "resultados");
   let snap;
   try {
-    snap = await getDocs(query(ref, orderBy("fecha", "desc")));
+    snap = await getDocs(query(ref, orderBy("fecha", "desc"), limit(limite)));
   } catch (err) {
     // Si el índice de orderBy aún no existe, se recuperan sin ordenar
     // y se ordena en el cliente para no romper la vista.
-    snap = await getDocs(ref);
+    snap = await getDocs(query(ref, limit(limite)));
   }
   const resultados = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   resultados.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
@@ -252,8 +267,12 @@ export async function obtenerResultadosDelGrupo(grupoId) {
 
 /**
  * Estadísticas agregadas de todas las clases de un profesor: número de
- * clases, estudiantes únicos, partidas jugadas en total y el promedio
- * general de todas esas partidas. Útil para "Mi Perfil" y "Mi Biblioteca".
+ * clases, estudiantes únicos, partidas jugadas en total, el promedio general
+ * de porcentaje y la nota promedio en escala de 5.
+ *
+ * Cuesta una lectura por clase creada, así que es para la pantalla de
+ * "Mi Biblioteca", que se entra a propósito. El Inicio del profesor ya no la
+ * usa: allí los contadores salen de una sola lectura de `obtenerGruposDelProfesor`.
  */
 export async function obtenerEstadisticasProfesor(profesorId) {
   const grupos = await obtenerGruposDelProfesor(profesorId);
@@ -267,9 +286,13 @@ export async function obtenerEstadisticasProfesor(profesorId) {
 
   let totalPartidas = 0;
   let sumaPorcentajes = 0;
+  let sumaNotas = 0;
   resultadosPorGrupo.forEach((resultados) => {
     totalPartidas += resultados.length;
-    resultados.forEach((r) => (sumaPorcentajes += r.porcentaje || 0));
+    resultados.forEach((r) => {
+      sumaPorcentajes += r.porcentaje || 0;
+      sumaNotas += notaDeResultado(r);
+    });
   });
 
   return {
@@ -277,6 +300,7 @@ export async function obtenerEstadisticasProfesor(profesorId) {
     totalEstudiantes: estudiantesUnicos.size,
     totalPartidas,
     promedioGeneral: totalPartidas ? Math.round(sumaPorcentajes / totalPartidas) : 0,
+    notaPromedio: totalPartidas ? Math.round((sumaNotas / totalPartidas) * 10) / 10 : null,
     grupos
   };
 }
@@ -297,6 +321,12 @@ async function obtenerGrupo(grupoId) {
  * Sin esta comprobación bastaba con escribir en la barra de direcciones
  * juegos/quiz.html?grupo=ID de una clase ajena para jugarla (el resultado no
  * se guardaba, pero la partida sí se dejaba hacer).
+ *
+ * La sala añade un estado intermedio: si el profesor aún no inicia la clase,
+ * se devuelve el grupo igual pero marcado con `sinEmpezar`, para que el juego
+ * pueda decir "espera a tu profe" en vez del "no tienes acceso", que es falso
+ * y confundía al niño. Cuando el profesor cierra la clase se marca
+ * `claseCerrada`.
  */
 export async function grupoJugable(grupoId, uid, juegoEsperado) {
   if (!grupoId) return null;
@@ -311,6 +341,9 @@ export async function grupoJugable(grupoId, uid, juegoEsperado) {
   if (!grupo || !grupo.activo) return null;
   if (juegoEsperado && grupo.juego !== juegoEsperado) return null;
   if (!(grupo.miembrosUids || []).includes(uid)) return null;
+
+  if (salaBloqueaJuego(grupo)) return { ...grupo, sinEmpezar: true };
+  if (salaCerroClase(grupo)) return { ...grupo, claseCerrada: true };
 
   return grupo;
 }
@@ -436,6 +469,13 @@ export async function guardarResultado({ grupoId, uid, username, juego, puntaje,
     throw new Error("No estás registrado como estudiante de esta clase.");
   }
   if (!grupo.activo) throw new Error("Esta clase ya no está aceptando resultados.");
+  // Segunda barrera, además del bloqueo en el juego: sin esto, escribir la URL
+  // a mano permitiría jugar y guardar antes de que el profesor abra la clase.
+  // Con la sala "cerrada" sí se guarda: al que lo agarró el cierre a mitad de
+  // partida no se le borra el trabajo.
+  if (salaBloqueaJuego(grupo)) {
+    throw new Error("Tu profesor todavía no ha iniciado esta clase.");
+  }
 
   const porcentaje = total > 0 ? Math.round((puntaje / total) * 100) : 0;
 
@@ -448,6 +488,9 @@ export async function guardarResultado({ grupoId, uid, username, juego, puntaje,
     puntaje,
     total,
     porcentaje,
+    // Se guarda la nota junto con el porcentaje para que el dato que ve el
+    // profesor en Firestore sea el mismo que vio el estudiante en pantalla.
+    nota: notaDesdeFraccion(puntaje, total),
     fecha: serverTimestamp()
   };
 
@@ -466,14 +509,14 @@ export async function guardarResultado({ grupoId, uid, username, juego, puntaje,
   return ref.id;
 }
 
-/** Historial completo de partidas jugadas por un estudiante, más recientes primero. */
-export async function obtenerHistorialEstudiante(uid) {
+/** Historial personal de un estudiante, más recientes primero (últimas 200). */
+export async function obtenerHistorialEstudiante(uid, { limite = 200 } = {}) {
   const ref = collection(db, "estudiantes", uid, "resultados");
   let snap;
   try {
-    snap = await getDocs(query(ref, orderBy("fecha", "desc")));
+    snap = await getDocs(query(ref, orderBy("fecha", "desc"), limit(limite)));
   } catch (err) {
-    snap = await getDocs(ref);
+    snap = await getDocs(query(ref, limit(limite)));
   }
   const historial = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   historial.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));

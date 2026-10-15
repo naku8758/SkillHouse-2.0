@@ -6,6 +6,7 @@
 import { suscribirSesion } from "../js/sesion.js";
 import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego } from "../js/catalogo.js";
 import { obtenerGruposDelEstudiante } from "../js/grupos.js";
+import { SALA, estadoDeSala } from "../js/sala.js";
 
 const listaClases = document.getElementById("lista-clases");
 
@@ -54,6 +55,12 @@ async function cargarClases(uid) {
       const tema = obtenerTema(g.materia, g.tema);
       const materia = obtenerMateria(g.materia);
       const juego = obtenerJuego(g.juego);
+      const estado = estadoDeSala(g);
+      const etiquetaSala = {
+        [SALA.ESPERANDO]: "⏳ En espera",
+        [SALA.ABIERTA]: "🟢 ¡Ya puedes jugar!",
+        [SALA.CERRADA]: "🔒 Clase cerrada"
+      }[estado];
 
       return `
       <div class="grupo-card grupo-card--${escapeHtml(g.juego)}">
@@ -67,10 +74,14 @@ async function cargarClases(uid) {
         <p class="grupo-meta">${escapeHtml(materia?.nombre || "Materia")} · Curso ${escapeHtml(g.curso || "—")} · Dificultad ${g.dificultad || "—"}</p>
         <p class="grupo-meta">Profesor(a): ${escapeHtml(g.profesorNombre || "Sin nombre")}</p>
         <p class="grupo-meta">Clase creada: ${formatearFecha(g.creadoEn) || "—"} · Tema: ${escapeHtml(tema?.nombre || "Sin tema")}</p>
+        <p><span class="grupo-sala grupo-sala--${estado}">${etiquetaSala}</span></p>
         <div class="grupo-acciones">
           ${
             g.activo && juego
-              ? `<a class="btn-accion" style="text-decoration:none;" href="${rutaDeJuego(g.juego, "../")}?grupo=${encodeURIComponent(g.id)}&m=${encodeURIComponent(g.materia || "")}">Jugar</a>`
+              ? `<a class="${estado === SALA.ABIERTA ? "btn-accion" : "btn-secundario"}" style="text-decoration:none;" href="sala.html?g=${encodeURIComponent(g.id)}&m=${encodeURIComponent(g.materia || "")}">Entrar a la sala</a>
+                 ${estado === SALA.ABIERTA
+                   ? `<a class="btn-secundario" style="text-decoration:none;" href="${rutaDeJuego(g.juego, "../")}?grupo=${encodeURIComponent(g.id)}&m=${encodeURIComponent(g.materia || "")}">Jugar directo</a>`
+                   : ""}`
               : `<span class="grupo-meta">Esta clase ya no está activa.</span>`
           }
         </div>

@@ -4,6 +4,7 @@
 
 import { suscribirSesion } from "../js/sesion.js";
 import { obtenerEstadisticasProfesor } from "../js/grupos.js";
+import { formatearNota } from "../js/nota.js";
 
 suscribirSesion("profesor", async (cuenta) => {
   if (!cuenta) return; // guard.js ya redirige si no hay sesión
@@ -15,6 +16,7 @@ suscribirSesion("profesor", async (cuenta) => {
       <div class="stat-card"><div class="stat-valor">${stats.totalClases}</div><div class="stat-label">Clases creadas</div></div>
       <div class="stat-card"><div class="stat-valor">${stats.totalEstudiantes}</div><div class="stat-label">Estudiantes únicos</div></div>
       <div class="stat-card"><div class="stat-valor">${stats.totalPartidas}</div><div class="stat-label">Partidas jugadas</div></div>
+      <div class="stat-card"><div class="stat-valor">${stats.totalPartidas ? formatearNota(stats.notaPromedio) : "—"}</div><div class="stat-label">Nota promedio (1 a 5)</div></div>
       <div class="stat-card"><div class="stat-valor">${stats.totalPartidas ? stats.promedioGeneral + "%" : "—"}</div><div class="stat-label">Promedio general</div></div>
     `;
   } catch (err) {

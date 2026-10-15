@@ -6,13 +6,17 @@
 // Se pinta en dos tiempos a propósito:
 //  1. Los cursos cuestan una sola lectura, así que el profesor ve qué puede
 //     crear casi al instante.
-//  2. El resumen (clases, estudiantes, partidas y promedio) cuesta una lectura
-//     por cada clase creada; eso llega después y nunca bloquea la página.
+//  2. El conteo de clases y estudiantes por curso llega con una segunda
+//     lectura (también una sola). El resumen con partidas y promedio ya NO se
+//     calcula aquí: costaba una lectura por cada clase creada, y con un
+//     profesor de varios cursos eso eran decenas de lecturas en cada carga de
+//     portada. Ese resumen vive en "Mi Biblioteca", que se entra a propósito.
 
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS, obtenerMateria } from "../js/catalogo.js";
-import { obtenerEstadisticasProfesor } from "../js/grupos.js";
+import { obtenerGruposDelProfesor } from "../js/grupos.js";
 import { cursosDelProfesor } from "../js/cursos.js";
+import { SALA, estadoDeSala } from "../js/sala.js";
 
 function escapar(texto) {
   const div = document.createElement("div");
@@ -142,15 +146,20 @@ suscribirSesion("profesor", async (cuenta) => {
   // Primer tiempo: los cursos ya están visibles y se puede crear.
   pintarTarjetas(null);
 
-  // Segundo tiempo: el resumen y los contadores por curso.
+  // Segundo tiempo: los contadores por curso y el resumen rápido.
   try {
-    const datos = await obtenerEstadisticasProfesor(cuenta.uid);
-    pintarTarjetas(datos.grupos || []);
+    const grupos = await obtenerGruposDelProfesor(cuenta.uid);
+    pintarTarjetas(grupos);
+
+    const estudiantes = new Set();
+    grupos.forEach((g) => (g.miembrosUids || []).forEach((uid) => estudiantes.add(uid)));
+    const abiertas = grupos.filter((g) => g.activo && estadoDeSala(g) === SALA.ABIERTA).length;
+
     stats.innerHTML = `
-      <div class="stat-card"><div class="stat-valor">${datos.totalClases}</div><div class="stat-label">Clases creadas</div></div>
-      <div class="stat-card"><div class="stat-valor">${datos.totalEstudiantes}</div><div class="stat-label">Estudiantes</div></div>
-      <div class="stat-card"><div class="stat-valor">${datos.totalPartidas}</div><div class="stat-label">Partidas jugadas</div></div>
-      <div class="stat-card"><div class="stat-valor">${datos.totalPartidas ? datos.promedioGeneral + "%" : "—"}</div><div class="stat-label">Promedio</div></div>`;
+      <div class="stat-card"><div class="stat-valor">${grupos.length}</div><div class="stat-label">Clases creadas</div></div>
+      <div class="stat-card"><div class="stat-valor">${estudiantes.size}</div><div class="stat-label">Estudiantes</div></div>
+      <div class="stat-card"><div class="stat-valor">${abiertas}</div><div class="stat-label">Clases abiertas ahora</div></div>
+      <div class="stat-card"><div class="stat-valor" style="font-size:1rem;"><a href="biblioteca.html">Partidas y promedios →</a></div><div class="stat-label">Mi Biblioteca</div></div>`;
     cajaResumen.style.display = "block";
   } catch (err) {
     console.error(err);

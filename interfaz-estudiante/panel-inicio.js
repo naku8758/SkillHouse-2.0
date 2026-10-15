@@ -5,6 +5,7 @@
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS, MATERIAS_PROXIMAS } from "../js/catalogo.js";
 import { obtenerGruposDelEstudiante, obtenerHistorialEstudiante } from "../js/grupos.js";
+import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
 
 function tarjeta({ href, icono, titulo, etiqueta, color }) {
   return `
@@ -61,11 +62,13 @@ suscribirSesion("estudiante", async (cuenta) => {
   const promedio = promedioDe(historial);
   const materiasConClases = new Set(grupos.map((g) => g.materia)).size;
   const promedioTexto = promedio == null ? "—" : `${promedio}%`;
+  const nota = promedioDeNotas(historial.map((r) => notaDeResultado(r)));
 
   document.getElementById("resumen-inicio").style.display = "block";
   document.getElementById("stats-inicio").innerHTML = `
     <div class="stat-card"><div class="stat-valor">${grupos.length}</div><div class="stat-label">Clases activas</div></div>
     <div class="stat-card"><div class="stat-valor">${materiasConClases}</div><div class="stat-label">Materias con clases</div></div>
     <div class="stat-card"><div class="stat-valor">${historial.length}</div><div class="stat-label">Partidas guardadas</div></div>
+    <div class="stat-card"><div class="stat-valor">${nota == null ? "—" : formatearNota(nota)}</div><div class="stat-label">Nota definitiva (1 a 5)</div></div>
     <div class="stat-card"><div class="stat-valor">${promedioTexto}</div><div class="stat-label">Promedio general</div></div>`;
 });

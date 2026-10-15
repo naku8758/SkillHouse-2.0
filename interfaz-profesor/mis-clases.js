@@ -13,6 +13,8 @@
 import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego, JUEGOS } from "../js/catalogo.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { cursosDelProfesor } from "../js/cursos.js";
+import { NOMBRE_SALA, estadoDeSala } from "../js/sala.js";
+import { notaDeResultado, notaPromedio, promedioDeNotas, formatearNota } from "../js/nota.js";
 import {
   crearGrupo,
   obtenerGruposDelProfesor,
@@ -357,7 +359,8 @@ form?.addEventListener("submit", async (evento) => {
     const materiaNombre = obtenerMateria(materia)?.nombre || "";
     mostrarMensaje(
       exitoEl,
-      `Clase creada para ${curso} · ${materiaNombre}. Código para tus estudiantes: ${resultado.codigo}`
+      `Clase creada para ${curso} · ${materiaNombre}. Código para tus estudiantes: ${resultado.codigo}. ` +
+      `Está en "En espera": ábrela desde 📺 Sala de clase cuando estés frente al curso.`
     );
     form.reset();
     if (CURSO_PARAMETRO) selectCurso.value = CURSO_PARAMETRO;
@@ -434,6 +437,7 @@ async function cargarGruposCon(promesa) {
       const juego = obtenerJuego(grupo.juego) || { icono: "🎲", nombre: grupo.juego || "Juego" };
       const tema = obtenerTema(grupo.materia, grupo.tema);
       const materia = obtenerMateria(grupo.materia);
+      const estado = estadoDeSala(grupo);
       return `
       <div class="grupo-card grupo-card--${escapar(grupo.juego)}">
         <div class="grupo-header">
@@ -446,8 +450,10 @@ async function cargarGruposCon(promesa) {
         <p class="grupo-meta">${escapar(materia?.nombre || "Materia")} · Curso ${escapar(grupo.curso || "—")}</p>
         <p class="grupo-meta">Tema: ${escapar(tema?.nombre || "Sin tema")} · Dificultad ${escapar(String(grupo.dificultad || "—"))}</p>
         <div class="grupo-codigo">${escapar(grupo.codigo)}</div>
+        <p><span class="grupo-sala grupo-sala--${estado}">Sala: ${escapar(NOMBRE_SALA[estado])}</span></p>
         <p class="grupo-meta">${(grupo.miembrosUids || []).length} estudiante(s) en la clase</p>
         <div class="grupo-acciones">
+          <a class="btn-accion" style="text-decoration:none;" href="sala.html?g=${escapar(encodeURIComponent(grupo.id))}">📺 Abrir sala</a>
           <a class="btn-secundario" style="text-decoration:none;" href="${escapar(rutaPractica(grupo))}">Probar el juego</a>
           <button class="btn-secundario" data-accion="copiar" data-id="${escapar(grupo.id)}" data-codigo="${escapar(grupo.codigo || "")}">Copiar código</button>
           <button class="btn-secundario" data-accion="estudiantes" data-id="${escapar(grupo.id)}" data-nombre="${escapar(grupo.nombre)}">Estudiantes</button>
@@ -536,6 +542,7 @@ async function mostrarResultados(grupoId, nombreGrupo) {
 
     const mejor = Math.max(...resultados.map((r) => r.porcentaje || 0));
     const promedio = Math.round(resultados.reduce((s, r) => s + (r.porcentaje || 0), 0) / resultados.length);
+    const notaGeneral = notaPromedio(resultados);
 
     // Nota del rector: lo que se corrige en clase no es la lista de partidas,
     // que con 30 niños es ilegible, sino cuánto lleva cada uno. Se agrupa por
@@ -547,11 +554,14 @@ async function mostrarResultados(grupoId, nombreGrupo) {
         nombre: r.username || "Estudiante",
         partidas: 0,
         suma: 0,
-        mejor: 0
+        mejor: 0,
+        notas: []
       };
+      const nota = notaDeResultado(r);
       fila.partidas += 1;
       fila.suma += r.porcentaje || 0;
       fila.mejor = Math.max(fila.mejor, r.porcentaje || 0);
+      fila.notas.push(nota);
       porEstudiante.set(clave, fila);
     });
 
@@ -560,12 +570,12 @@ async function mostrarResultados(grupoId, nombreGrupo) {
 
     resultadosContenido.innerHTML = `
       <p class="panel-sub">${resultados.length} partida(s) de ${hanJugado} estudiante(s) ·
-        promedio ${promedio}% · mejor ${mejor}%${
+        promedio ${promedio}% · mejor ${mejor}% · nota promedio ${escapar(formatearNota(notaGeneral))} de 5,0${
           matriculados ? ` · ${hanJugado} de ${matriculados} matriculados han jugado` : ""}</p>
 
       <h3 style="margin:16px 0 8px;">Por estudiante</h3>
       <table class="tabla-resultados">
-        <thead><tr><th>Estudiante</th><th>Partidas</th><th>Mejor</th><th>Promedio</th></tr></thead>
+        <thead><tr><th>Estudiante</th><th>Partidas</th><th>Mejor %</th><th>Promedio %</th><th>Nota definitiva</th></tr></thead>
         <tbody>
           ${filas
             .map(
@@ -575,6 +585,7 @@ async function mostrarResultados(grupoId, nombreGrupo) {
                 <td>${f.partidas}</td>
                 <td>${f.mejor}%</td>
                 <td>${Math.round(f.suma / f.partidas)}%</td>
+                <td><span class="nota-celda">${escapar(formatearNota(promedioDeNotas(f.notas)))}</span> / 5,0</td>
               </tr>`
             )
             .join("")}
@@ -583,7 +594,7 @@ async function mostrarResultados(grupoId, nombreGrupo) {
 
       <h3 style="margin:20px 0 8px;">Últimas partidas</h3>
       <table class="tabla-resultados">
-        <thead><tr><th>Estudiante</th><th>Juego</th><th>Puntaje</th><th>Porcentaje</th></tr></thead>
+        <thead><tr><th>Estudiante</th><th>Juego</th><th>Puntaje</th><th>Porcentaje</th><th>Nota</th></tr></thead>
         <tbody>
           ${resultados
             .slice(0, 20)
@@ -594,6 +605,7 @@ async function mostrarResultados(grupoId, nombreGrupo) {
                 <td>${escapar(etiquetaJuego(r.juego))}</td>
                 <td>${escapar(String(r.puntaje ?? "—"))} / ${escapar(String(r.total ?? "—"))}</td>
                 <td>${escapar(String(r.porcentaje ?? "—"))}%</td>
+                <td class="nota-celda">${escapar(formatearNota(notaDeResultado(r)))}</td>
               </tr>`
             )
             .join("")}
@@ -601,6 +613,9 @@ async function mostrarResultados(grupoId, nombreGrupo) {
       </table>
       ${resultados.length > 20
         ? `<p class="panel-sub" style="margin-top:8px;">Se muestran las 20 partidas más recientes de ${resultados.length}.</p>`
+        : ""}
+      ${resultados.length >= 500
+        ? `<p class="panel-sub" style="margin-top:8px;">Esta clase tiene más de 500 partidas: se leen solo las 500 más recientes, por eso el promedio puede diferir del historial completo.</p>`
         : ""}`;
   } catch (error) {
     resultadosContenido.innerHTML = `<p class="estado-vacio">No se pudieron cargar los resultados.</p>`;

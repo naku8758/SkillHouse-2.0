@@ -9,6 +9,7 @@
 import { suscribirSesion } from "../js/sesion.js";
 import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego, JUEGOS } from "../js/catalogo.js";
 import { unirseAGrupo, obtenerGruposDelEstudiante } from "../js/grupos.js";
+import { SALA, estadoDeSala } from "../js/sala.js";
 
 const MATERIA = obtenerMateria(new URLSearchParams(window.location.search).get("m"));
 
@@ -82,7 +83,7 @@ function iniciarPagina(cuenta) {
       });
 
       if (resultado.estado === "miembro") {
-        mostrarMensaje(exitoEl, `Ya estabas en "${resultado.grupo.nombre}". ¡A jugar!`);
+        mostrarMensaje(exitoEl, `Ya estás en "${resultado.grupo.nombre}". Entra a la sala desde su tarjeta y espera a que tu profesor inicie la clase.`);
       } else {
         mostrarMensaje(
           exitoEl,
@@ -125,6 +126,17 @@ async function cargarGrupos(uid) {
     .map((g) => {
       const juego = obtenerJuego(g.juego);
       const tema = obtenerTema(g.materia, g.tema);
+      const estado = estadoDeSala(g);
+      const sala = `sala.html?g=${encodeURIComponent(g.id)}&m=${encodeURIComponent(MATERIA.id)}`;
+
+      // La sala manda si se puede jugar ya o si hay que esperar al profesor.
+      // "Jugar" sigue existiendo en espera (el juego también avisa), pero el
+      // botón principal pasa a ser la sala, que es donde el niño se queda.
+      const etiquetaSala = {
+        [SALA.ESPERANDO]: "⏳ En espera",
+        [SALA.ABIERTA]: "🟢 ¡Ya puedes jugar!",
+        [SALA.CERRADA]: "🔒 Clase cerrada"
+      }[estado];
 
       return `
       <div class="grupo-card grupo-card--${escapeHtml(g.juego)}">
@@ -137,10 +149,14 @@ async function cargarGrupos(uid) {
         <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego?.icono || "🎲"}</span>${escapeHtml(juego?.nombre || g.juego || "Juego")}</span>
         <p class="grupo-meta">Profesor(a): ${escapeHtml(g.profesorNombre || "—")}</p>
         <p class="grupo-meta">Curso: ${escapeHtml(g.curso || "—")} · Tema: ${escapeHtml(tema?.nombre || "Sin tema")}</p>
+        <p><span class="grupo-sala grupo-sala--${estado}">${etiquetaSala}</span></p>
         <div class="grupo-acciones">
           ${
             g.activo && juego
-              ? `<a class="btn-accion" style="text-decoration:none;" href="${rutaDeJuego(g.juego, "../")}?grupo=${encodeURIComponent(g.id)}&m=${encodeURIComponent(MATERIA.id)}">Jugar</a>`
+              ? `<a class="${estado === SALA.ABIERTA ? "btn-accion" : "btn-secundario"}" style="text-decoration:none;" href="${escapeHtml(sala)}">Entrar a la sala</a>
+                 ${estado === SALA.ABIERTA
+                   ? `<a class="btn-secundario" style="text-decoration:none;" href="${rutaDeJuego(g.juego, "../")}?grupo=${encodeURIComponent(g.id)}&m=${encodeURIComponent(MATERIA.id)}">Jugar directo</a>`
+                   : ""}`
               : `<span class="grupo-meta">Esta clase ya no está activa.</span>`
           }
         </div>

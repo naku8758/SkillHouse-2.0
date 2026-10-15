@@ -9,6 +9,8 @@ import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { guardarResultado, grupoJugable } from "../js/grupos.js";
+import { pantallaDeEspera, pantallaDeClaseCerrada } from "../js/espera.js";
+import { notaDesdeFraccion, formatearNota, desempenio } from "../js/nota.js";
 import { obtenerPreguntasPorTema, nombreDelTema, temaAleatorio, tiempoPorPregunta } from "../js/games/contenido-temas.js";
 
 const contenedor = document.getElementById("juego-caja");
@@ -87,6 +89,16 @@ async function iniciar() {
       grupoActual = await grupoJugable(grupoId, user.uid, "carrera");
       if (!grupoActual) {
         mostrarAviso(AVISO_ACCESO);
+        return;
+      }
+      // El estudiante sí es de esta clase: solo llegó antes de que el profe la
+      // abriera. Decirle "no tienes acceso" sería mentira.
+      if (grupoActual.sinEmpezar) {
+        pantallaDeEspera(contenedor, grupoActual);
+        return;
+      }
+      if (grupoActual.claseCerrada) {
+        pantallaDeClaseCerrada(contenedor, grupoActual);
         return;
       }
       temaId = grupoActual.tema;
@@ -248,11 +260,13 @@ async function terminarRonda() {
     }
   }
 
+  const nota = notaDesdeFraccion(puntaje, total);
+  const nivel = desempenio(nota);
   const llegoALaMeta = puntaje === total;
-  const emoji = llegoALaMeta ? "🏆" : porcentaje >= 50 ? "🚀" : "💪";
+  const emoji = llegoALaMeta ? "🏆" : nota >= 4 ? "🎉" : nota >= 3 ? "🚀" : "💪";
   const mensaje = llegoALaMeta
     ? "¡Llegaste a la meta sin fallar ninguna!"
-    : porcentaje >= 50
+    : nota >= 3
     ? "¡Buen despegue! Sigue practicando para llegar a la meta."
     : "La velocidad se gana con práctica, ¡vuelve a intentarlo!";
 
@@ -260,6 +274,8 @@ async function terminarRonda() {
     <div class="resultado-final">
       <div class="resultado-emoji">${emoji}</div>
       <h2>Resolviste ${puntaje} de ${total} (${porcentaje}%)</h2>
+      <p class="resultado-nota">Nota: <strong>${formatearNota(nota)}</strong> / 5,0
+        <span class="nota-nivel nota-nivel--${nivel.clase}">${nivel.nombre}</span></p>
       <p>${mensaje}</p>
       <div class="resultado-acciones">
         <button class="btn-accion" id="btn-jugar-de-nuevo">Jugar de nuevo</button>

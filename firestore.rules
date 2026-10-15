@@ -235,6 +235,30 @@ service cloud.firestore {
         allow delete: if esDuenoDelGrupo(grupoId) || request.auth.uid == uid;
       }
 
+      // Presencia en la sala de espera (js/sala.js). Un documento por
+      // estudiante, no un arreglo en el grupo: si los 30 niños escribieran en
+      // `grupos/{id}` pelearían por el mismo documento, y Firestore aguanta
+      // alrededor de una escritura por segundo ahí.
+      //
+      // La lista es visible para el dueño, el admin y los compañeros de clase:
+      // la pantalla de espera tiene que mostrar quién ya llegó, que es justo el
+      // objetivo del modo Kahoot. No expone correos ni PINes, solo el nombre.
+      match /sala/{uid} {
+        allow get, list: if estaAutenticado()
+          && (esDuenoDelGrupo(grupoId) || esAdmin() || esMiembro(grupoId, uid));
+
+        // Solo uno anota su propia asistencia, solo si es estudiante aceptado
+        // de la clase y solo mientras la clase siga activa.
+        allow create, update: if estaAutenticado() && request.auth.uid == uid
+          && request.resource.data.uid == uid
+          && esMiembro(grupoId, uid)
+          && docGrupo(grupoId).activo == true;
+
+        // El profesor vacía la sala entre sesiones; el estudiante puede borrar
+        // su propio cartel.
+        allow delete: if esDuenoDelGrupo(grupoId) || request.auth.uid == uid;
+      }
+
       // Solicitudes de ingreso: el estudiante crea la suya, el profesor la
       // resuelve (aceptar = crear miembro + borrar solicitud).
       match /solicitudes/{uid} {

@@ -7,6 +7,8 @@ import { suscribirSesion } from "../js/sesion.js";
 import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { obtenerMateria, obtenerJuego } from "../js/catalogo.js";
 import { obtenerGruposDelEstudiante, obtenerHistorialEstudiante } from "../js/grupos.js";
+import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
+import { NOMBRE_SALA, estadoDeSala } from "../js/sala.js";
 
 function escapeHtml(texto) {
   const div = document.createElement("div");
@@ -68,10 +70,12 @@ suscribirSesion("estudiante", async (cuenta) => {
   const promedio = historial.length
     ? Math.round(historial.reduce((s, r) => s + (r.porcentaje || 0), 0) / historial.length)
     : 0;
+  const nota = promedioDeNotas(historial.map((r) => notaDeResultado(r)));
 
   document.getElementById("perfil-stats").innerHTML = `
     <div class="stat-card"><div class="stat-valor">${grupos.length}</div><div class="stat-label">Clases inscritas</div></div>
     <div class="stat-card"><div class="stat-valor">${historial.length}</div><div class="stat-label">Partidas jugadas</div></div>
+    <div class="stat-card"><div class="stat-valor">${nota == null ? "—" : formatearNota(nota)}</div><div class="stat-label">Nota definitiva (1 a 5)</div></div>
     <div class="stat-card"><div class="stat-valor">${historial.length ? promedio + "%" : "—"}</div><div class="stat-label">Promedio general</div></div>
   `;
 
@@ -85,6 +89,7 @@ suscribirSesion("estudiante", async (cuenta) => {
     .map((g) => {
       const juego = obtenerJuego(g.juego) || { icono: "🎲", nombre: g.juego };
       const materia = obtenerMateria(g.materia);
+      const estado = estadoDeSala(g);
       return `
       <div class="grupo-card grupo-card--${escapeHtml(g.juego || "")}">
         <div class="grupo-header">
@@ -93,7 +98,7 @@ suscribirSesion("estudiante", async (cuenta) => {
         </div>
         <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego.icono}</span>${escapeHtml(juego.nombre)}</span>
         <p class="grupo-meta">${escapeHtml(materia?.nombre || "Materia")} · Curso ${escapeHtml(g.curso || "—")}</p>
-        <p class="grupo-meta">${escapeHtml(g.profesorNombre || "Sin nombre")}</p>
+        <p class="grupo-meta">${escapeHtml(g.profesorNombre || "Sin nombre")} · <span class="grupo-sala grupo-sala--${estado}">${escapeHtml(NOMBRE_SALA[estado])}</span></p>
       </div>`;
     })
     .join("");

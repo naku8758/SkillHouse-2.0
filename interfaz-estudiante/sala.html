@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../imag/logo.png">
+    <title>Sala de espera | SkillHouse</title>
+    <link rel="stylesheet" href="../css/tokens.css">
+    <link rel="stylesheet" href="stylea.css">
+    <link rel="stylesheet" href="../css/juegos.css?v=3">
+    <script type="module">
+        import { protegerPagina } from "../js/guard.js";
+        protegerPagina("estudiante");
+    </script>
+</head>
+
+<body>
+<div class="contenedor">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>SkillHouse</h2>
+            <p>Estudiante</p>
+        </div>
+        <ul class="menu">
+            <li><a href="homepagea.html">🏠 Materias</a></li>
+            <li><a href="mis-clases.html">📝 Mis clases</a></li>
+            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
+            <li><a href="perfil.html">👤 Mi Perfil</a></li>
+            <li><a href="configuracion.html">⚙️ Configuración</a></li>
+            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <header class="topbar">
+            <div class="page-hero">
+                <div class="page-hero-icon">⏳</div>
+                <div class="page-hero-text">
+                    <h1 id="sala-titulo">Sala de espera</h1>
+                    <p id="sala-subtitulo">Ya estás dentro. Cuando tu profesor inicie la clase, el botón de jugar se enciende solo.</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="sala-pantalla">
+            <div class="sala-cabecera">
+                <div>
+                    <h1 id="sala-nombre">Cargando la clase...</h1>
+                    <p class="sala-meta" id="sala-datos">—</p>
+                    <p style="margin-top:14px;">
+                        <span class="sala-estado sala-estado--esperando" id="sala-estado">
+                            <span class="dot"></span><span id="sala-estado-texto">Cargando...</span>
+                        </span>
+                    </p>
+                </div>
+                <div class="sala-pin">
+                    <span class="sala-pin-label">Código de tu clase</span>
+                    <div class="sala-pin-valor" id="sala-codigo">······</div>
+                </div>
+            </div>
+
+            <div id="sala-accion" style="margin-bottom:20px;"></div>
+
+            <h2 style="font-size:.8rem; text-transform:uppercase; letter-spacing:.14em; color:var(--sh-on-dark-soft); margin:0 0 10px;">
+                Compañeros en la sala (<span id="sala-conteo">0</span>)
+            </h2>
+            <div class="sala-asistentes" id="sala-asistentes">
+                <p class="sala-vacio">Entrando a la sala...</p>
+            </div>
+
+            <p id="sala-aviso" class="sala-meta" style="display:none; margin-top:14px;"></p>
+
+            <div class="sala-controles" style="margin-top:20px;">
+                <a href="#" id="btn-sala-volver" class="sala-btn-secundario" style="text-decoration:none; display:inline-grid; place-items:center; padding:12px 20px; border-radius:var(--sh-r-sm);">← Volver a la materia</a>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script type="module" src="sala-estudiante.js"></script>
+</body>
+</html>

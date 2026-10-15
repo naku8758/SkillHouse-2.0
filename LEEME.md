@@ -333,13 +333,20 @@ Configuración, que actualiza el registro).
 
 - *Resumen*: conteos reales de estudiantes, profesores, clases activas y cursos,
   más las últimas sugerencias (con "Marcar atendida").
-- *Usuarios*: **el padrón completo**. Cruza el índice `usuarios` con la ficha del
-  rol, así que es la única pantalla que dice si una cuenta está realmente lista
-  para entrar: rol, curso o materias, quién la creó, y si está "Listo para
-  entrar", "Sin PIN" o "Registro incompleto" (creada a mano en Firebase Console).
-  Filtro por rol y curso, búsqueda, "Solo con fallas", copiar los datos de una
-  cuenta, CSV, y una tabla de clases y partidas por curso con cuántas salas están
-  abiertas ahora.
+- *Usuarios*: **el padrón completo, agrupado**. Cruza el índice `usuarios` con la
+  ficha del rol, así que es la única pantalla que dice si una cuenta está
+  realmente lista para entrar: rol, curso o materias, quién la creó, y si está
+  "Listo para entrar", "Sin PIN" o "Registro incompleto" (creada a mano en
+  Firebase Console). No es una tabla plana: los **estudiantes salen por curso**
+  (el título de cada bloque trae el nombre del director de ese curso) y los
+  **profesores por la materia que dictan**; si un profesor da dos materias
+  aparece en las dos, que es como se lee un directorio de colegio. Cada fila
+  muestra el **PIN** de la cuenta —solo un administrador lo obtiene, porque solo
+  su rol puede listar la colección `usuarios`—, con un botón para ocultarlos si
+  se comparte la pantalla y otro para generar un PIN nuevo sin salir del padrón.
+  Filtro por rol, curso y materia, búsqueda, "Solo con fallas", copiar los datos
+  de una cuenta, CSV (que incluye las claves: no lo reparta), y una tabla de
+  clases y partidas por curso con cuántas salas están abiertas ahora.
 - *Crear cuenta*: estudiante / profesor / director / administrador, con materia,
   curso y credenciales autogeneradas. Un director no puede asignarse a un curso
   que ya tiene director.
@@ -351,8 +358,11 @@ Configuración, que actualiza el registro).
 - *Reportes*: promedios por materia y por curso, y top 15 de estudiantes. Además
   del porcentaje, cada tabla trae su **nota de 1 a 5** (total, por materia, por
   curso y por estudiante).
-- *Claves*: los PINes de todas las cuentas (filtro por rol, búsqueda y CSV), el
-  botón de generar una nueva a cualquiera y la bandeja de solicitudes.
+- *Claves*: la lista plana de los PINes (filtro por rol, búsqueda y CSV) y la
+  bandeja de solicitudes de cambio. El padrón agrupado de "Usuarios" (§5) ya
+  muestra los mismos PINes ordenados por curso y por materia, y desde ahí también
+  se genera una clave nueva sin cambiar de página; Claves sigue siendo el sitio
+  donde se **atienden los pedidos** de quien no recuerda la suya.
 - *Configuración*: su perfil y cambiar su clave, con un acceso directo a Claves.
 
 **Profesor**
@@ -484,8 +494,15 @@ portada.
    **Perfil** del estudiante, y en **Reportes** del administrador, la nota tiene
    que ser el mismo número en los cuatro lados.
 8. En **👥 Usuarios** del administrador, la cuenta del estudiante debe salir
-   "Listo para entrar"; una creada a mano en Firebase Console sale "Registro
-   incompleto".
+   "Listo para entrar" dentro del bloque de **su curso**, y el profesor dentro
+   del bloque de **la materia que dicta**; una cuenta creada a mano en Firebase
+   Console sale en "Sin curso" con "Registro incompleto". Comprobar que la
+   columna PIN trae la clave de 6 dígitos, que "Ocultar PINes" la tapa y que
+   "Nueva clave" deja el padrón y la página Claves de acuerdo con el mismo PIN.
+9. Con una cuenta de profesor, abrir **👥 Usuarios** escribiendo la URL a mano:
+   `guard.js` lo devuelve a la portada, y aunque se saltara ese filtro, la
+   lectura de `usuarios` le sale `permission-denied`. Es la prueba de que los
+   PINes son solo del administrador.
 
 ## 8. Límites conocidos
 

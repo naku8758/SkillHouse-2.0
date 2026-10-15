@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" href="../imag/logo.png">
     <title>Usuarios | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
-    <link rel="stylesheet" href="stylec.css">
+    <link rel="stylesheet" href="stylec.css?v=1">
     <link rel="stylesheet" href="../css/juegos.css?v=3">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
@@ -55,7 +55,15 @@
         <section class="panel-box sh-reveal">
             <h2 id="titulo-lista">Todos los registros</h2>
             <p class="panel-sub">
-                "Registro completo" significa que la cuenta existe en Firebase y que esta plataforma
+                El padrón viene <strong>agrupado</strong>: los estudiantes por el curso en que fueron
+                creados o asignados, y los profesores por la materia que dictan (si un profesor da dos
+                materias, sale en las dos). Aquí ves también el <strong>PIN de cada cuenta</strong>:
+                solo lo ve el administrador, porque es el único rol al que Firestore le deja listar la
+                colección de usuarios. Si compartes pantalla o descargas el CSV, recuerda que ese
+                archivo contiene todas las claves.
+            </p>
+            <p class="panel-sub">
+                "Registro incompleto" significa que la cuenta existe en Firebase y que esta plataforma
                 guardó su ficha. Si pone <strong>Registro incompleto</strong>, esa cuenta se creó a
                 mano en Firebase Console y no tiene curso ni materia: el estudiante no puede jugar
                 y el profesor no puede crear clases. Borra esa cuenta en Console y créala de nuevo
@@ -79,6 +87,12 @@
                     </select>
                 </div>
                 <div class="campo">
+                    <label for="filtro-materia">Filtrar por materia (profesores)</label>
+                    <select id="filtro-materia">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="campo">
                     <label for="filtro-buscar">Buscar por nombre o correo</label>
                     <input type="text" id="filtro-buscar" placeholder="Ej. Maria" autocomplete="off">
                 </div>
@@ -88,9 +102,14 @@
                 </div>
                 <div class="campo" style="flex:none;">
                     <label>&nbsp;</label>
+                    <button type="button" class="btn-secundario" id="btn-ver-pines">Ocultar PINes</button>
+                </div>
+                <div class="campo" style="flex:none;">
+                    <label>&nbsp;</label>
                     <button type="button" class="btn-secundario" id="btn-descargar-usuarios">Descargar CSV</button>
                 </div>
             </div>
+            <p id="usuarios-aviso" class="mensaje-exito" style="display:none;"></p>
             <p id="usuarios-error" class="mensaje-error" style="display:none;"></p>
             <div id="lista-usuarios"><p class="estado-vacio">Cargando cuentas...</p></div>
         </section>

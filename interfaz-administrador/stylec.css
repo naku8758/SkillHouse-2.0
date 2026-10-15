@@ -247,3 +247,46 @@ footer .link-ayuda:hover{ color:#fff; }
     .topbar{ flex-direction:column; align-items:flex-start; }
     table{ display:block; overflow-x:auto; white-space:nowrap; }
 }
+
+/* =====================================
+   PADRÓN DE USUARIOS (usuarios.html)
+===================================== */
+/* El padrón no es una tabla: son bloques por curso y por materia, y cada bloque
+   lleva su propia tabla. Los títulos tienen que jerarquizarse entre el h2 de la
+   sección y la tabla, y el conteo va pegado al título para que se lea de
+   reojo cuánto hay en cada grupo. */
+.padron-seccion{ margin-top:26px; }
+.padron-seccion > h2{
+    font-family:var(--sh-font-display);
+    color:var(--sh-navy-800);
+    font-size:1.08rem;
+    margin-bottom:4px;
+}
+.padron-seccion > .panel-sub{ margin-bottom:14px; }
+.padron-bloque{
+    border:1px solid var(--sh-cloud-200);
+    border-radius:var(--sh-r-md);
+    padding:14px 16px 6px;
+    margin-bottom:16px;
+    background:var(--sh-cloud-50);
+}
+.padron-titulo{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    flex-wrap:wrap;
+    font-family:var(--sh-font-display);
+    font-size:.98rem;
+    color:var(--sh-navy-800);
+    margin-bottom:8px;
+}
+.padron-conteo{
+    font-family:var(--sh-font-body);
+    font-size:.78rem;
+    font-weight:600;
+    color:var(--sh-ink-400);
+}
+.tabla-envoltura{ overflow-x:auto; }
+.padron-bloque .tabla-resultados{ background:var(--sh-white); border-radius:var(--sh-r-sm); }
+.padron-bloque .grupo-acciones{ margin-top:0; }
+.pin-celda{ font-size:1rem; letter-spacing:.14em; font-weight:700; }

@@ -1,6 +1,10 @@
 // interfaz-administrador/usuarios-panel.js
-// El padrón de la plataforma: cada cuenta, su rol, su curso, quién la creó y
-// si está o no en condiciones de entrar.
+// El padrón de la plataforma: cada cuenta, su rol, su PIN, su curso, quién la
+// creó y si está o no en condiciones de entrar.
+//
+// Viene ordenado por bloques —estudiantes por curso, profesores por la materia
+// que dictan— porque el administrador no piensa en "la lista de los 400
+// usuarios", piensa en "los de 601" o "quién da Inglés".
 //
 // Por qué hace falta una pantalla aparte si ya existe "🔑 Claves": Claves lista
 // el documento `usuarios/{uid}`, que es solo el índice de acceso (nombre, correo
@@ -10,27 +14,39 @@
 //
 // Cuesta 5 lecturas en total (una por colección) y ninguna por fila, así que
 // tarda lo mismo con 20 que con 800 cuentas.
+//
+// Los PINes solo salen aquí porque esta página es de administrador: `listar`
+// sobre la colección `usuarios` está restringido en firestore.rules, así que
+// ningún otro rol obtiene esta lista aunque escriba el código a mano.
 
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-import { listarCredenciales } from "../js/claves.js";
+import { listarCredenciales, restablecerClaveDe } from "../js/claves.js";
 import { descargarTexto, copiarAlPortapapeles } from "../js/lista-credenciales.js";
-import { obtenerMateria } from "../js/catalogo.js";
+import { MATERIAS, obtenerMateria } from "../js/catalogo.js";
 import { estadoDeSala, SALA } from "../js/sala.js";
+
+const SIN_DATO = { sin_curso: "Sin curso", sin_materia: "Sin materia asignada" };
 
 const lista = document.getElementById("lista-usuarios");
 const cajaCursos = document.getElementById("usuarios-cursos");
 const stats = document.getElementById("usuarios-stats");
 const errorEl = document.getElementById("usuarios-error");
+const avisoEl = document.getElementById("usuarios-aviso");
 const filtroRol = document.getElementById("filtro-rol");
 const filtroCurso = document.getElementById("filtro-curso");
+const filtroMateria = document.getElementById("filtro-materia");
 const filtroBuscar = document.getElementById("filtro-buscar");
 const btnSoloFallas = document.getElementById("btn-solo-fallas");
+const btnVerPines = document.getElementById("btn-ver-pines");
 
 let cuentas = [];
 let grupos = [];
 let soloFallas = false;
+// Los PINes se muestran por defecto: el administrador entra aquí precisamente a
+// verlos. El botón deja ocultarlos cuando comparte la pantalla con un profe.
+let pinesVisibles = true;
 
 function escapar(texto) {
   const div = document.createElement("div");
@@ -41,6 +57,11 @@ function escapar(texto) {
 function mostrarError(texto) {
   errorEl.textContent = texto;
   errorEl.style.display = texto ? "block" : "none";
+}
+
+function mostrarAviso(texto) {
+  avisoEl.textContent = texto;
+  avisoEl.style.display = texto ? "block" : "none";
 }
 
 function formatearFecha(timestamp) {
@@ -85,12 +106,16 @@ function construir(cuentasBase, perfilesBase) {
 function visibles() {
   const rol = filtroRol.value;
   const curso = filtroCurso.value;
+  const materia = filtroMateria.value;
   const texto = filtroBuscar.value.trim().toLowerCase();
 
   return cuentas.filter((c) => {
     if (soloFallas && c.completa && c.clave) return false;
     if (rol && rolFiltro(c) !== rol) return false;
     if (curso && c.curso !== curso) return false;
+    // El filtro de materia solo concierne a los profesores: un estudiante no
+    // tiene materia propia, entra a las clases que ya filtran por curso.
+    if (materia && !(c.rol === "profesor" && c.materias.includes(materia))) return false;
     if (texto && !`${c.username} ${c.email}`.toLowerCase().includes(texto)) return false;
     return true;
   });
@@ -128,54 +153,204 @@ function pintarTabla() {
     return;
   }
 
-  const clasesDe = (uid) => grupos.filter((g) => g.miembrosUids?.includes(uid)).length;
+  const rol = filtroRol.value;
+  const bloques = [];
 
-  lista.innerHTML = `
-    <table class="tabla-resultados">
-      <thead>
-        <tr>
-          <th>Nombre</th><th>Rol</th><th>Curso / materias</th><th>Correo</th>
-          <th>Creado</th><th>Estado</th><th></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${filas
-          .map(
-            (c) => {
-              const estado = !c.completa
-                ? '<span class="grupo-estado grupo-estado--inactivo"><span class="dot"></span>Registro incompleto</span>'
-                : !c.clave
-                ? '<span class="grupo-estado grupo-estado--inactivo"><span class="dot"></span>Sin PIN</span>'
-                : '<span class="grupo-estado grupo-estado--activo"><span class="dot"></span>Listo para entrar</span>';
+  if (!rol || rol === "estudiante") bloques.push(bloqueEstudiantes(filas));
+  if (!rol || rol === "profesor" || rol === "director") bloques.push(bloqueProfesores(filas));
+  if (!rol || rol === "administrador") bloques.push(bloqueAdministradores(filas));
 
-              const detalle =
-                c.rol === "profesor"
-                  ? c.materias.map((id) => escapar(obtenerMateria(id)?.nombre || id)).join(", ") || "Sin materia"
-                  : c.curso
-                  ? `Curso ${escapar(c.curso)}`
-                  : "Sin curso";
+  lista.innerHTML = bloques.filter(Boolean).join("") ||
+    `<p class="estado-vacio">Ninguna cuenta coincide con el filtro.</p>`;
 
-              const clases = c.rol === "estudiante" ? clasesDe(c.uid) : null;
+  conectarBotones();
+}
 
-              return `
-              <tr>
-                <td>${escapar(c.username)}</td>
-                <td>${escapar(rolEtiqueta(c))}</td>
-                <td>${detalle}</td>
-                <td><code>${escapar(c.email)}</code></td>
-                <td>${escapar(c.creadoPorNombre || "—")}<span class="grupo-meta"> · ${formatearFecha(c.creadoEn)}</span></td>
-                <td>${estado}${clases != null ? `<span class="grupo-meta"> ${clases} clase(s)</span>` : ""}</td>
-                <td style="white-space:nowrap;">
-                  <button class="btn-secundario" data-copiar="${escapar(c.uid)}">Copiar datos</button>
-                  <a class="btn-accion" style="text-decoration:none;" href="claves.html">PIN</a>
-                </td>
-              </tr>`;
-            }
-          )
-          .join("")}
-      </tbody>
-    </table>`;
+/* ---------------------- Bloques agrupados ---------------------- */
 
+const PIN = (c) =>
+  `<code class="pin pin-celda">${escapar(pinesVisibles ? c.clave || "sin registro" : "••••••")}</code>`;
+
+const CORREO = (c) => `<code>${escapar(c.email)}</code>`;
+
+const CREADO = (c) =>
+  `${escapar(c.creadoPorNombre || "—")}<span class="grupo-meta"> · ${formatearFecha(c.creadoEn)}</span>`;
+
+function estadoCelda(c) {
+  if (!c.completa) {
+    return '<span class="grupo-estado grupo-estado--inactivo"><span class="dot"></span>Registro incompleto</span>';
+  }
+  if (!c.clave) {
+    return '<span class="grupo-estado grupo-estado--inactivo"><span class="dot"></span>Sin PIN</span>';
+  }
+  return '<span class="grupo-estado grupo-estado--activo"><span class="dot"></span>Listo para entrar</span>';
+}
+
+function accionesCelda(c) {
+  return `<span class="grupo-acciones">
+    <button class="btn-secundario" data-copiar="${escapar(c.uid)}">Copiar</button>
+    <button class="btn-accion" data-nueva="${escapar(c.uid)}">Nueva clave</button>
+  </span>`;
+}
+
+const COLUMNAS = {
+  estudiante: {
+    // El curso no se repite en una columna: ya es el título del bloque.
+    cabecera: ["Nombre", "Correo", "PIN", "Creada por", "Estado", ""],
+    celdas: (c, enClases) => [
+      escapar(c.username),
+      CORREO(c),
+      PIN(c),
+      CREADO(c),
+      `${estadoCelda(c)}<span class="grupo-meta"> ${enClases} clase(s)</span>`,
+      accionesCelda(c)
+    ]
+  },
+  profesor: {
+    cabecera: ["Nombre", "Rol", "Curso que dirige", "Correo", "PIN", "Creado", "Estado", ""],
+    celdas: (c) => [
+      escapar(c.username),
+      escapar(rolEtiqueta(c)),
+      c.curso ? `Curso ${escapar(c.curso)}` : "No dirige ninguno",
+      CORREO(c),
+      PIN(c),
+      CREADO(c),
+      estadoCelda(c),
+      accionesCelda(c)
+    ]
+  },
+  administrador: {
+    cabecera: ["Nombre", "Correo", "PIN", "Estado", ""],
+    celdas: (c) => [escapar(c.username), CORREO(c), PIN(c), estadoCelda(c), accionesCelda(c)]
+  }
+};
+
+function tabla(cuentasDelGrupo, variante) {
+  const { cabecera, celdas } = COLUMNAS[variante];
+  // Contar en cuántas clases está cada uno solo hace falta en la tabla de
+  // estudiantes; recorrer `grupos` por cada profesor sería trabajo de más.
+  const clasesDe = (uid) =>
+    variante === "estudiante" ? grupos.filter((g) => g.miembrosUids?.includes(uid)).length : 0;
+
+  return `
+    <div class="tabla-envoltura">
+      <table class="tabla-resultados">
+        <thead><tr>${cabecera.map((t) => `<th>${t}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${cuentasDelGrupo
+            .map((c) => `<tr>${celdas(c, clasesDe(c.uid)).map((td) => `<td>${td}</td>`).join("")}</tr>`)
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/**
+ * Un grupo del padrón: su título, cuántas cuentas tiene y la tabla. El subtítulo
+ * sirve para lo que el administrador busca cuando agrupa ("quién dirige 601").
+ */
+function bloque(titulo, meta, contenido) {
+  return `
+    <div class="padron-bloque">
+      <h3 class="padron-titulo">${escapar(titulo)}<span class="padron-conteo">${escapar(meta)}</span></h3>
+      ${contenido}
+    </div>`;
+}
+
+/** Coloca los grupos conocidos en orden y empuja los huecos ("sin dato") al final. */
+function ordenGrupos(pares, ordenConocido, claveSinDato) {
+  pares.sort(([a], [b]) => {
+    if (a === claveSinDato) return 1;
+    if (b === claveSinDato) return -1;
+    const ia = ordenConocido.indexOf(a);
+    const ib = ordenConocido.indexOf(b);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    return String(a).localeCompare(String(b), "es", { numeric: true });
+  });
+  return pares;
+}
+
+function bloqueEstudiantes(filas) {
+  const delRol = filas.filter((c) => c.rol === "estudiante");
+  if (!delRol.length) return "";
+
+  const porCurso = new Map();
+  delRol.forEach((c) => {
+    const clave = c.curso || "sin_curso";
+    if (!porCurso.has(clave)) porCurso.set(clave, []);
+    porCurso.get(clave).push(c);
+  });
+
+  const codigos = [...cuentas.map((c) => c.curso).filter(Boolean), ...grupos.map((g) => g.curso).filter(Boolean)];
+  const orden = [...new Set(codigos)].sort((a, b) => String(a).localeCompare(String(b), "es", { numeric: true }));
+
+  const cuerpo = ordenGrupos([...porCurso.entries()], orden, "sin_curso")
+    .map(([codigo, listaCurso]) => {
+      const director = cuentas.find((c) => c.tipoProfesor === "director" && c.curso === codigo);
+      const titulo = codigo === "sin_curso" ? SIN_DATO.sin_curso : `Curso ${codigo}`;
+      const meta = `${listaCurso.length} cuenta(s)${director ? ` · director(a): ${director.username}` : ""}`;
+      return bloque(titulo, meta, tabla(ordenNombres(listaCurso), "estudiante"));
+    })
+    .join("");
+
+  return `<section class="padron-seccion">
+    <h2>🎓 Estudiantes por curso</h2>
+    <p class="panel-sub">Aparecen agrupados por curso porque el curso es el dato que decide a qué clases puede entrar cada uno. Si un estudiante sale en "Sin curso", es que su ficha no tiene curso y la plataforma lo deja fuera de cualquier clase.</p>
+    ${cuerpo}
+  </section>`;
+}
+
+function bloqueProfesores(filas) {
+  const delRol = filas.filter((c) => c.rol === "profesor");
+  if (!delRol.length) return "";
+
+  // Un profesor que dicta dos materias sale en las dos: el padrón responde a
+  // "quién da Inglés", y esa pregunta no se contesta bien con un grupo por
+  // combinación de materias.
+  const porMateria = new Map();
+  delRol.forEach((c) => {
+    const ids = c.materias.length ? c.materias : ["sin_materia"];
+    ids.forEach((id) => {
+      if (!porMateria.has(id)) porMateria.set(id, []);
+      porMateria.get(id).push(c);
+    });
+  });
+
+  const cuerpo = ordenGrupos([...porMateria.entries()], MATERIAS.map((m) => m.id), "sin_materia")
+    .map(([id, listaMateria]) => {
+      const materia = obtenerMateria(id);
+      const titulo = materia ? `${materia.icono} ${materia.nombre}` : SIN_DATO.sin_materia;
+      const directores = listaMateria.filter((c) => c.tipoProfesor === "director");
+      const meta = `${listaMateria.length} profesor(es)${
+        directores.length ? ` · ${directores.length} director(es)` : ""
+      }`;
+      return bloque(titulo, meta, tabla(ordenNombres(listaMateria), "profesor"));
+    })
+    .join("");
+
+  return `<section class="padron-seccion">
+    <h2>🧑‍🏫 Profesores por materia</h2>
+    <p class="panel-sub">Cada profesor aparece en la materia que dicta; si da dos, sale en las dos. Un profesor estándar crea clases de cualquier curso en esas materias, y el director de curso solo del suyo, que es el que figura en su columna.</p>
+    ${cuerpo}
+  </section>`;
+}
+
+function bloqueAdministradores(filas) {
+  const delRol = filas.filter((c) => c.rol === "administrador");
+  if (!delRol.length) return "";
+
+  return `<section class="padron-seccion">
+    <h2>🛡️ Administradores</h2>
+    <p class="panel-sub">Quien entra aquí puede crear cuentas y ver el PIN de todas. Conviene que sean los menos.</p>
+    ${tabla(ordenNombres(delRol), "administrador")}
+  </section>`;
+}
+
+function ordenNombres(listaCuentas) {
+  return [...listaCuentas].sort((a, b) => a.username.localeCompare(b.username, "es", { numeric: true }));
+}
+
+function conectarBotones() {
   lista.querySelectorAll("[data-copiar]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const c = cuentas.find((x) => x.uid === btn.dataset.copiar);
@@ -186,6 +361,43 @@ function pintarTabla() {
       );
     });
   });
+
+  lista.querySelectorAll("[data-nueva]").forEach((btn) => {
+    btn.addEventListener("click", () => generarNueva(btn.dataset.nueva, btn));
+  });
+}
+
+/**
+ * PIN nuevo sin salir del padrón. Es el mismo restablecerClaveDe que usa
+ * "🔑 Claves"; estar aquí evita tener que buscar de nuevo la cuenta en otra
+ * tabla cuando lo que el administrador está viendo es justamente esa ficha.
+ */
+async function generarNueva(uid, boton) {
+  const c = cuentas.find((x) => x.uid === uid);
+  if (!c) return;
+
+  if (!window.confirm(`¿Generar un PIN nuevo para ${c.username}?\n\nEl actual deja de servir en el mismo momento.`)) {
+    return;
+  }
+
+  mostrarError("");
+  mostrarAviso("");
+  boton.disabled = true;
+  const original = boton.textContent;
+  boton.textContent = "Cambiando...";
+
+  try {
+    const nueva = await restablecerClaveDe({ uid: c.uid, email: c.email });
+    c.clave = nueva;
+    pintarStats();
+    pintarTabla();
+    mostrarAviso(`La nueva clave de ${c.username} es ${nueva}. Anótala: solo se muestra en esta pantalla.`);
+  } catch (err) {
+    console.error(err);
+    mostrarError(err.message || "No se pudo cambiar la contraseña.");
+    boton.disabled = false;
+    boton.textContent = original;
+  }
 }
 
 function pintarCursos() {
@@ -229,6 +441,12 @@ function llenarFiltroCursos() {
   filtroCurso.innerHTML =
     `<option value="">Todos</option>` +
     codigos.map((c) => `<option value="${escapar(c)}">Curso ${escapar(c)}</option>`).join("");
+
+  // Las materias del catálogo, no las que aparecen en las fichas: así el
+  // administrador puede comprobar que ninguna materia se quedó sin profesor.
+  filtroMateria.innerHTML =
+    `<option value="">Todas</option>` +
+    MATERIAS.map((m) => `<option value="${escapar(m.id)}">${escapar(m.icono)} ${escapar(m.nombre)}</option>`).join("");
 }
 
 async function cargar() {
@@ -269,7 +487,7 @@ async function cargar() {
   pintarCursos();
 }
 
-[filtroRol, filtroCurso, filtroBuscar].forEach((el) => el.addEventListener("input", pintarTabla));
+[filtroRol, filtroCurso, filtroMateria, filtroBuscar].forEach((el) => el.addEventListener("input", pintarTabla));
 
 btnSoloFallas.addEventListener("click", () => {
   soloFallas = !soloFallas;
@@ -277,6 +495,12 @@ btnSoloFallas.addEventListener("click", () => {
   // distingue cambiando de clase de botón.
   btnSoloFallas.className = soloFallas ? "btn-accion" : "btn-secundario";
   btnSoloFallas.textContent = soloFallas ? "Ver todo de nuevo" : "Solo con fallas";
+  pintarTabla();
+});
+
+btnVerPines.addEventListener("click", () => {
+  pinesVisibles = !pinesVisibles;
+  btnVerPines.textContent = pinesVisibles ? "Ocultar PINes" : "Mostrar PINes";
   pintarTabla();
 });
 

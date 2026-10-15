@@ -1,623 +1,563 @@
-# SkillHouse 2.0
+# SkillHouse 2.0 — cómo funciona esto
 
-Plataforma web estática (HTML + CSS + JavaScript, sin compilador) para practicar
-Matemáticas, Español e Inglés mediante juegos, con tres roles: **estudiante**,
-**profesor** (incluido el **director de curso**) y **administrador**.
-El backend es Firebase (Authentication + Firestore); no hay servidor propio.
+Esto es lo que hicimos Sara y yo para el proyecto de técnico. Es una página web
+para que los muchachos de sexto practiquen Matemáticas, Español e Inglés jugando,
+con tres tipos de cuenta: estudiante, profesor (y dentro del profesor, el
+director de curso) y administrador.
 
-## 1. Estructura
+No es una app con servidor propio. Es HTML, CSS y JavaScript puro, sin
+compilador ni nada que instalar, y lo que hace de base de datos es Firebase
+(Authentication para entrar y Firestore para guardar todo). O sea que el código
+son archivos planos y la "nube" es Firebase, que en el plan gratis da de sobra
+para un colegio pequeño.
 
-```
-index.html                  Página pública: portada + modal de inicio de sesión
-invitado.html               Jugar sin cuenta (materia, tema, dificultad)
-ayuda.html / ayuda.css      Centro de ayuda y formulario de sugerencias
-firestore.rules             Reglas de seguridad (hay que publicarlas, ver §6)
+Este archivo está escrito para que alguien que no ha visto el proyecto lo prenda,
+lo mueva y entienda qué está pasando por debajo. Si te pierdes, el §2 y el §8 son
+los que resuelven el 90 % de las dudas.
 
-css/
-  tokens.css                Variables de diseño, tipografía, botones
-  style.css                 Estilos de la portada y de la página de invitado
-  juegos.css                Componentes compartidos por los 3 paneles y los juegos
+## 1. Prenderlo en tu PC
 
-imag/                       Logo y avatares
+Clonas, entras a la carpeta y levantas un servidorito cualquiera. No sirve
+abrir el `index.html` con doble clic (los archivos son módulos ES y el navegador
+los bloquea por `file://`), tiene ser por `http`:
 
-js/
-  firebase.js               Configuración y arranque de Firebase (app única)
-  auth.js                   Inicio de sesión, redirección según rol y, si ya hay
-                            sesión abierta, el botón "Ingreso" pasa a "Ir a mi panel"
-  sesion.js                 "Quién está conectado": índice + documento del rol
-  guard.js                  Protege una página de panel (rol esperado, menú, saludo)
-  catalogo.js               MATERIAS, MATERIAS_PROXIMAS y JUEGOS
-  cursos.js                 CRUD de cursos (601, 602, ...) y su director
-  credenciales.js           Correo autogenerado + PIN de 6 dígitos + crear cuentas
-                            (guarda el PIN ofuscado en usuarios/{uid}.clave)
-  claves.js                 Ver el PIN de cualquiera, generar uno nuevo y la
-                            bandeja de solicitudes de cambio
-  cambiar-clave.js          Formulario "cambiar mi contraseña" (perfil propio)
-  lista-credenciales.js     Registro de credenciales en sesión: tabla, copiar, CSV
-  grupos.js                 Clases: crear, unirse por código, solicitudes, resultados
-  sala.js                   La sala de clase: en espera / abierta / cerrada y la
-                            lista de asistentes (onSnapshot, no pausas de lectura)
-  espera.js                 Las pantallas que comparten los juegos cuando el
-                            estudiante llega antes de que el profe abra la clase
-  nota.js                  Escala de 1,0 a 5,0: cómo se calcula, se promedia y se
-                            lee (4,7 · Superior/Alto/Básico/Inferior)
-  panel-configuracion.js    Página de configuración (perfil, cambio de clave y
-                            "no recuerdo mi contraseña")
-  portada.js                Números y tarjetas reales de la página de inicio
-  invitado.js               Selector de práctica sin cuenta
-  ayuda.js                  Buscador de FAQ + envío de sugerencias a Firestore
-  ui.js / scripts.js        Animaciones, contadores, modal
-  games/contenido-temas.js  Banco de contenido: 27 temas, 810 preguntas, 162 retos
-
-interfaz-administrador/     homepagec (resumen), usuarios (todas las cuentas),
-                            crear-cuenta, claves, cursos,
-                            clases, materias, reportes, configuracion
-interfaz-profesor/          homepageb (sus cursos), materia (crear/gestionar
-                            clases), sala (la pantalla que se proyecta),
-                            curso (solo director), biblioteca, perfil,
-                            configuracion
-interfaz-estudiante/        homepagea (materias), materia (unirse y jugar),
-                            sala (sala de espera),
-                            mis-clases, biblioteca, perfil, configuracion
-juegos/                     quiz, puzzle, carrera (HTML + su motor JS)
+```bash
+git clone https://github.com/naku8758/SkillHouse-2.0.git
+cd SkillHouse-2.0
+git checkout main                       # todo el trabajo está acá
+python3 -m http.server 5500
 ```
 
-Cada carpeta de panel tiene su propio CSS (`stylea.css`, `styleb.css`,
-`stylec.css`) y todas comparten `css/juegos.css` para tarjetas, formularios,
-tablas y estadísticas.
+Y abres `http://127.0.0.1:5500`. Con eso ya está, no hay `npm install` ni build.
 
-## 2. Datos en Firestore
+Si lo que quieres es ver la portada sin cuenta, con eso basta. Para entrar con
+una cuenta necesitas que Firebase esté configurado y con las reglas publicadas
+(§9), si no el login te bota error.
 
-```
-usuarios/{uid}                       índice ligero: { username, email, rol, clave }
-estudiantes/{uid}                    perfil de estudiante: curso, creadoPorUid, avatar...
-  /resultados/{id}                   historial personal de partidas
-profesores/{uid}                     tipoProfesor (estandar|director), materias[], curso
-administradores/{uid}                perfil de administrador
-cursos/{codigo}                      { codigo, nombre, anio, directorUid, directorNombre }
-grupos/{id}                          { nombre, codigo, juego, materia, curso, tema,
-                                       dificultad, profesorId, activo, sala,
-                                       miembrosUids[] }
-  /miembros/{uid}                    estudiante aceptado
-  /solicitudes/{uid}                 pedido de ingreso pendiente
-  /sala/{uid}                        el estudiante que está hoy en la sala
-                                     { uid, nombre, enSala, desde }
-  /resultados/{id}                   partida jugada en esa clase
-                                     { uid, username, juego, puntaje, total,
-                                       porcentaje, nota, fecha, ... }
-solicitudes_clave/{id}               pedido de "no recuerdo mi PIN":
-                                     { uid, nombre, email, rol, motivo, estado, creadoEn }
-sugerencias/{id}                     opiniones que llegan desde ayuda.html
-```
+## 2. Qué pasa cuando uno entra (el flujo completo)
 
-`usuarios/{uid}.clave` guarda el PIN **ofuscado** (XOR contra una semilla fija +
-base64). No es cifrado: es un candado para que no se lea de un vistazo en la
-consola de Firebase. Está ahí porque el administrador necesita firmar el cambio
-ante Firebase Auth, y desde un navegador no se puede imponer una clave a otra
-persona sin escribirla primero. Consecuencia honesta: quien controle el panel de
-administrador puede ver todos los PINes. Es lo que se pidió; si algún día se
-usaran correos reales y claves serias, ese campo tendría que desaparecer y el
-restablecerse pasar a una función de servidor con el Admin SDK.
+Te lo cuento seguido, seguido, porque es la parte que uno no ve en el código:
 
-## 3. Roles, cursos y aislamiento (modelo tipo Teams)
+1. Abres `index.html`. Sale la portada con las materias, los juegos y cuatro
+   números. Esos números no son inventados, los cuenta `js/portada.js` leyendo el
+   catálogo real (`js/catalogo.js`): 3 materias, 27 temas, 3 formas de jugar y
+   3 materias que vienen. Por eso si mañana agregas un tema, el número de la
+   portada sube solo.
+2. Tocas "Ingreso". Se abre el modal de login y escribes correo + PIN.
+   `js/auth.js` llama a `signInWithEmailAndPassword` de Firebase Auth. Ahí
+   Firebase Auth solo responde "esa contraseña sí es de ese usuario" o "no es".
+   Firebase Auth no sabe nada de roles.
+3. Si la clave pegó, el código hace UNA lectura a Firestore: el documento
+   `usuarios/{uid}`. Ese documento es como un índice liviano que trae
+   `username`, `email` y `rol`. Con el `rol` se decide a dónde te manda:
+   - `estudiante` → `interfaz-estudiante/homepagea.html`
+   - `profesor` → `interfaz-profesor/homepageb.html`
+   - `administrador` → `interfaz-administrador/homepagec.html`
+4. Ya en tu panel, cada página que abres pasa por `js/guard.js`. El guard hace
+   tres cosas: se fija de nuevo quién eres (`js/sesion.js` lee `usuarios/{uid}` y
+   en paralelo tu ficha de rol, que es `estudiantes/{uid}`, `profesores/{uid}` o
+   `administradores/{uid}`), te manda a la portada si no hay sesión o si el rol
+   no es el de esa carpeta, y arma el menú lateral y el saludo. Por eso un
+   profesor que escriba a mano la URL del panel del administrador vuelve a la
+   portada en vez de verse en una pantalla vacía.
+5. Si ya tenías sesión abierta y vuelves a la portada, el botón "Ingreso" cambia
+   a "Ir a mi panel". Es un detalle, pero evita que la gente se cree una segunda
+   sesión por error.
 
-- El **administrador** crea los cursos (601, 602...) y les asigna un **director**.
-- El **director de curso** es un profesor con `tipoProfesor: "director"` atado a
-  un único curso. Desde "Estudiantes" crea las cuentas de los estudiantes de ese
-  grado, y solo puede crear clases de ese curso.
-- El **profesor normal** solo ve, en su inicio y en el formulario de clase, las
-  materias que el administrador le asignó (`profesores/{uid}.materias`). A
-  cambio, ese profesor puede abrir clases de su materia **en cualquiera de los
-  cursos**: el profe de Inglés ve 601, 602, ... 607 y crea su grupo de actividad
-  en cada uno. Lo que no puede es dar de alta cuentas de estudiante: eso lo hace
+El paso 4 tiene una cosa que me costó arreglar. `sesion.js` hace dos lecturas, y
+a veces fallan (el wifi del colegio es lo que es, o la pestaña estaba dormida).
+Antes el guard interpretaba cualquier fallo como "aquí no hay nadie" y te
+sacaba a la portada. Eso era el bug de "navego rápido por el menú y me tumba".
+Ahora distingue tres casos: no hay sesión (te saca), rol equivocado (te saca), y
+no se pudo leer (reintenta dos veces, 500 ms y 1,2 s, y si sigue fallando te
+deja en la página con un cartel de "Reintentar"). La sesión no se toca.
+
+## 3. Los tres roles, qué hace cada uno
+
+### Administrador
+
+Es el dueño de la plataforma. Lo que hace:
+
+- **Crear los cursos** (601, 602...) y ponerle un director a cada uno.
+- **Crear cuentas**: estudiante, profesor, director o administrador, con materia
+  y curso. Le autogenera el correo y el PIN, y le muestra la clave una sola vez
+  para copiarla o descargar el CSV.
+- **👥 Usuarios**: el padrón de todas las cuentas. Esto lo hice en esta última
+  entrega y es la pantalla más useful del panel. Cruza la colección `usuarios`
+  con la ficha de rol, así que es la única que te dice si una cuenta está de
+  verdad lista para entrar. No es una tabla plana: los estudiantes salen
+  **agrupados por curso** (y el título de cada bloque dice quién es el director
+  de ese curso) y los profesores **agrupados por la materia que dan**. Si un
+  profe da dos materias aparece en los dos bloques, que es como se lee un
+  directorio de colegio real. Cada fila muestra el **PIN** de esa cuenta, y tiene
+  un botón para ocultarlos (por si compartes pantalla en una reunión) y un botón
+  "Nueva clave" para resetearla sin irse a otra página. Filtros por rol, por
+  curso y por materia, buscador, "solo con fallas" y exportar CSV.
+  Ojo con el CSV: trae las claves, no lo mandes por chat.
+- **🔑 Claves**: la misma información pero en tabla plana, y acá está la bandeja
+  de **solicitudes de cambio** (los pedidos de "no recuerdo mi PIN"). Cuando
+  atiendes un pedido le generas el PIN nuevo y se lo entregas en persona.
+- **Cursos, Clases, Materias, Reportes**: altas y bajas de grados, inventario de
+  todas las clases, el catálogo con cuántas clases usan cada tema, y promedios
+  por materia, por curso y por estudiante con la nota de 1 a 5.
+- No puede borrar un curso que tenga estudiantes o clases, y no deja asignarse a
+  él mismo como director si el curso ya tiene uno.
+
+### Profesor (y director de curso)
+
+El profesor ya tiene materia asignada por el administrador (`materias` en su
+ficha), así que la plataforma nunca se la vuelve a preguntar.
+
+- **Inicio** (`homepageb.html`): abre su materia y dentro le lista los cursos
+  donde dicta, con las clases y los estudiantes reales de cada uno. Cada tarjeta
+  dice "＋ Crear clase" y te lleva al formulario ya con ese curso puesto.
+- **Mis clases** (`materia.html`): crear, editar, desactivar o eliminar clases;
+  **duplicar una clase en otros cursos** (el profe de Inglés que dicta a los
+  siete sextos la crea una vez y la copia marcando los cursos, cada copia sale
+  con su propio código); probar el juego antes de mandarlo; copiar el código;
+  aceptar solicitudes de ingreso; quitar estudiantes; y ver resultados
+  agrupados por estudiante (partidas, mejor porcentaje y promedio de cada uno).
+- **Sala de clase** (`sala.html`): la pantalla para proyectar. Código gigante,
+  quiénes van entrando, marcador en vivo con la mejor nota y el promedio de cada
+  uno, e Iniciar / En espera / Cerrar / Vaciar sala / Copiar código.
+- **Estudiantes** (esto solo lo ve un **director de curso**): matricular
+  estudiantes de su grado, exportar credenciales y ver las clases del curso.
+
+La diferencia entre un profesor normal y un director:
+
+- El director está atado a UN curso y solo puede crear clases de ese curso. Sí
+  puede dar de alta estudiantes de ese grado.
+- El profesor normal puede crear clases de su materia en CUALQUIER curso
+  (ve 601, 602... 607), pero no puede crear cuentas de estudiante. Eso lo hace
   el administrador o el director del grado.
-- El **estudiante** pertenece a un curso (`estudiantes/{uid}.curso`) y entra a un
-  grupo con el **código de 6 caracteres** que se genera al crear la clase, estilo
-  Teams: el profesor comparte el código, el estudiante lo escribe en su materia,
-  queda una solicitud y el profesor la acepta antes de que pueda jugar.
 
-Doble comprobación al unirte a una clase (`js/grupos.js`, `unirseAGrupo`):
+### Estudiante
 
-1. el código debe ser de **la materia de la página** que estás usando;
-2. el código debe ser de **tu curso**.
+- **Materias** (`homepagea.html`): las tarjetas del catálogo, las tres que dicen
+  "próximamente" (Ciencias, Sociales, Tecnología), y su resumen real: clases,
+  partidas jugadas, nota definitiva y promedio.
+- **Materia** (`materia.html?m=ingles`): acá se une a las clases con el **código
+  de 6 caracteres** que le pasa el profe, y también puede practicar libremente
+  por tema y dificultad sin clase. Cada tarjeta de clase le dice si está
+  ⏳ en espera, 🟢 lista para jugar o 🔒 cerrada.
+- **Sala de espera** (`sala.html?g=`): entra con el código, ve a sus compañeros
+  que ya llegaron y el botón ▶ Entrar al juego está apagado hasta que el profe
+  abra la clase. Se prende solo, sin recargar la página.
+- **Mis clases**, **Biblioteca** (historial de partidas con porcentaje y nota de
+  cada una), **Perfil** y **Configuración**.
+
+### Invitado
+
+`invitado.html` deja jugar sin cuenta: se escoge materia, tema y dificultad y se
+abre el juego. Es para que el colegio muestre la plataforma en una feria sin
+crear cuentas. Esa partida no se guarda en ninguna parte.
+
+## 4. Cómo se une un estudiante a una clase (y por qué te rechaza)
+
+El profe crea la clase → Firestore le genera un código de 6 caracteres → el profe
+lo comparte (lo copia del botón o lo proyecta) → el estudiante lo escribe en la
+página de su materia → queda una **solicitud pendiente** en
+`grupos/{id}/solicitudes/{uid}` → el profe la acepta en "Mis clases" → el
+estudiante pasa a `miembrosUids` y ya puede jugar.
+
+Al escribir el código se revisan dos cosas, no una:
+
+1. Que el código sea de **la materia de la página** donde estás.
+2. Que el código sea de **tu curso**.
 
 Antes solo se miraba que el código existiera, así que un código de Matemáticas
-funcionaba en la página de Inglés. Ahora la plataforma lo rechaza con un mensaje
-que explica por qué. Las reglas de Firestore refuerzan lo mismo al crear la clase
-(`materia in docProfesor().materias` y, si eres director, `curso` debe ser el
-tuyo), y **también al unirse**: una solicitud solo se escribe si el curso del
-estudiante es el mismo de la clase y la clase sigue activa, y un resultado solo
-se guarda a nombre de un miembro aceptado. Lo que antes era solo un filtro de
-interfaz ahora lo niega el servidor, aunque alguien escriba por su cuenta.
+funcionaba en la página de Inglés. Ahora sale un mensaje que te dice por qué lo
+rechazó. Y no es solo un filtro de interfaz: las reglas de Firestore niegan la
+escritura en el servidor, así que alguien que escriba el `fetch` a mano tampoco
+pasa. Lo mismo al guardar una partida, solo se escribe a nombre de un miembro
+aceptado.
 
-**Mover un director** (`interfaz-administrador/cursos.html`) escribe las dos
-caras de la relación en un solo lote de Firestore: `cursos/{codigo}.directorUid`
-y `profesores/{uid}.curso`, y limpia el `curso` del director saliente. Se hace
-por lote porque el panel antes solo movía la primera, así quien deja de dirigir
-seguía viendo su curso viejo en el Inicio y Firestore le negaba crear clases
-en él. Si un escrito del lote falla, fallan los dos y no quedan mitades.
+## 5. La sala de clase estilo Kahoot
 
-### El menú del profesor
+Un curso real no puede jugar desordenado: los 30 muchachos entran cuando el
+profesor lo dice. Por eso cada clase tiene un semáforo en `grupos/{id}.sala`, y
+`js/sala.js` es el único que lo lee o lo mueve:
 
-Tres opciones que suenan igual hicieron perder al profesor el hilo de dónde se
-creaba una clase. Los nombres ahora son distintos entre sí:
-
-| Menú | Página | Qué hace |
-| --- | --- | --- |
-| **Inicio** | `homepageb.html` | Sus materias y, dentro de cada una, **los cursos** donde dicta. Cada tarjeta de curso dice "＋ Crear clase" y abre el formulario ya con ese curso puesto. |
-| **Mis clases** | `materia.html` | Todas sus clases, curso por curso, con el formulario arriba. Con `?m=` filtra la materia y con `?c=` fija el curso. |
-| **Sala de clase** | `sala.html` | La pantalla para proyectar: código en grande, quiénes entraron, marcador en vivo y los botones Iniciar / En espera / Cerrar. |
-| **Estudiantes** (solo directores) | `curso.html` | Matricular estudiantes del curso que dirige, exportar sus claves y ver las clases abiertas de ese curso. |
-
-Lo que se arregló en el flujo de crear clase:
-
-- **El formulario ya no se queda en blanco.** `materia.html` necesita dos
-  lecturas (los cursos y tus clases). Mientras no llegan, los selectores muestran
-  "Cargando cursos..." y el botón **Crear clase está apagado**. Antes pasaba lo
-  contrario: las cajas salían vacías, uno le daba al botón y la respuesta era un
-  "Selecciona el curso" que parecía un botón roto.
-- **Corte de red ≠ falta de cursos.** Si la lectura de cursos falla, ahora se
-  ofrece un botón *Reintentar* en vez de esconder el formulario, y la lista de
-  clases se carga igual (es otra lectura).
-- **Con varios cursos hay que elegir.** Antes, entrando por el menú sin `?c=`, se
-  auto-seleccionaba el primer curso y la clase podía nacer para 601 cuando se
-  quería crear para 602. Ahora aparece "Selecciona un curso"; con un solo curso
-  se elige solo.
-- **El Inicio pinta en dos tiempos y no gasta una lectura por clase.** Las
-  tarjetas de curso cuestan una lectura; los contadores por curso, otra. Antes el
-  resumen de partidas y promedio se calculaba aquí y costaba **una lectura por
-  cada clase creada** (con sus resultados completos), así que un profesor de
-  varios cursos pagaba decenas de lecturas solo por abrir la portada. Ese resumen
-  ahora vive en "Mi Biblioteca", que se entra a propósito; el Inicio solo muestra
-  cuántas clases tiene abiertas la sala en este momento.
-- **Duplicar en otros cursos** (`materia.html`, botón en cada tarjeta). El profe
-  de Inglés que dicta a los siete sextos crea la clase una vez y la copia
-  marcando los cursos: cada copia lleva su tema, dificultad y juego, y sale con
-  su propio código.
-- **Probar el juego** abre el juego de la clase en modo práctica (sin `grupo`),
-  para que el profesor vea el ejercicio antes de mandarlo. Esa partida no se
-  guarda en ningún lado.
-- **Copiar código** pone el código de la clase en el portapapeles para
-  proyectarlo o pegarlo en el chat del grado.
-- **Resultados por estudiante.** "Ver resultados" ya no es solo la lista de
-  partidas: primero sale una tabla por estudiante (partidas, mejor porcentaje y
-  promedio) y cuántos de los matriculados han jugado; el detalle de las últimas
-  20 partidas queda debajo.
-
-Al **jugar** pasa lo mismo por el otro lado: `grupoJugable()` (en `js/grupos.js`)
-valida antes de cargar la ronda que la clase exista, siga activa, sea del juego
-de esa pantalla y que el estudiante esté **aceptado** como miembro. Así, escribir
-a mano `juegos/quiz.html?grupo=ID` de una clase ajena ya no deja jugar; sale el
-aviso "No puedes jugar esta clase".
-
-### La sala de clase (estilo Kahoot!)
-
-Un curso real no puede jugar desordenado: los 30 niños entran cuando el profesor
-lo dice. `grupos/{id}.sala` guarda un semáforo de tres estados y `js/sala.js` es
-el único que lo lee o lo mueve:
-
-| Estado | Quién puede jugar | Lo que ve el estudiante |
+| Estado | Quién puede jugar | Qué ve el estudiante |
 | --- | --- | --- |
 | `esperando` (el que trae toda clase nueva) | nadie | "⏳ Tu profesor todavía no ha iniciado la clase" |
-| `abierta` | sí | botón ▶ Entrar al juego encendido |
-| `cerrada` | nadie, y ya no se reabre en la sesión | "🔒 Esta clase ya terminó" |
+| `abierta` | sí | el botón ▶ Entrar al juego encendido |
+| `cerrada` | nadie | "🔒 Esta clase ya terminó" |
 
-El bloqueo está en **tres lados**, no solo en la pantalla:
+El bloqueo está en tres lados para que no se pase de lista:
 
-1. `grupoJugable()` devuelve el grupo marcado con `sinEmpezar` / `claseCerrada`
-   en vez de dejar jugar, así que escribir la URL del juego a mano tampoco sirve;
+1. `grupoJugable()` (en `js/grupos.js`) valida antes de cargar la ronda que la
+   clase exista, siga activa, sea del juego de esa pantalla y que el estudiante
+   esté aceptado. Con eso, escribir `juegos/quiz.html?grupo=ID` a mano tampoco
+   sirve.
 2. `guardarResultado()` vuelve a leer el grupo antes de escribir y rechaza la
-   partida si la sala sigue en espera (un error que se ve en el juego, no un
-   resultado que se pierde en silencio);
-3. las pantallas de `js/espera.js` explican qué esperar, con un `onSnapshot` que
-   recarga la página justo cuando el profesor abre la clase.
+   partida si la sala sigue en espera. Sale un error en el juego, no un resultado
+   que se pierde en silencio.
+3. Las pantallas de `js/espera.js` explican qué esperar, con un `onSnapshot` que
+   recarga justo cuando el profe abre la clase.
 
-Una clase antigua que no tiene el campo `sala` se toma como **abierta**: las
-reglas del juego no cambian para lo que ya estaba creado.
+Dos decisiones de arquitectura acá, que no son de gusto sino de cupo:
 
-**Los asistentes** viven en `grupos/{id}/sala/{uid}`, un documento por niño, y no
-en un arreglo dentro del grupo. Con 30 estudiantes entrando al mismo tiempo, un
-solo documento no aguanta (Firestore admite ~1 escritura por segundo por
-documento) y se pisarían entre ellos. Cada quien escribe el suyo; la pantalla
-los lee juntos con un `onSnapshot` sobre la subcolección.
+- **La asistencia es un documento por niño** (`grupos/{id}/sala/{uid}`), no un
+  arreglo dentro del grupo. Firestore aguanta como 1 escritura por segundo por
+  documento; 30 muchachos entrando al mismo tiempo contra un solo arreglo se
+  pisarían y se perderían tarjetas.
+- **Todo es escucha en vez de pausa.** Un `setInterval` que recargue la sala cada
+  2 segundos son 30 lecturas por minuto en cada tablero del colegio. Con
+  `onSnapshot` pagas una lectura inicial y deltas después.
 
-Por eso también todo lo de la sala es **escucha en vez de pausa**: un
-`setInterval` que recargue la pantalla cada 2 segundos son 30 lecturas por
-minuto en cada uno de los tableros del colegio. Con `onSnapshot` el costo es de
-una lectura inicial y deltas después.
+Una clase vieja que no tenga el campo `sala` se toma como **abierta**, así lo que
+ya estaba creado no cambia de comportamiento. Y "Vaciar sala" borra los documentos
+de asistencia entre sesión y sesión, pero no quita a nadie de la clase: la
+matrícula sigue en `miembrosUids`.
 
-"Vaciar sala" borra los documentos de asistencia entre una sesión y otra. No
-quita a nadie de la clase: la matrícula sigue en `miembrosUids`.
+## 6. La nota, de 1,0 a 5,0
 
-### La nota: de 1,0 a 5,0
-
-La escala del colegio (`js/nota.js`) es lineal: **cada 25 % de acierto vale 1
-punto**, de modo que 0 % → 1,0 y 100 % → 5,0, con un decimal y coma.
+Como en el colegio. Está en `js/nota.js` y la regla se dice en una frase:
+**cada 25 % de acierto vale 1 punto**. 0 % → 1,0, 100 % → 5,0, siempre con un
+decimal y con coma.
 
 | Aciertos | 0 % | 25 % | 50 % | 75 % | 100 % |
 | --- | --- | --- | --- | --- | --- |
 | Nota | 1,0 | 2,0 | 3,0 | 4,0 | 5,0 |
 
-Los cortes de desempeño caen casi redondos: 60 % → 3,4 (Básico), 75 % → 4,0
-(Alto), 90 % → 4,6 (Superior). Las bandas son Superior ≥ 4,5 · Alto ≥ 4,0 ·
-Básico ≥ 3,0 · Inferior < 3,0, que es como se lee en un boletín.
+Con esa recta los cortes caen casi redondos: 60 % da 3,4 (Básico), 75 % da 4,0
+(Alto), 90 % da 4,6 (Superior). Las bandas son Superior ≥ 4,5, Alto ≥ 4,0,
+Básico ≥ 3,0, Inferior < 3,0.
 
-Se calcula sobre `puntaje / total` y **no** sobre el porcentaje redondeado, para
-que 1 de 3 no salga 2,4 por un redondeo doble. El resultado guarda
-`porcentaje` y `nota`, pero la nota siempre se puede reconstruir a partir de
-`puntaje`/`total`, así que las partidas jugadas antes de este módulo también se
-muestran en escala de 5: no hubo que migrar nada.
+Se calcula sobre `puntaje / total` crudo, no sobre el porcentaje redondeado, para
+que 1 de 3 no salga con error por redondear dos veces. La **nota definitiva** de
+un estudiante es el promedio de sus notas (no el promedio de porcentajes y luego
+convertido), y sale con el mismo número en la Biblioteca y el Perfil del
+estudiante, en "Ver resultados" del profe y en Reportes del administrador.
 
-La **nota definitiva** de un estudiante es el promedio de sus notas (no el
-promedio de porcentajes convertido después), y aparece en el mismo número en la
-Biblioteca y el Perfil del estudiante, en "Ver resultados" del profesor, en las
-estadísticas de su Biblioteca y en los Reportes del administrador (total, por
-materia, por curso y por estudiante).
+Importante si siguen trabajando sobre datos viejos: la nota siempre se puede
+reconstruir a partir de `puntaje`/`total`, así que las partidas guardadas antes de
+este módulo también se muestran en escala de 5. **No hubo que migrar nada.**
 
-### Sesión y cortes de red
+## 7. Las cuentas, los correos y los PINes
 
-`js/sesion.js` escucha `onAuthStateChanged` y decide quién es el usuario leyendo
-dos documentos de Firestore. Ese par de lecturas a veces falla (el Wi-Fi del
-colegio, una pestaña dormida, Firebase tardando): antes `guard.js` interpretaba
-cualquier fallo como "aquí no hay nadie" y mandaba a la portada, que es el bug
-que se veía al moverse rápido por el menú lateral — te sacaba al inicio y al
-volver a entrar funcionaba, porque la sesión nunca se había caído.
+Cuando el administrador o un director crean una cuenta:
 
-Ahora `suscribirSesion` distingue tres resultados (`MOTIVO`): sin sesión, rol
-equivocado y **no se pudo leer**. Los dos primeros sí redirigen; el tercero
-reintenta la lectura dos veces (500 ms y 1,2 s) y, si sigue fallando, muestra un
-aviso con botón "Reintentar" sin tocar la sesión. Además el listener ignora las
-reemisiones del mismo `uid`, así que un refresco de token ya no vuelve a cablear
-los botones de la página.
+- **Correo**: se arma del nombre completo, sin tildes ni espacios.
+  `Andrés Felipe Perdomo Cangrejo` → `AndresFC@skillhouse.edu.co`. Si está ocupado
+  prueba `AndresFC1@`, `AndresFC2@`... hasta el 30.
+- **PIN**: 6 dígitos con `crypto.getRandomValues` (no `Math.random`, que es
+  predecible). Se muestra **una sola vez** en la pantalla de creación y en la
+  tabla de credenciales de esa sesión. Se puede copiar o descargar en CSV.
+- El campo de la clave está en `readonly` y tiene un ↻ para regenerarla antes de
+  crear la cuenta.
 
-## 4. Cuentas y contraseñas autogeneradas
+**Quién olvida el PIN:**
 
-Al crear cualquier cuenta (administrador o director):
+- El **administrador** no pide nada: entra a Claves o al padrón de Usuarios, ve la
+  clave de cualquiera y le genera una nueva. No tiene que escribir la anterior.
+- El **profesor, el director y el estudiante** van a *Configuración → No recuerdo
+  mi contraseña*. Eso abre un documento en `solicitudes_clave` con
+  `estado: "pendiente"`. Si ya tiene uno abierto, el botón se bloquea y no crea
+  duplicados. El administrador lo atiende desde su bandeja.
 
-- **Correo**: se deriva del nombre completo, sin tildes ni espacios.
-  `Andrés Felipe Perdomo Cangrejo` → `AndresFC@skillhouse.edu.co`; si está
-  ocupado se prueban `AndresFC1@`, `AndresFC2@`... hasta el 30.
-- **Contraseña**: PIN de 6 dígitos generado con `crypto.getRandomValues`
-  (no `Math.random`, que es predecible). Se muestra **una sola vez** en la
-  pantalla de creación, en la tabla de credenciales de la sesión, y se puede
-  copiar o descargar en CSV.
-- El campo de la clave está en `readonly` y tiene un botón ↻ para regenerarla
-  antes de crear la cuenta.
+Cambiar la **propia** contraseña sí sigue pidiendo la actual, porque eso es lo que
+confirma que eres tú. Lo que quitamos fue el requisito de la clave actual para
+cambiar la de **otra** persona, que era lo que no se podía cumplir en una app sin
+servidor.
 
-### Quien olvida el PIN
+### Cómo demonios hace el admin para cambiar la clave de otro
 
-- **Administrador** → página **🔑 Claves** (`interfaz-administrador/claves.html`).
-  Ve una tabla con el PIN de todas las cuentas (filtrable y descargable en CSV)
-  y, en cada fila, **Nueva clave**: genera un PIN al azar, lo aplica y lo
-  devuelve en pantalla. No le piden la clave anterior ni tiene que escribirla:
-  el panel toma el PIN registrado en `usuarios/{uid}.clave` y firma el cambio él
-  mismo en una app Firebase secundaria, así que su propia sesión no se cierra.
-  Arriba tiene la bandeja de **solicitudes de cambio** pendientes.
-- **Profesor, director y estudiante** → *Configuración → No recuerdo mi
-  contraseña*. Se abre un documento en `solicitudes_clave` con `estado:
-  "pendiente"`; si ya tiene uno abierto, el botón queda bloqueado y no crea
-  duplicados. El administrador lo atiende desde Claves y le entrega el PIN nuevo.
+Firebase Auth no deja imponerle una contraseña a otro usuario desde el navegador.
+Lo único que funciona es iniciar sesión como ese usuario y cambiársela. Por eso
+`usuarios/{uid}` guarda el PIN con un campo `clave`, **ofuscado** (XOR contra una
+semilla fija + base64), y `js/claves.js` abre una app Firebase secundaria, inicia
+sesión con ese PIN, firma el cambio y cierra esa sesión. Así la sesión del
+administrador no se cae en el proceso.
 
-Cambiar la propia contraseña sigue pidiendo la actual (eso confirma que eres
-tú). Lo que se quitó es el requisito de la clave actual para cambiar la de
-**otra** persona.
+Dejo esto claro porque es el punto flaco del proyecto y no quiero que nadie lo
+descubra pensando que es cifrado: **ofuscación no es encriptación**. Sirve para
+que el PIN no se lea de un vistazo en la consola de Firebase. No sirve contra
+alguien que tenga acceso real al proyecto. Si algún día esto se usa con correos
+reales y claves serias, el campo `clave` tiene que desaparecer y el restablecerse
+tiene que pasar a una función de servidor con el Admin SDK.
 
-Las reglas de `firestore.rules` son las que sostienen todo esto: solo el
-administrador puede LISTAR `usuarios` (por tanto, ver los PINes), solo él o el
-dueño de la cuenta pueden escribir el campo `clave`, y `solicitudes_clave` solo
-se crea con el `uid` propio, con `estado: "pendiente"`, con los campos justos y
-con el motivo limitado a 300 caracteres; solo el administrador puede cerrarla.
-Las sugerencias de "Ayuda" tienen el mismo tope (1000 caracteres y solo los
-cuatro campos que escribe `js/ayuda.js`). Un profesor que escriba a mano el
-código de Claves no obtiene nada: Firestore le responde `permission-denied`.
+### Las reglas de seguridad, en cristiano
 
-Como el administrador ahora también corrige altas, puede escribir en
-`profesores/{uid}` los campos `curso`, `materias` y `tipoProfesor` (antes estaba
-prohibido, así que cambiar el curso de un director desde "Cursos" no tenía forma
-de reflejarse en su ficha). `uid`, correo, nombre y rol siguen inmutables desde
-el cliente.
+`firestore.rules` es lo que sostiene todo el tema de permisos. Lo que hace:
 
-**Estas reglas hay que volver a publicarlas** en Firebase → Firestore → Reglas
-después de actualizar el código; mientras no se publiquen, el administrador no
-podrá escribir `usuarios/{uid}.clave` y la página Claves saldrá vacía.
+- Solo el **administrador** puede hacer `list` de `usuarios`. Es la razón de que
+  el padrón con los PINes funcione solo para él: un profesor que escriba el
+  código de Claves a mano recibe `permission-denied` de Firestore, no una tabla
+  vacía por un bug de la interfaz.
+- Solo el admin o el dueño de la cuenta pueden escribir el campo `clave`.
+- `solicitudes_clave` solo se crea con el `uid` propio, con `estado: "pendiente"`,
+  con los campos justos y con el motivo limitado a 300 caracteres. Solo el admin
+  puede cerrarla.
+- `sugerencias` (las de ayuda.html) tiene el mismo tope: 1000 caracteres y solo
+  los cuatro campos que escribe el código.
+- Al crear una clase: la materia tiene que estar en la lista del profesor y, si
+  eres director, el curso tiene que ser el tuyo.
+- Al unirse: solo se escribe la solicitud si el curso del estudiante es el mismo
+  de la clase y la clase sigue activa.
+- Un profesor que ya no dirige un curso no puede seguir creando clases en él
+  (esto se arregló junto con el lote de "Mover director", más abajo).
 
-Cuentas creadas **antes** de este cambio no tienen `clave` registrada: en la
-tabla aparecen como "sin registro" y el botón de nueva clave avisa de que hay
-que cambiarlas desde Firebase Console → Authentication una sola vez. A partir de
-ahí, todo queda sincronizado (también cuando el usuario cambia su clave desde su
-Configuración, que actualiza el registro).
+El admin además ya puede escribir en `profesores/{uid}` los campos `curso`,
+`materias` y `tipoProfesor`, que antes estaban bloqueados. Antes por eso cambiar
+el director desde "Cursos" no se reflejaba en la ficha del profesor. `uid`,
+correo, nombre y rol siguen inmutables desde el cliente.
 
-## 5. Qué hace cada panel
+**Estas reglas hay que volver a publicarlas** después de actualizar el código. No
+se aplican solas por estar en el zip. Si no las publicas, el admin no puede
+escribir `usuarios/{uid}.clave`, la página Claves sale vacía y la sala de clase no
+funciona (subcolección nueva).
 
-**Administrador**
-
-- *Resumen*: conteos reales de estudiantes, profesores, clases activas y cursos,
-  más las últimas sugerencias (con "Marcar atendida").
-- *Usuarios*: **el padrón completo, agrupado**. Cruza el índice `usuarios` con la
-  ficha del rol, así que es la única pantalla que dice si una cuenta está
-  realmente lista para entrar: rol, curso o materias, quién la creó, y si está
-  "Listo para entrar", "Sin PIN" o "Registro incompleto" (creada a mano en
-  Firebase Console). No es una tabla plana: los **estudiantes salen por curso**
-  (el título de cada bloque trae el nombre del director de ese curso) y los
-  **profesores por la materia que dictan**; si un profesor da dos materias
-  aparece en las dos, que es como se lee un directorio de colegio. Cada fila
-  muestra el **PIN** de la cuenta —solo un administrador lo obtiene, porque solo
-  su rol puede listar la colección `usuarios`—, con un botón para ocultarlos si
-  se comparte la pantalla y otro para generar un PIN nuevo sin salir del padrón.
-  Filtro por rol, curso y materia, búsqueda, "Solo con fallas", copiar los datos
-  de una cuenta, CSV (que incluye las claves: no lo reparta), y una tabla de
-  clases y partidas por curso con cuántas salas están abiertas ahora.
-- *Crear cuenta*: estudiante / profesor / director / administrador, con materia,
-  curso y credenciales autogeneradas. Un director no puede asignarse a un curso
-  que ya tiene director.
-- *Cursos*: alta y baja de grados; no deja borrar un curso con estudiantes o
-  clases.
-- *Clases*: inventario filtrable de todas las clases de la plataforma.
-- *Materias*: catálogo real con temas, preguntas por nivel, retos, cuántas clases
-  usan cada tema y qué profesores lo dictan; avisa de temas sin contenido.
-- *Reportes*: promedios por materia y por curso, y top 15 de estudiantes. Además
-  del porcentaje, cada tabla trae su **nota de 1 a 5** (total, por materia, por
-  curso y por estudiante).
-- *Claves*: la lista plana de los PINes (filtro por rol, búsqueda y CSV) y la
-  bandeja de solicitudes de cambio. El padrón agrupado de "Usuarios" (§5) ya
-  muestra los mismos PINes ordenados por curso y por materia, y desde ahí también
-  se genera una clave nueva sin cambiar de página; Claves sigue siendo el sitio
-  donde se **atienden los pedidos** de quien no recuerda la suya.
-- *Configuración*: su perfil y cambiar su clave, con un acceso directo a Claves.
-
-**Profesor**
-
-- *Inicio*: la plataforma ya sabe qué materia dictas, así que no te la pregunta
-  otra vez: abre la materia y **dentro salen sus cursos** (601, 602...) con las
-  clases y los estudiantes reales de cada uno. Cada tarjeta dice "＋ Crear clase".
-  Un director solo ve el curso que dirige; un profesor normal, todos los que
-  existan.
-- *Mis clases*: crear/editar/desactivar/eliminar clases, **duplicar una clase en
-  otros cursos**, probar el juego antes de mandarlo, copiar el código, aceptar
-  solicitudes, quitar estudiantes y ver resultados **agrupados por estudiante**.
-  Con `?m=` abre una materia y con `?m=&c=` abre la materia **y** el curso (el
-  selector de curso queda fijado y la lista filtrada); es como llega uno desde la
-  tarjeta del curso.
-- *Sala de clase* (`sala.html`): la pantalla para proyectar. Elige una de sus
-  clases activas y muestra el código en grande, los asistentes que van entrando,
-  el marcador en vivo con la mejor nota y el promedio de cada uno, y los botones
-  **Iniciar clase / Poner en espera / Cerrar clase / Vaciar sala / Copiar
-  código**. Todo llega solo por `onSnapshot`: no se recarga nada.
-- *Estudiantes* (directores): crear estudiantes del curso, exportar credenciales,
-  ver su lista y las clases del curso. Cambiarles una clave ya no se hace aquí:
-  lo hace el administrador desde Claves (§4).
-- *Biblioteca / Perfil / Configuración*: sus clases, estadísticas (partidas,
-  **nota promedio de 1 a 5** y porcentaje) y ajustes. En Configuración está el
-  botón "No recuerdo mi contraseña".
-
-**Estudiante**
-
-- *Materias*: tarjetas del catálogo + "Próximamente" (Ciencias, Sociales,
-  Tecnología) y su resumen real (clases, materias con clase, partidas, **nota
-  definitiva** y promedio).
-- *Materia* (`materia.html?m=`): unirse con código a las clases de esa materia y
-  de su curso, práctica libre por tema y dificultad, y sus clases de esa materia.
-  Cada tarjeta dice si está ⏳ En espera, 🟢 lista para jugar o 🔒 cerrada.
-- *Sala de espera* (`sala.html?g=`): entra con el código de la clase, ve a sus
-  compañeros que ya llegaron (el propio resaltado), y el botón ▶ Entrar al juego
-  se enciende solo cuando el profesor abre la clase.
-- *Mis clases*: todas sus clases, con materia, curso, profesor, estado de la sala
-  y botón de entrar a la sala o de jugar.
-- *Biblioteca*: historial completo de partidas, con el porcentaje y la nota de
-  cada una, y la nota definitiva arriba.
-- *Perfil / Configuración*: sus datos, cambiar la clave con la actual y el botón
-  "No recuerdo mi contraseña" (§4).
-
-**Juegos**: Quiz de Lógica (opción múltiple), Puzzle de Código (ordenar pasos) y
-Carrera Espacial (contrarreloj). Los tres son motores: reciben el tema y la
-dificultad de la clase. En modo clase el resultado se guarda; en práctica no.
-Las opciones de cada pregunta se barajan al cargar la ronda, así que la respuesta
-correcta ya no está siempre en la primera posición. Al terminar muestran el
-porcentaje y la **nota de 1,0 a 5,0** con su desempeño (§3). Si la clase sigue en
-espera, no dejan jugar y explican la espera; si ya se cerró, invitan al modo
-práctica.
-
-## 6. Puesta a punto en Firebase
-
-1. **Proyecto**: `skillhouse-64b02`, la configuración está en `js/firebase.js`.
-2. **Authentication** → *Sign-in method* → activar **Email/Password**.
-   Sin esto, `crearCuenta()` falla con `auth/operation-not-allowed`.
-3. **Firestore** → *Reglas* → pegar el contenido de `firestore.rules` y
-   **publicar**. Las reglas están en el zip pero no se aplican solas.
-   Hay que volver a publicarlas después de cada cambio: la sala de clase
-   (`grupos/{id}/sala/{uid}`) es una subcolección nueva y, mientras las reglas no
-   estén publicadas, el estudiante no puede anotarse en la sala y el profesor no
-   puede abrir ni cerrar la clase (sale "permission-denied").
-4. **Base de datos**: crear la colección (modo producción o de prueba da igual,
-   las reglas mandan).
-5. **Primer administrador** (no se puede crear desde la app, porque la app la
-   controla un administrador que aún no existe):
-   1. Authentication → *Agregar usuario* → `juan@skillhouse.edu.co` y una clave
-      de 6 dígitos.
-   2. Copiar el **UID** y crear en Firestore el documento
-      `usuarios/<UID>` con `{ username: "Juan Garzon", email: "juan@skillhouse.edu.co", rol: "administrador" }`.
-   3. Crear también `administradores/<UID>` con `{ uid: "<UID>", username: "Juan Garzon", email: ..., rol: "administrador", creadoEn: <marca de tiempo> }`.
-   4. Entrar desde la portada: te lleva al panel de administrador, donde ya
-      puedes crear cursos, profesores, directores y estudiantes.
-6. **Índices**: no hace falta crear ninguno a mano. Las consultas con `orderBy`
-   van sobre una sola colección y, si Firebase las rechaza, el código reintenta
-   sin ordenar.
-
-## 7. Probar en local
-
-Abrir los archivos con `file://` no funciona (son módulos ES). Desde la carpeta
-del proyecto:
+## 8. Dónde está cada cosa en el código
 
 ```
-python3 -m http.server 8099
-# y entrar a http://localhost:8099/index.html
+index.html                  portada + modal de login
+invitado.html               jugar sin cuenta
+ayuda.html / ayuda.css      preguntas frecuentes y formulario de sugerencias
+firestore.rules             reglas de seguridad (publicarlas, ver §9)
+
+css/
+  tokens.css                variables de diseño, tipografía, botones
+  style.css                 portada e invitado
+  juegos.css                componentes que comparten los 3 paneles y los juegos
+
+imag/                       logo y avatares
+
+js/
+  firebase.js               configuración y arranque de Firebase (app única)
+  auth.js                   login y a dónde te manda según rol
+  sesion.js                 "quién está conectado": índice + ficha de rol
+  guard.js                  protege las páginas de panel (rol, menú, saludo)
+  catalogo.js               MATERIAS, MATERIAS_PROXIMAS y JUEGOS
+  cursos.js                 CRUD de cursos (601, 602...) y su director
+  credenciales.js           correo autogenerado + PIN de 6 dígitos + crear cuentas
+  claves.js                 ver el PIN de cualquiera, generar uno nuevo, bandeja de pedidos
+  cambiar-clave.js          el "cambiar mi contraseña" del perfil propio
+  lista-credenciales.js     tabla de credenciales de la sesión, copiar y CSV
+  grupos.js                 clases: crear, unirse por código, solicitudes, resultados
+  sala.js                   la sala: en espera / abierta / cerrada y los asistentes
+  espera.js                 las pantallas que ven los juegos si llegan temprano
+  nota.js                   la escala de 1,0 a 5,0
+  panel-configuracion.js    la página de configuración
+  portada.js                los números y tarjetas reales de la portada
+  invitado.js               el selector de práctica sin cuenta
+  ayuda.js                  buscador de FAQ y envío de sugerencias
+  ui.js / scripts.js        animaciones, contadores, modal
+  games/contenido-temas.js  el banco de preguntas: 27 temas, 810 preguntas, 162 retos
+
+interfaz-administrador/     homepagec, usuarios, crear-cuenta, claves, cursos,
+                            clases, materias, reportes, configuracion
+interfaz-profesor/          homepageb, materia, sala, curso, biblioteca,
+                            perfil, configuracion
+interfaz-estudiante/        homepagea, materia, sala, mis-clases, biblioteca,
+                            perfil, configuracion
+juegos/                     quiz, puzzle, carrera (HTML + su motor JS)
 ```
 
-Recorrido de prueba: crear un administrador (§6) → crear el curso 601 → crear un
-director de Inglés del 601 → entrar con ese director y crear 3 estudiantes del
-601 → crear una clase de Inglés del 601 → entrar con un estudiante y unirse con
-el código → jugar y ver el resultado en "Mis clases" del profesor y en
-"Biblioteca" del estudiante. Con un código de Matemáticas en la página de Inglés
-tiene que salir el aviso de que es de otra materia, y con el de otro curso, que
-no es el suyo.
+Cada carpeta de panel tiene su CSS (`stylea.css`, `styleb.css`, `stylec.css`) y
+las tres comparten `css/juegos.css` para tarjetas, formularios, tablas y
+estadísticas. Si cambias un componente en `juegos.css` cambia en los tres lados.
 
-Dos comprobaciones más de este recorrido, por si se prueba con datos viejos:
-un profesor con **una sola** materia debe poder crear su primera clase desde el
-menú "Mis clases" (sin entrar por la tarjeta de un curso), y al mover el director
-de un curso en *Cursos*, el director saliente pierde ese curso en su inicio y el
-entrante lo ve — ambas caras se escriben en el mismo lote.
+Los tres juegos son motores: reciben el tema y la dificultad de la clase, no
+tienen preguntas propias hardcodeadas. Son Quiz de Lógica (opción múltiple),
+Puzzle de Código (ordenar pasos) y Carrera Espacial (contrarreloj). En modo clase
+el resultado se guarda; en práctica no. Las opciones de cada pregunta se barajan
+al cargar la ronda, así que la respuesta correcta no está siempre en la primera
+posición.
 
-Para el resto de lo nuevo: con el administrador, entrar a **Claves** y comprobar
-que salen los PINes de esas cuentas y que "Nueva clave" cambia una; con un
-estudiante, abrir *Configuración → No recuerdo mi contraseña*, mandar el pedido,
-volver al administrador, atenderlo desde Claves y entrar con el PIN que sale.
-Y para el corte de sesión: navegar rápido por el menú lateral con el Wi-Fi
-apagado un segundo; debe quedar el aviso de "Reintentar", no devolverte a la
-portada.
+## 9. Datos en Firestore, qué guarda cada colección
 
-**La sala y la nota**, en este orden:
+```
+usuarios/{uid}                       índice liviano: { username, email, rol, clave }
+estudiantes/{uid}                    perfil: curso, creadoPorUid, avatar...
+  /resultados/{id}                   historial personal de partidas
+profesores/{uid}                     tipoProfesor (estandar|director), materias[], curso
+administradores/{uid}                perfil de administrador
+cursos/{codigo}                      { codigo, nombre, anio, directorUid, directorNombre }
+grupos/{id}                          { nombre, codigo, juego, materia, curso, tema,
+                                       dificultad, profesorId, activo, sala, miembrosUids[] }
+  /miembros/{uid}                    estudiante aceptado
+  /solicitudes/{uid}                 pedido de ingreso pendiente
+  /sala/{uid}                        el que está hoy en la sala { uid, nombre, enSala, desde }
+  /resultados/{id}                   partida jugada { uid, username, juego, puntaje,
+                                       total, porcentaje, nota, fecha }
+solicitudes_clave/{id}               pedido de "no recuerdo mi PIN"
+sugerencias/{id}                     opiniones que llegan desde ayuda.html
+```
 
-1. El profesor crea la clase y entra a **📺 Sala de clase** con ella. Sale el
-   código en grande y "En espera".
-2. Con un estudiante, unirse a la clase, aceptar la solicitud desde el profesor,
-   y entrar a la sala del estudiante desde la tarjeta de la clase. Debe verse a
-   sí mismo en la lista, con el botón de jugar apagado.
-3. Escribir a mano `juegos/quiz.html?grupo=ID` con la sala en espera: tiene que
-   salir "⏳ Tu profesor todavía no ha iniciado la clase", no el aviso de acceso.
-4. El profesor pulsa **Iniciar clase**: la pantalla del estudiante se actualiza
-   sola y el botón ▶ se enciende.
-5. El estudiante juega y termina: ve el porcentaje y su nota (1,0 a 5,0 con
-   coma). El marcador del tablero del profesor muestra esa partida sin recargar.
-6. El profesor pulsa **Cerrar clase**: el estudiante ve "🔒 Esta clase ya
-   terminó" y ya no puede guardar otra partida; lo anterior se conserva.
-7. En **Mis clases → Ver resultados** del profesor, en **Biblioteca** y
-   **Perfil** del estudiante, y en **Reportes** del administrador, la nota tiene
-   que ser el mismo número en los cuatro lados.
-8. En **👥 Usuarios** del administrador, la cuenta del estudiante debe salir
-   "Listo para entrar" dentro del bloque de **su curso**, y el profesor dentro
-   del bloque de **la materia que dicta**; una cuenta creada a mano en Firebase
-   Console sale en "Sin curso" con "Registro incompleto". Comprobar que la
-   columna PIN trae la clave de 6 dígitos, que "Ocultar PINes" la tapa y que
-   "Nueva clave" deja el padrón y la página Claves de acuerdo con el mismo PIN.
-9. Con una cuenta de profesor, abrir **👥 Usuarios** escribiendo la URL a mano:
-   `guard.js` lo devuelve a la portada, y aunque se saltara ese filtro, la
-   lectura de `usuarios` le sale `permission-denied`. Es la prueba de que los
-   PINes son solo del administrador.
+Lo que **no** está en Firestore: el contenido de las preguntas. Vive en
+`js/games/contenido-temas.js` y se baja una vez con la página. Por eso una partida
+no lee la base por cada pregunta; lo que cuesta es entrar a la clase, anotarse en
+la sala y guardar el resultado.
 
-## 8. Límites conocidos
+Cursos, materias y temas nuevos tampoco se cargan desde la interfaz: se agregan
+editando `js/catalogo.js` y `js/games/contenido-temas.js`. Son parte del código.
 
-- El dominio `@skillhouse.edu.co` no existe: los correos son solo identificadores
-  de acceso. Nunca llega un correo de recuperación automático.
-- Crear o cambiar cuentas consume muchas lecturas/escrituras de Firestore para
-  un curso grande; es un proyecto académico, no un multiusuario de producción.
-- Las claves de 6 dígitos son PINes pensados para niños de sexto grado: son
-  cómodos, no seguros frente a un ataque serio.
-- El administrador ve los PINes de todos (§2 y §4). Es un requisito del
-  proyecto, no una buena práctica: la ofuscación de `usuarios/{uid}.clave`
-  esconde el PIN de un vistazo en la consola, no de alguien con acceso real.
-- No hay servidor, así que no hay Admin SDK: cambiar la clave de otro exige
-  iniciar sesión como ese usuario con su clave actual. Por eso hace falta que
-  el PIN quede registrado; una cuenta creada a mano en Firebase Console no se
-  puede restablecer desde la plataforma.
-- Un estudiante cuya ficha no tenga `curso` (una cuenta escrita a mano en la
-  consola) ya no puede unirse a ninguna clase: las reglas exigen que el curso del
-  estudiante y el de la clase coincidan, y la app lo avisa en español antes de
-  intentar la escritura.
-- Los cursos, materias y temas nuevos se añaden editando `js/catalogo.js` y
-  `js/games/contenido-temas.js`: son parte del código, no datos que un usuario
-  pueda cargar desde la interfaz.
+## 10. Puesta a punto en Firebase (la primera vez)
 
-### Cuánto aguanta un colegio real
+1. El proyecto es `skillhouse-64b02` y la configuración está en `js/firebase.js`.
+   Si creas tu propio proyecto, se cambia ese archivo y ya, es el único lugar.
+2. **Authentication → Sign-in method → activar Email/Password.** Sin esto, crear
+   una cuenta falla con `auth/operation-not-allowed` y uno se vuelve loco
+   buscando el error en el código.
+3. **Firestore → Reglas**: pegar el contenido de `firestore.rules` y darle
+   **Publicar**. Cada vez que cambien las reglas hay que volver a publicarlas.
+4. Crear la base de datos (modo producción o de prueba da igual, las reglas mandan).
+5. **El primer administrador no se puede crear desde la app**, porque la app la
+   controla un administrador que todavía no existe. Se hace a mano:
+   1. Authentication → *Agregar usuario* → un correo y una clave de 6 dígitos.
+   2. Copiar el **UID** y crear en Firestore el documento `usuarios/<UID>` con
+      `{ username: "Juan Garzon", email: "...", rol: "administrador" }`.
+   3. Crear también `administradores/<UID>` con
+      `{ uid, username, email, rol: "administrador", creadoEn: <marca de tiempo> }`.
+   4. Entrar desde la portada. Ya puedes crear cursos, profes, directores y
+      estudiantes desde el panel.
+6. **Índices**: no hay que crear ninguno a mano. Las consultas con `orderBy` van
+   sobre una sola colección y si Firebase las rechaza el código reintenta sin
+   ordenar.
 
-El contenido de las preguntas **no** está en Firestore: vive en
-`js/games/contenido-temas.js`, que se descarga una vez con la página. Por eso una
-partida no lee la base de datos por pregunta; lo que cuesta es entrar a la clase,
-anotarse en la sala y guardar el resultado.
+Las cuentas creadas **antes** de lo de la clave registrada no tienen `clave`, así
+que salen en la tabla como "sin registro" y el botón de nueva clave te avisa que
+esa hay que cambiarla una vez desde Firebase Console → Authentication.
 
-Estimación para un colegio de 12 cursos × 30 estudiantes (360 cuentas), con una
-hora de clase jugada en un grupo:
+## 11. Cómo probarlo de verdad (haz este orden)
+
+Con esto recorres todos los roles y te deja de quedar ninguna pantalla sin ver:
+
+1. Crea el administrador (§10) → entra y crea el curso **601**.
+2. Crea un **director de Inglés** del 601.
+3. Entra con ese director y crea **3 estudiantes** del 601. Anota los PINes.
+4. Crea una **clase de Inglés del 601**. Entra a **📺 Sala de clase** con ella:
+   sale el código en grande y "En espera".
+5. Entra con un estudiante, únete con el código. El profe acepta la solicitud.
+6. El estudiante abre la sala de la clase: se ve a sí mismo en la lista y el
+   botón de jugar está apagado.
+7. Escribe a mano `juegos/quiz.html?grupo=ID` con la sala todavía en espera: tiene
+   que salir "⏳ Tu profesor todavía no ha iniciado la clase", no el aviso de
+   acceso.
+8. El profe pulsa **Iniciar clase**. La pantalla del estudiante se actualiza sola
+   y el ▶ se prende.
+9. El estudiante juega y termina: ve el porcentaje y su nota (1,0 a 5,0 con coma).
+   El marcador del tablero del profe muestra esa partida sin recargar.
+10. El profe pulsa **Cerrar clase**: el estudiante ve "🔒 Esta clase ya terminó" y
+    no puede guardar otra partida, pero lo anterior se conserva.
+11. Mira la misma nota en **Ver resultados** del profe, **Biblioteca** y **Perfil**
+    del estudiante y **Reportes** del admin. Tienen que dar el mismo número.
+
+Y estas cuatro, que son de los arreglos recientes:
+
+- En **👥 Usuarios** del admin, el estudiante tiene que salir "Listo para entrar"
+  dentro del bloque de **su curso**, y el profesor dentro del bloque de **la
+  materia que dicta**. La columna PIN trae la clave de 6 dígitos, "Ocultar PINes"
+  la tapa y "Nueva clave" deja el padrón y la página Claves de acuerdo con el
+  mismo PIN. Una cuenta creada a mano en Firebase Console sale en "Sin curso" con
+  "Registro incompleto", que es exactamente como debe verse.
+- Con una cuenta de **profesor**, escribe a mano la URL de 👥 Usuarios: te devuelve
+  a la portada (guard.js) y aunque te la saltaras, la lectura de `usuarios` sale
+  `permission-denied`. Esa es la prueba de que los PINes son solo del admin.
+- Con un estudiante, *Configuración → No recuerdo mi contraseña*, manda el pedido,
+  volve al admin, atendelo desde Claves y entra con el PIN que sale. Con el pedido
+  abierto, el botón del estudiante tiene que estar bloqueado.
+- Navega rápido por el menú lateral con el wifi apagado un segundo: tiene que
+  quedar el aviso de "Reintentar", no devolverte a la portada.
+
+Para la parte de cursos y directores: al **mover el director** de un curso en
+*Cursos*, el que sale pierde ese curso en su inicio y el que entra lo ve. Se
+escriben las dos caras en un solo lote de Firestore (`cursos/{codigo}.directorUid`
+y `profesores/{uid}.curso`), así que si un escrito falla fallan los dos y no
+quedan mitades. Antes el panel solo movía una cara y el director saliente seguía
+viendo el curso viejo, pero Firestore le negaba crear clases ahí.
+
+También: un profesor con **una sola** materia tiene que poder crear su primera
+clase desde el menú "Mis clases", sin entrar por la tarjeta de un curso. Y si un
+código de Matemáticas se escribe en la página de Inglés tiene que salir el aviso
+de que es de otra materia.
+
+## 12. Cuánto aguanta un colegio real
+
+Estimación para 12 cursos × 30 estudiantes (360 cuentas), con una hora de clase
+jugada en un grupo:
 
 | Paso | Lecturas | Escrituras |
 | --- | --- | --- |
-| 30 estudiantes entran a la sala (grupo + estado + lista de asistentes) | ~30 × 32 = 960 | 30 (una asistencia por documento propio) |
-| 30 estudiantes juegan una partida y la guardan | ~30 × 2 = 60 | 30 |
-| El profesor proyecta la sala y ve el marcador | ~40, una sola vez | 3 (cambiar el estado de la sala) |
-| **Total de una hora de clase** | **~1.060** | **~63** |
+| 30 estudiantes entran a la sala | ~30 × 32 = 960 | 30 |
+| 30 estudiantes juegan y guardan una partida | ~30 × 2 = 60 | 30 |
+| El profe proyecta la sala y ve el marcador | ~40, una sola vez | 3 |
+| **Una hora de clase** | **~1.060** | **~63** |
 
 Doce horas de clase al día son ~13.000 lecturas y ~750 escrituras, más el uso de
-los paneles. Con eso:
+los paneles. Con eso el plan **Spark** (gratis, 50.000 lecturas y 20.000
+escrituras al día) alcanza para unas 40 horas de clase jugada al día, o sea un
+colegio de ese tamaño usando la plataforma un par de periods por grado. Si la usan
+todo el día se pasa a **Blaze** (pago por uso) y el excedente son céntimos; no hay
+que cambiar ni una línea de código, solo activar la facturación en Firebase.
 
-- El plan **Spark** (gratis) da 50.000 lecturas y 20.000 escrituras al día:
-  alcanza para unas 40 horas de clase jugada al día, o sea un colegio de este
-  tamaño usando la plataforma un par de periods por grado. No es ilimitado, pero
-  no se cae a la primera.
-- Si el colegio la usa todo el día, se pasa a **Blaze** (pago por uso). Con las
-  mismas cifras el excedente son céntimos al día; no hace falta cambiar ni una
-  línea de código, solo activar la facturación en Firebase.
+Lo que ya se dejó hecho para no gastar de más: `onSnapshot` en vez de
+`setInterval`, un documento de asistencia por estudiante en vez de un arreglo, el
+Inicio del profesor dejó de leer los resultados de cada clase (antes costaba una
+lectura por clase creada, con todas sus partidas; ahora son 3 lecturas fijas y el
+resumen se fue a "Mi Biblioteca", que se entra a propósito), y `limit()` en las
+consultas de resultados (500 por clase, 200 por estudiante) con un aviso cuando se
+corta, para que un historial de años no se trague la cuota de un día.
 
-Lo que ya se hizo para no gastar de más, y por qué:
+## 13. Lo que está mal o sin probar, para que nadie se lleve sorpresas
 
-- **`onSnapshot` en vez de `setInterval`.** Recargar la sala cada 2 segundos
-  desde 12 tableros son decenas de miles de lecturas al día en nada. Con
-  escuchas, el costo es una lectura inicial y los cambios reales.
-- **Un documento de asistencia por estudiante.** Firestore admite ~1 escritura por
-  segundo por documento: 30 niños entrando a la vez contra un solo arreglo se
-  pisarían y perderían tarjetas.
-- **El Inicio del profesor dejó de leer los resultados.** Antes costaba una
-  lectura por clase creada, con todas sus partidas; ahora son 3 lecturas fijas.
-- **`limit()` en las consultas de resultados** (500 por clase, 200 por
-  estudiante) y un aviso cuando se corta, para que una clase con años de historial
-  no se trague la cuota de un día.
+Prefiero escribirlo yo antes de que lo encuentren en una sustentación:
 
-### Lo que quedó sin probar
+- **Ninguna prueba se corrió contra Firestore con sesiones reales.** La
+  verificación de esta entrega fue estática (sintaxis de los `.js`, que cada
+  nombre importado exista en su módulo, que ningún `href`/`src` apunte a un
+  archivo inexistente, que cada `getElementById` tenga su `id`, y las llaves de
+  `firestore.rules`), más pruebas en el navegador de las pantallas nuevas con
+  datos simulados y el test del cálculo de notas. Antes de entregarla al colegio
+  hay que correr el recorrido del §11 con una cuenta real de cada rol. Lo único
+  que puede fallar ahí y no en una prueba estática es un permiso de Firestore,
+  y eso casi siempre significa que faltó publicar `firestore.rules`.
+- El dominio `@skillhouse.edu.co` **no existe**. Los correos son solo
+  identificadores de acceso. Nunca va a llegar un correo de recuperación.
+- Los PINes de 6 dígitos son para niños de sexto grado: cómodos, no seguros.
+- El administrador ve los PINes de todos. Es un requisito del proyecto, no una
+  buena práctica, y se apoya en la ofuscación de §7.
+- No hay servidor, así que no hay Admin SDK: cambiar la clave de otro exige
+  iniciar sesión como ese usuario con su clave actual. Por eso hace falta que el
+  PIN quede registrado. Una cuenta creada a mano en Firebase Console no se puede
+  restablecer desde la plataforma.
+- Un estudiante cuya ficha no tenga `curso` (cuenta escrita a mano en la consola)
+  no puede unirse a ninguna clase: las reglas exigen que el curso coincida, y la
+  app lo avisa en español antes de intentar la escritura.
 
-La verificación de esta entrega fue estática (sintaxis de todos los `.js`, que
-cada `import` nombre por nombre exista en su módulo, que ningún `href`/`src` de
-los HTML apunte a un archivo inexistente, que cada `getElementById` tenga su `id`
-en la página, y las llaves de `firestore.rules`) más una prueba en el navegador
-de las pantallas nuevas con datos simulados y del cálculo de notas.
+## 14. Trabajo en pareja y repo
 
-**No** se probó contra Firestore con sesiones reales — nadie se autenticó como
-administrador, profesor ni estudiante — porque hace falta el PIN de una cuenta de
-cada rol. Antes de entregarla al colegio hay que correr el recorrido de §7. Lo
-que puede fallar ahí y no en una prueba estática es el permiso de Firestore:
-sobre todo la subcolección nueva `grupos/{id}/sala/{uid}`, que exige publicar
-`firestore.rules` de nuevo.
+Todo está en `github.com/naku8758/SkillHouse-2.0`, rama **`main`**. La rama
+`skillhouse-2.0-mejorado` se quedó en el último commit antes de las mejoras
+nuevas (la sala estilo Kahoot, la nota de 1 a 5 y el padrón de usuarios están en
+`main`), así que no se trabaje ahí.
 
-## 9. Repositorio y trabajo en pareja
+Antes de tocar nada, `git pull`. Para subir hace falta un *Personal access
+token* fine-grained (GitHub ya no acepta la contraseña de la cuenta): Settings →
+Developer settings → Personal access tokens → Fine-grained token, con permiso de
+escritura sobre ese repo. Se configura una vez en el gestor de credenciales de tu
+máquina y no se vuelve a escribir. **Nada de `git push --force`**: es un repo de
+dos y el force le pisa el trabajo a la otra persona.
 
-El proyecto está en `github.com/naku8758/SkillHouse-2.0`. La carpeta de trabajo
-es un clon del repositorio, así que se puede editar y commitear sin mover
-archivos de sitio.
+Cosas que ya cambiaron de nombre y conviene saber:
 
-- Las carpetas del repositorio se renombraron con guiones
-  (`interfaz administrador/` → `interfaz-administrador/`) porque todo el código
-  enlaza con guiones. Git lo registra como renombrado, no como borrado.
-- Desaparecieron, reemplazadas por páginas generales: `matematicas.html` (ahora
-  `materia.html?m=matematicas`), `grupos.html`/`juegos-panel.js` del profesor y
-  `juegos-panel.js` del estudiante.
+- Las carpetas se renombraron con guiones (`interfaz administrador/` →
+  `interfaz-administrador/`) porque todo el código enlaza con guiones. Git lo
+  registró como renombrado, no como borrado.
+- `matematicas.html` se fue: ahora es `materia.html?m=matematicas`. Igual
+  `grupos.html` y los dos `juegos-panel.js` viejos, que los reemplazaron páginas
+  generales.
 - `js/games/quiz-data.js`, `puzzle-data.js` y `carrera-data.js` se unificaron en
-  `js/games/contenido-temas.js`, que es la única fuente de preguntas.
+  `js/games/contenido-temas.js`, que hoy es la única fuente de preguntas.
 
-Para la pareja que sigue trabajando:
-
-```bash
-git clone https://github.com/naku8758/SkillHouse-2.0.git
-cd SkillHouse-2.0
-git checkout main                       # aquí está todo el trabajo
-python3 -m http.server 5500            # y abrir http://127.0.0.1:5500
-```
-
-La rama `skillhouse-2.0-mejorado` se quedó en el último commit anterior a estas
-mejoras; la sala de clase, la nota de 1 a 5, el padrón de usuarios y las páginas
-nuevas del administrador están en `main`.
-
-Antes de tocar nada, `git pull`. Para subir cambios hace falta un token de
-acceso personal (GitHub ya no acepta la contraseña de la cuenta):
-*Settings → Developer settings → Personal access tokens → Fine-grained token*,
-con permiso de escritura sobre este repositorio.
+Si vas a agregar una materia, son tres toques: el objeto en `MATERIAS`
+(`js/catalogo.js`), sus 9 temas con contenido en `js/games/contenido-temas.js`, y
+ya: la portada, los filtros, los formularios de clase y el padrón de Usuarios leen
+de ahí, así que salen solos.
 
 ---
 
-Desarrollado por Aprendiz Garzón Juan y Tovar Sara — Técnico de Programación de
-Software, CENIGRAF.
+Proyecto de grado — Técnico de Programación de Software.
+Aprendiz Garzón Juan y Tovar Sara.

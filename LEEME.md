@@ -604,9 +604,13 @@ Para la pareja que sigue trabajando:
 ```bash
 git clone https://github.com/naku8758/SkillHouse-2.0.git
 cd SkillHouse-2.0
-git checkout skillhouse-2.0-mejorado   # la rama con estas mejoras
+git checkout main                       # aquí está todo el trabajo
 python3 -m http.server 5500            # y abrir http://127.0.0.1:5500
 ```
+
+La rama `skillhouse-2.0-mejorado` se quedó en el último commit anterior a estas
+mejoras; la sala de clase, la nota de 1 a 5, el padrón de usuarios y las páginas
+nuevas del administrador están en `main`.
 
 Antes de tocar nada, `git pull`. Para subir cambios hace falta un token de
 acceso personal (GitHub ya no acepta la contraseña de la cuenta):

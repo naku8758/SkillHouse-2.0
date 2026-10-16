@@ -5,7 +5,7 @@
    un cielo nocturno de aprendizaje ("aprender es hacer brillar algo").
    ===================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
 :root{
   /* --- Cielo / marca --- */
@@ -57,6 +57,41 @@
   /* --- Tipografía --- */
   --sh-font-display:'Baloo 2', 'Fredoka One', cursive;
   --sh-font-body:'Poppins', sans-serif;
+  --sh-font-mono:'IBM Plex Mono', ui-monospace, monospace;
+
+  /* --- Alias semánticos de los componentes (panel.css / juegos.css) ---
+     No introducen colores nuevos: cada uno apunta a la paleta de arriba.
+     Están aquí para que la carcasa de los paneles se pueda reutilizar en
+     otra marca cambiando únicamente este bloque. */
+  --sh-accent:var(--sh-indigo);
+  --sh-accent-dark:#4626D1;
+  --sh-accent-soft:var(--sh-indigo-light);
+  --sh-accent-tint:rgba(91,46,255,.10);
+  --sh-accent-ring:rgba(91,46,255,.28);
+  --sh-on-accent:#FFFFFF;
+
+  --sh-rojo:#B3261E;          /* solo peligro: borrar, cerrar, error */
+  --sh-rojo-hondo:#8E1D17;
+  --sh-verde:#0E9E72;
+  --sh-verde-vivo:var(--sh-mint);
+  --sh-oro:#D97706;
+  --sh-oro-claro:var(--sh-amber);
+  --sh-celeste:#7DD3E8;
+  --sh-azul:#0E7A9C;
+
+  --sh-papel:var(--sh-cloud-50);
+  --sh-linea:#E1E5F5;
+  --sh-linea-fuerte:#C7CDEB;
+
+  --sh-night-1:var(--sh-navy-950);
+  --sh-night-2:var(--sh-navy-900);
+  --sh-night-line:rgba(255,255,255,.12);
+  --sh-night-grad:var(--sh-grad-night);
+  --sh-veil:rgba(8,11,33,.55);
+
+  --sh-danger:var(--sh-rojo);
+  --sh-exito:#0E7A50;
+  --sh-aviso:#8A6116;
 
   /* --- Movimiento --- */
   --sh-ease: cubic-bezier(.22,1,.36,1);
@@ -129,32 +164,33 @@ summary:focus-visible{
 }
 
 /* Utilidad: elementos que se revelan al hacer scroll (activada por js/ui.js).
-   Si el JS no carga por cualquier motivo, el contenido sigue visible
-   igualmente porque el estado inicial no depende de JS aquí. */
-.sh-reveal{
+   El estado inicial sólo se aplica cuando js/ui.js ya puso la clase `sh-js`
+   en <html>: así, si el archivo falla o está bloqueado, el contenido se ve
+   igual y nadie se queda mirando una página en blanco. */
+html.sh-js .sh-reveal{
   opacity:0;
-  transform:translateY(24px);
-  transition: opacity .7s var(--sh-ease), transform .7s var(--sh-ease);
+  transform:translateY(14px);
+  transition: opacity .5s var(--sh-ease), transform .5s var(--sh-ease);
 }
-.sh-reveal.is-visible{
+html.sh-js .sh-reveal.is-visible{
   opacity:1;
-  transform:translateY(0);
+  transform:none;
 }
-.sh-reveal-stagger > *{
+html.sh-js .sh-reveal-stagger > *{
   opacity:0;
-  transform:translateY(24px);
-  transition: opacity .6s var(--sh-ease), transform .6s var(--sh-ease);
+  transform:translateY(14px);
+  transition: opacity .45s var(--sh-ease), transform .45s var(--sh-ease);
 }
-.sh-reveal-stagger.is-visible > *{
+html.sh-js .sh-reveal-stagger.is-visible > *{
   opacity:1;
-  transform:translateY(0);
+  transform:none;
 }
-.sh-reveal-stagger.is-visible > *:nth-child(1){ transition-delay:.03s; }
-.sh-reveal-stagger.is-visible > *:nth-child(2){ transition-delay:.11s; }
-.sh-reveal-stagger.is-visible > *:nth-child(3){ transition-delay:.19s; }
-.sh-reveal-stagger.is-visible > *:nth-child(4){ transition-delay:.27s; }
-.sh-reveal-stagger.is-visible > *:nth-child(5){ transition-delay:.35s; }
-.sh-reveal-stagger.is-visible > *:nth-child(6){ transition-delay:.43s; }
+html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(1){ transition-delay:.03s; }
+html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(2){ transition-delay:.09s; }
+html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(3){ transition-delay:.15s; }
+html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(4){ transition-delay:.21s; }
+html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(5){ transition-delay:.27s; }
+html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(6){ transition-delay:.33s; }
 
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after{

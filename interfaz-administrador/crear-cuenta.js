@@ -29,7 +29,7 @@ const inputEmail = document.getElementById("input-email");
 const inputRol = document.getElementById("input-rol");
 const inputPassword = document.getElementById("input-password");
 const filaProfesor = document.getElementById("fila-profesor");
-const selectMateria = document.getElementById("select-materia");
+const cajaMaterias = document.getElementById("materias-crear");
 const campoCursoDirigido = document.getElementById("campo-curso-dirigido");
 const selectCursoDirigido = document.getElementById("select-curso-dirigido");
 const campoCursoEstudiante = document.getElementById("campo-curso-estudiante");
@@ -76,9 +76,18 @@ function formatearFecha(timestamp) {
 
 /* ---------------------- Selects ---------------------- */
 
-selectMateria.innerHTML =
-  `<option value="">Selecciona una materia</option>` +
-  MATERIAS.map((m) => `<option value="${escapar(m.id)}">${escapar(m.nombre)}</option>`).join("");
+// Un profesor puede dictar más de una materia, y `profesores/{uid}.materias`
+// ya es un arreglo: con un <select> de una sola opción el arreglo nunca tenía
+// más de un elemento y el padrón agrupaba mentiendo.
+cajaMaterias.innerHTML = MATERIAS.map(
+  (m) => `<label class="marca-materia">
+    <input type="checkbox" value="${escapar(m.id)}">
+    <span>${escapar(m.icono)} ${escapar(m.nombre)}</span>
+  </label>`
+).join("");
+
+const materiasElegidas = () =>
+  [...cajaMaterias.querySelectorAll("input:checked")].map((i) => i.value);
 
 function poblarCursos(select, { incluirVacio }) {
   const opciones = cursos.map((c) => `<option value="${escapar(c.codigo)}">${escapar(c.codigo)} — ${escapar(c.nombre)}</option>`);
@@ -116,7 +125,7 @@ function actualizarCampos() {
   campoCursoDirigido.style.display = rol === "director" ? "block" : "none";
   campoCursoEstudiante.style.display = rol === "estudiante" ? "block" : "none";
 
-  if (!esDocente) selectMateria.value = "";
+  if (!esDocente) cajaMaterias.querySelectorAll("input:checked").forEach((i) => (i.checked = false));
   if (rol !== "director") selectCursoDirigido.value = "";
   if (rol !== "estudiante") selectCursoEstudiante.value = "";
 }
@@ -170,8 +179,9 @@ form.addEventListener("submit", async (evento) => {
     perfil = { curso, creadoPorUid: sesion.uid, creadoPorNombre: sesion.username };
     detalle = `Curso ${curso}`;
   } else if (rol === "profesor") {
-    const materia = selectMateria.value;
-    if (!materia) return mostrarMensaje(errorEl, "Elige la materia que dicta este profesor.");
+    const materias = materiasElegidas();
+    if (!materias.length) return mostrarMensaje(errorEl, "Marca por qué materia dicta este profesor.");
+    const nombreMaterias = materias.map((id) => NOMBRE_MATERIA[id]).join(" y ");
 
     if (esDirector) {
       const curso = selectCursoDirigido.value;
@@ -179,11 +189,11 @@ form.addEventListener("submit", async (evento) => {
       if (cursos.find((c) => c.codigo === curso && c.directorUid)) {
         return mostrarMensaje(errorEl, `El curso ${curso} ya tiene un director asignado.`);
       }
-      perfil = { tipoProfesor: "director", materias: [materia], curso };
-      detalle = `Director del ${curso} · ${NOMBRE_MATERIA[materia]}`;
+      perfil = { tipoProfesor: "director", materias, curso };
+      detalle = `Director del ${curso} · ${nombreMaterias}`;
     } else {
-      perfil = { tipoProfesor: "estandar", materias: [materia] };
-      detalle = NOMBRE_MATERIA[materia];
+      perfil = { tipoProfesor: "estandar", materias };
+      detalle = nombreMaterias;
     }
   } else {
     perfil = {};

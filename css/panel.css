@@ -1,0 +1,552 @@
+/* =====================================================================
+   SKILLHOUSE · CARCASA DE LOS PANELES
+   Columna lateral, barra superior, tarjetas de área y pie que comparten
+   las tres interfaces (estudiante, profesor y administrador). Un solo
+   archivo para los tres roles: lo único que cambia entre ellos es el
+   menú, no el aspecto.
+
+   Ningún color se escribe aquí: todos salen de tokens.css, y los que son
+   de marca pasan por los alias (--sh-accent, --sh-rojo, --sh-verde…), de
+   modo que cambiar de identidad es cambiar solo ese archivo.
+
+   Requiere ../css/tokens.css y ../css/juegos.css cargados antes.
+   ===================================================================== */
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+    /* El panel es herramienta de trabajo: radio corto y sombra discreta sólo
+       aquí. tokens.css conserva la forma redondeada de la portada y de los
+       juegos, que son la cara lúdica de la marca. */
+    --sh-r-sm:6px;
+    --sh-r-md:10px;
+    --sh-r-lg:15px;
+    --sh-r-xl:20px;
+    --sh-shadow-sm:0 2px 8px rgba(18,20,60,.07);
+
+    font-family:var(--sh-font-body);
+    background:var(--sh-cloud-50);
+    color:var(--sh-ink-900);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+
+.contenedor{
+    display:flex;
+    flex:1;
+}
+
+/* =====================================
+   COLUMNA LATERAL
+   Estrecha y oscura, con un hilo de separación. El activo se marca con
+   una barra dorada por dentro: nada de botones inflados ni resplandor.
+===================================== */
+.sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:var(--sh-night-1);
+    border-right:1px solid var(--sh-night-line);
+    color:var(--sh-on-dark);
+    padding:18px 0;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+}
+
+.logo{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    align-items:center;
+    column-gap:10px;
+    text-align:left;
+    padding:0 18px 16px;
+    margin-bottom:12px;
+    border-bottom:1px solid var(--sh-night-line);
+}
+.logo h2{
+    grid-column:2;
+    font-family:var(--sh-font-display);
+    font-weight:600;
+    font-size:.98rem;
+    line-height:1.15;
+    letter-spacing:-.01em;
+    color:var(--sh-on-dark);
+}
+.logo p{
+    grid-column:2;
+    margin-top:3px;
+    font-size:.64rem;
+    font-weight:600;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--sh-on-dark-soft);
+}
+
+.menu{
+    list-style:none;
+    padding:0 10px;
+}
+.menu li{ margin:1px 0; }
+.menu a{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    text-decoration:none;
+    color:var(--sh-on-dark-soft);
+    font-weight:500;
+    font-size:.85rem;
+    padding:8px 12px;
+    border-radius:var(--sh-r-sm);
+    transition:background var(--sh-fast), color var(--sh-fast);
+}
+.menu a:hover{
+    background:rgba(255,255,255,.05);
+    color:var(--sh-on-dark);
+}
+.menu a.is-active{
+    background:rgba(233,180,52,.11);
+    color:#fff;
+    font-weight:600;
+    box-shadow:inset 2px 0 0 var(--sh-oro-claro);
+}
+.menu a#logout-link{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--sh-night-line);
+    border-radius:0;
+    font-size:.82rem;
+}
+
+/* =====================================
+   ÁREA DE TRABAJO
+===================================== */
+.contenido{
+    flex:1;
+    padding:26px 30px 44px;
+    min-width:0;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+    padding-bottom:14px;
+    margin-bottom:26px;
+    border-bottom:1px solid var(--sh-linea);
+    animation:sh-fade-up .5s var(--sh-ease) both;
+}
+.topbar h1{
+    font-family:var(--sh-font-display);
+    color:var(--sh-ink-900);
+    font-size:1.45rem;
+    font-weight:600;
+    letter-spacing:-.015em;
+}
+.topbar .admin-info{
+    background:var(--sh-white);
+    padding:6px 12px;
+    border:1px solid var(--sh-linea);
+    border-radius:var(--sh-r-sm);
+    font-weight:600;
+    font-size:.82rem;
+    color:var(--sh-ink-600);
+}
+
+/* =====================================
+   BÚSQUEDA
+===================================== */
+.search-bar{
+    width:280px;
+    max-width:100%;
+    height:34px;
+    padding:0 12px;
+    border:1px solid var(--sh-linea-fuerte);
+    border-radius:var(--sh-r-sm);
+    background:var(--sh-white);
+    font-size:.88rem;
+    font-family:var(--sh-font-body);
+    color:var(--sh-ink-900);
+    outline:none;
+    transition:border-color var(--sh-fast);
+}
+.search-bar:focus{
+    border-color:var(--sh-accent);
+    box-shadow:0 0 0 3px var(--sh-accent-tint);
+}
+
+/* Casillas de materia (crear usuario). Mismo alto y radio que los selectores
+   de al lado para que la fila no se deshaga, y en dos columnas porque el
+   catálogo tiene pocas materias y una lista larga se ve suelta. */
+.marcas-materias{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    min-height:34px;
+    align-items:center;
+}
+.marca-materia{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    height:34px;
+    padding:0 11px;
+    border:1px solid var(--sh-linea-fuerte);
+    border-radius:var(--sh-r-sm);
+    background:var(--sh-white);
+    font-size:.86rem;
+    color:var(--sh-ink-900);
+    cursor:pointer;
+    user-select:none;
+    transition:border-color var(--sh-fast), background var(--sh-fast);
+}
+.marca-materia:hover{ border-color:var(--sh-accent); }
+.marca-materia:has(input:checked){
+    border-color:var(--sh-accent);
+    background:var(--sh-accent-tint);
+}
+.marca-materia input{ accent-color:var(--sh-accent); margin:0; }
+
+/* Código de curso autogenerado. Es un dato de lectura, no un campo: se dibuja
+   como los inputs de su fila para que la vista previa del formulario no baile,
+   y en monoespaciada porque son tres dígitos que hay que dictar sin error. */
+.codigo-curso{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:34px;
+    min-width:78px;
+    padding:0 12px;
+    border:1px dashed var(--sh-linea-fuerte);
+    border-radius:var(--sh-r-sm);
+    background:var(--sh-cloud-50);
+    font-family:var(--sh-font-mono);
+    font-size:1rem;
+    font-weight:700;
+    letter-spacing:.18em;
+    color:var(--sh-ink-900);
+}
+
+/* Borrar cuenta (padrón del administrador). Es la única acción destructiva del
+   panel, así que se ve distinta del resto de botones sin gritar: contorno rojo
+   sobre blanco y relleno solo al pasar el cursor. */
+.btn-borrar{
+    background:var(--sh-white);
+    color:var(--sh-rojo);
+    border:1px solid var(--sh-rojo);
+    height:34px;
+    padding:0 12px;
+    border-radius:var(--sh-r-sm);
+    font-family:var(--sh-font-body);
+    font-size:.8rem;
+    font-weight:700;
+    line-height:1;
+    cursor:pointer;
+    transition:background var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease);
+}
+.btn-borrar:hover{ background:var(--sh-rojo); color:var(--sh-white); }
+.btn-borrar:disabled{ opacity:.5; cursor:progress; }
+
+/* =====================================
+   TARJETAS DE ÁREA, CURSO Y SALA
+===================================== */
+.materias-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(232px, 1fr));
+    gap:14px;
+}
+.materias-grid--destacada{
+    grid-template-columns:minmax(240px, 340px);
+}
+
+.materia-card{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+    background:var(--sh-white);
+    border:1px solid var(--sh-linea);
+    border-top:2px solid var(--sh-accento, var(--sh-linea-fuerte));
+    border-radius:var(--sh-r-md);
+    color:var(--sh-ink-900);
+    text-align:left;
+    text-decoration:none;
+    cursor:pointer;
+    padding:16px 18px;
+    transition:border-color var(--sh-fast) var(--sh-ease), box-shadow var(--sh-fast) var(--sh-ease);
+}
+.materia-card:hover{
+    border-color:var(--sh-linea-fuerte);
+    border-top-color:var(--sh-accento, var(--sh-linea-fuerte));
+    box-shadow:var(--sh-shadow-sm);
+}
+.materia-card h3{
+    font-family:var(--sh-font-display);
+    font-size:1.02rem;
+    font-weight:600;
+    letter-spacing:-.01em;
+    line-height:1.3;
+}
+.materia-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:.73rem;
+    font-weight:600;
+    letter-spacing:.02em;
+    color:var(--sh-accento, var(--sh-ink-600));
+}
+.materia-tag::before{
+    content:"";
+    width:4px; height:4px;
+    border-radius:50%;
+    background:currentColor;
+    opacity:.6;
+}
+/* Tercera línea de las tarjetas de curso: nombre y conteos. */
+.curso-datos{
+    font-size:.79rem;
+    line-height:1.45;
+    color:var(--sh-ink-400);
+}
+/* Aviso de acción dentro de la tarjeta. La tarjeta entera es el enlace,
+   así que esto no es un botón: dice qué va a pasar al hacer click. */
+.curso-cta{
+    margin-top:6px;
+    font-size:.78rem;
+    font-weight:600;
+    color:var(--sh-accento, var(--sh-ink-600));
+    border-bottom:1px solid transparent;
+}
+.materia-card:hover .curso-cta{ border-bottom-color:currentColor; }
+
+/* Casillas del panel "Duplicar en otros cursos". */
+.curso-check{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:8px 12px;
+    margin-bottom:5px;
+    border:1px solid var(--sh-linea);
+    border-radius:var(--sh-r-sm);
+    font-size:.86rem;
+    font-weight:500;
+    cursor:pointer;
+    background:var(--sh-white);
+}
+.curso-check:hover{ border-color:var(--sh-linea-fuerte); }
+.curso-check input{ width:16px; height:16px; accent-color:var(--sh-accent); cursor:pointer; }
+
+/* =====================================
+   ÁREAS "PRÓXIMAMENTE" (aún sin contenido)
+===================================== */
+.materias-proximamente-titulo{
+    margin:30px 0 14px;
+    font-family:var(--sh-font-display);
+    font-size:.95rem;
+    color:var(--sh-ink-400);
+    font-weight:600;
+    letter-spacing:.01em;
+}
+.materia-card--proximamente{
+    cursor:default;
+    background:var(--sh-cloud-50);
+    border-style:dashed;
+    border-top-style:solid;
+    opacity:.75;
+    pointer-events:none;
+}
+.materia-card--proximamente .materia-tag{ color:var(--sh-ink-400); }
+
+/* =====================================
+   ACENTO POR ÁREA
+   Cada área tiene un color propio, tomado del final de los degradados que
+   la marca ya usaba para sus tarjetas. Lo consume .materia-card a través
+   de --sh-accento, así que agregar una materia nueva es una línea aquí.
+===================================== */
+.card1{ --sh-accento:#C1121F; }  /* Matemáticas            · rojo de marca */
+.card2{ --sh-accento:#131B7C; }  /* Lengua Castellana      · azul noche */
+.card3{ --sh-accento:#0E8F5E; }  /* Ciencias Naturales     · verde */
+.card4{ --sh-accento:#7C0BA8; }  /* Inglés                 · magenta */
+.card5{ --sh-accento:#B8790D; }  /* Ciencias Sociales      · ámbar */
+.card6{ --sh-accento:#5B2EFF; }  /* Tecnología             · índigo */
+.card7{ --sh-accento:#C4187C; }  /* Educación Artística    · rosa fuerte */
+.card8{ --sh-accento:#0E7A9C; }  /* Educación Física       · cian oscuro */
+.card9{ --sh-accento:#5B3BA8; }  /* Ética y Valores        · violeta */
+
+/* =====================================
+   TARJETAS DE RESUMEN (administrador)
+===================================== */
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:14px;
+    margin-bottom:26px;
+}
+.card{
+    background:var(--sh-white);
+    padding:18px 20px;
+    border-radius:var(--sh-r-md);
+    border:1px solid var(--sh-linea);
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+.card .card-icono{
+    width:38px; height:38px;
+    border-radius:var(--sh-r-sm);
+    border:1px solid var(--sh-linea);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.05rem;
+    background:var(--sh-cloud-50);
+    flex-shrink:0;
+}
+.card h2{
+    color:var(--sh-ink-900);
+    font-family:var(--sh-font-display);
+    font-size:1.5rem;
+    font-weight:600;
+    letter-spacing:-.015em;
+}
+.card p{
+    color:var(--sh-ink-400);
+    margin-top:1px;
+    font-size:.82rem;
+}
+
+/* =====================================
+   BLOQUE CON TABLA
+===================================== */
+.actividad{
+    background:var(--sh-white);
+    padding:20px 22px;
+    border-radius:var(--sh-r-md);
+    border:1px solid var(--sh-linea);
+}
+.actividad h2{
+    color:var(--sh-ink-900);
+    font-family:var(--sh-font-display);
+    font-size:1.05rem;
+    font-weight:600;
+    margin-bottom:14px;
+}
+.actividad table{
+    width:100%;
+    border-collapse:collapse;
+}
+.actividad thead{
+    background:var(--sh-cloud-50);
+    color:var(--sh-ink-600);
+}
+.actividad th{
+    padding:8px 12px;
+    text-align:left;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    font-weight:600;
+    border-bottom:1px solid var(--sh-linea-fuerte);
+}
+.actividad td{
+    padding:9px 12px;
+    border-bottom:1px solid var(--sh-linea);
+    color:var(--sh-ink-600);
+    font-size:.86rem;
+}
+.actividad tbody tr{ transition:background var(--sh-fast); }
+.actividad tbody tr:hover{ background:var(--sh-cloud-50); }
+.actividad tbody tr:last-child td{ border-bottom:none; }
+
+/* =====================================
+   PADRÓN DE USUARIOS (usuarios.html)
+   Bloques por curso y por materia, cada uno con su tabla. El conteo va
+   pegado al título para leer de reojo cuánto hay en cada grupo.
+===================================== */
+.padron-seccion{ margin-top:22px; }
+.padron-seccion > h2{
+    font-family:var(--sh-font-display);
+    color:var(--sh-ink-900);
+    font-size:1.02rem;
+    font-weight:600;
+    margin-bottom:4px;
+}
+.padron-seccion > .panel-sub{ margin-bottom:12px; }
+.padron-bloque{
+    border:1px solid var(--sh-linea);
+    border-radius:var(--sh-r-md);
+    padding:12px 14px 4px;
+    margin-bottom:14px;
+    background:var(--sh-white);
+}
+.padron-titulo{
+    display:flex;
+    align-items:baseline;
+    gap:9px;
+    flex-wrap:wrap;
+    font-family:var(--sh-font-display);
+    font-size:.95rem;
+    font-weight:600;
+    color:var(--sh-ink-900);
+    margin-bottom:8px;
+}
+.padron-conteo{
+    font-family:var(--sh-font-body);
+    font-size:.75rem;
+    font-weight:600;
+    color:var(--sh-ink-400);
+}
+.tabla-envoltura{ overflow-x:auto; }
+.pin-celda{
+    font-family:var(--sh-font-mono);
+    font-size:.88rem;
+    letter-spacing:.16em;
+    font-weight:600;
+    color:var(--sh-ink-900);
+}
+
+/* =====================================
+   PIE
+===================================== */
+footer{
+    padding:18px 5%;
+    background:var(--sh-night-1);
+    border-top:1px solid var(--sh-night-line);
+    text-align:center;
+    font-size:.75rem;
+    color:var(--sh-on-dark-soft);
+}
+footer .link-ayuda{
+    color:var(--sh-oro-claro);
+    font-weight:600;
+    text-decoration:none;
+}
+footer .link-ayuda:hover{ color:#fff; }
+
+/* =====================================
+   RESPONSIVE
+   Por debajo de 900 px la columna pasa a una tira horizontal arriba.
+===================================== */
+@media(max-width:900px){
+    .contenedor{ flex-direction:column; }
+    .sidebar{
+        width:100%;
+        height:auto;
+        position:relative;
+        padding:14px 0 10px;
+        border-right:none;
+        border-bottom:1px solid var(--sh-night-line);
+    }
+    .logo{ border-bottom:none; margin-bottom:4px; padding-bottom:8px; }
+    .menu{ display:flex; flex-wrap:wrap; gap:2px; padding:0 10px; }
+    .menu a.is-active{ box-shadow:inset 0 -2px 0 var(--sh-oro-claro); }
+    .menu a#logout-link{ margin-top:0; padding-top:8px; border-top:none; }
+    .contenido{ padding:22px 18px 36px; }
+    .topbar{ flex-direction:column; align-items:flex-start; }
+    .search-bar{ width:100%; }
+    .materias-grid{ grid-template-columns:1fr; }
+    .actividad{ overflow-x:auto; }
+    .actividad table{ white-space:nowrap; }
+}

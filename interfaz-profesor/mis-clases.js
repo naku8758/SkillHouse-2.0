@@ -438,6 +438,9 @@ async function cargarGruposCon(promesa) {
       const tema = obtenerTema(grupo.materia, grupo.tema);
       const materia = obtenerMateria(grupo.materia);
       const estado = estadoDeSala(grupo);
+      // Un director de curso no duplica: por diseño dirige uno solo, así que el
+      // panel de duplicación siempre le saldría vacío.
+      const puedeDuplicar = cuenta?.datos.tipoProfesor !== "director";
       return `
       <div class="grupo-card grupo-card--${escapar(grupo.juego)}">
         <div class="grupo-header">
@@ -459,7 +462,7 @@ async function cargarGruposCon(promesa) {
           <button class="btn-secundario" data-accion="estudiantes" data-id="${escapar(grupo.id)}" data-nombre="${escapar(grupo.nombre)}">Estudiantes</button>
           <button class="btn-secundario" data-accion="resultados" data-id="${escapar(grupo.id)}" data-nombre="${escapar(grupo.nombre)}">Ver resultados</button>
           <button class="btn-secundario" data-accion="editar" data-id="${escapar(grupo.id)}">Editar</button>
-          <button class="btn-secundario" data-accion="duplicar" data-id="${escapar(grupo.id)}">Duplicar en...</button>
+          ${puedeDuplicar ? `<button class="btn-secundario" data-accion="duplicar" data-id="${escapar(grupo.id)}">Duplicar en...</button>` : ""}
           <button class="btn-secundario" data-accion="alternar" data-id="${escapar(grupo.id)}" data-activo="${grupo.activo}">${grupo.activo ? "Desactivar" : "Activar"}</button>
           <button class="btn-secundario" data-accion="eliminar" data-id="${escapar(grupo.id)}">Eliminar</button>
         </div>

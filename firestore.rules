@@ -106,7 +106,12 @@ service cloud.firestore {
       allow update: if estaAutenticado()
                     && (esAdmin() || request.auth.uid == uid)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clave']);
-      allow delete: if false;
+
+      // Borrar cuentas es tarea del administrador, desde su panel de Usuarios.
+      // js/credenciales.js:eliminarCuenta firma primero como el interesado (con
+      // el PIN que la plataforma le guardó) para borrarlo también de Firebase
+      // Auth, y luego viene a quitar este índice.
+      allow delete: if esAdmin();
     }
 
     // ------------------- Estudiantes -------------------
@@ -137,17 +142,39 @@ service cloud.firestore {
             && dirigeEseCurso(request.resource.data.curso))
       );
 
-      // Personalización del perfil: avatar y color. Nada más.
-      allow update: if estaAutenticado() && request.auth.uid == uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']);
-      allow delete: if false;
+      allow update: if estaAutenticado() && (
+        // Personalización del perfil: avatar y color. Nada más.
+        (request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']))
+        // El "plan b" del curso (js/cursos.js:matricularEnCurso): el propio
+        // estudiante escribe el código que le pasó su director, pero solo para
+        // RELLENAR un curso vacío. Si pudiera moverse entre dos cursos que ya
+        // existen, bastaría con que se sepa el código de 602 para meterse en las
+        // clases de otro grado. Y el curso tiene que existir de verdad.
+        || (request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso'])
+          && (not ('curso' in resource.data) or resource.data.curso == '')
+          && exists(/databases/$(database)/documents/cursos/$(request.resource.data.curso)))
+        // El administrador sí corrige un curso mal puesto: es el único que ve
+        // el padrón completo y desde su panel de Usuarios hace el cambio.
+        || (esAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso']))
+      );
+      allow delete: if esAdmin();
 
       // Historial personal de partidas (copia de grupos/*/resultados).
       match /resultados/{resultadoId} {
-        allow read: if estaAutenticado() && request.auth.uid == uid;
+        // El admin también las lee: es la única forma de borrarlas junto con la
+        // cuenta (js/credenciales.js:eliminarCuenta), y ya es el único que puede
+        // ver el historial de un estudiante desde Reportes.
+        allow read: if estaAutenticado() && (request.auth.uid == uid || esAdmin());
         allow create: if estaAutenticado() && request.auth.uid == uid
                       && request.resource.data.uid == uid;
-        allow update, delete: if false;
+        // Al borrar la cuenta se va su historial: es el derecho de petición de
+        // datos de un menor (Ley 1581 de 2012), y Firestore no borra
+        // subdocumentos en cascada.
+        allow delete: if esAdmin();
+        allow update: if false;
       }
     }
 
@@ -172,7 +199,9 @@ service cloud.firestore {
         || (esAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso', 'materias', 'tipoProfesor']))
       );
-      allow delete: if false;
+      // Borrar a un profesor se hace desde el panel del administrador; eso
+      // arrastra sus clases, que se eliminan en el mismo lote (grupos/).
+      allow delete: if esAdmin();
     }
 
     match /administradores/{uid} {
@@ -217,9 +246,12 @@ service cloud.firestore {
         && request.resource.data.curso != ''
         && (docProfesor().tipoProfesor != 'director' || dirigeEseCurso(request.resource.data.curso));
 
-      // Solo el profesor dueño puede modificar o borrar su clase.
-      allow update: if esDuenoDelGrupo(grupoId);
-      allow delete: if esDuenoDelGrupo(grupoId);
+      // Solo el profesor dueño puede modificar o borrar su clase. El
+      // administrador también: al borrar una cuenta hay que sacarla de
+      // `miembrosUids` de las clases ajenas y llevarse por completo las clases
+      // del profesor que se va (js/credenciales.js:eliminarCuenta).
+      allow update: if esDuenoDelGrupo(grupoId) || esAdmin();
+      allow delete: if esDuenoDelGrupo(grupoId) || esAdmin();
 
       // Ficha del estudiante dentro de la clase. La escribe solo el profesor al
       // aceptar; el alumno puede sacarse a sí mismo de ella.
@@ -232,7 +264,7 @@ service cloud.firestore {
       match /miembros/{uid} {
         allow get, list: if esDuenoDelGrupo(grupoId) || esAdmin();
         allow create, update: if esDuenoDelGrupo(grupoId);
-        allow delete: if esDuenoDelGrupo(grupoId) || request.auth.uid == uid;
+        allow delete: if esDuenoDelGrupo(grupoId) || esAdmin() || request.auth.uid == uid;
       }
 
       // Presencia en la sala de espera (js/sala.js). Un documento por
@@ -255,8 +287,9 @@ service cloud.firestore {
           && docGrupo(grupoId).activo == true;
 
         // El profesor vacía la sala entre sesiones; el estudiante puede borrar
-        // su propio cartel.
-        allow delete: if esDuenoDelGrupo(grupoId) || request.auth.uid == uid;
+        // su propio cartel; el administrador limpia la presencia de una cuenta
+        // que se borra.
+        allow delete: if esDuenoDelGrupo(grupoId) || esAdmin() || request.auth.uid == uid;
       }
 
       // Solicitudes de ingreso: el estudiante crea la suya, el profesor la
@@ -274,7 +307,7 @@ service cloud.firestore {
           && request.resource.data.estado == 'pendiente'
           && docGrupo(grupoId).activo == true
           && comparteCursoConElGrupo(grupoId, uid);
-        allow delete: if estaAutenticado() && (request.auth.uid == uid || esDuenoDelGrupo(grupoId));
+        allow delete: if estaAutenticado() && (request.auth.uid == uid || esDuenoDelGrupo(grupoId) || esAdmin());
       }
 
       match /resultados/{resultadoId} {
@@ -289,7 +322,10 @@ service cloud.firestore {
         allow create: if estaAutenticado()
           && request.resource.data.uid == request.auth.uid
           && esMiembro(grupoId, request.auth.uid);
-        allow update, delete: if false;
+        allow update: if false;
+        // Las notas de una cuenta que se borra se borran con ella (petición de
+        // datos de menor, Ley 1581 de 2012).
+        allow delete: if esAdmin();
       }
     }
 
@@ -333,7 +369,8 @@ service cloud.firestore {
       // El administrador solo mueve el estado; el texto del pedido no se reescribe.
       allow update: if esAdmin()
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'resueltaEn']);
-      allow delete: if false;
+      // Al borrarse una cuenta se van también sus pedidos pendientes.
+      allow delete: if esAdmin();
     }
   }
 }

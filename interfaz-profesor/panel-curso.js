@@ -130,6 +130,16 @@ document.getElementById("btn-copiar").addEventListener("click", (e) => {
   copiarAlPortapapeles(credenciales.comoTexto(), e.currentTarget);
 });
 
+/* ---------------------- Código del curso (plan b) ---------------------- */
+// El mismo código que ve el administrador en Cursos. El director lo reparte y un
+// estudiante lo usa en Mi Perfil para reenganchar su curso si se quedó sin él.
+const cajaCodigo = document.getElementById("caja-codigo-curso");
+const vistoCodigo = document.getElementById("codigo-curso");
+
+document.getElementById("btn-copiar-curso").addEventListener("click", (e) => {
+  copiarAlPortapapeles(vistoCodigo.textContent, e.currentTarget);
+});
+
 /* ---------------------- Listas ---------------------- */
 
 let estudiantes = [];
@@ -236,6 +246,9 @@ suscribirSesion("profesor", async (c) => {
 
   curso = await obtenerCurso(c.datos.curso).catch(() => null);
   const codigo = c.datos.curso;
+
+  vistoCodigo.textContent = codigo;
+  cajaCodigo.style.display = "block";
 
   document.getElementById("etiqueta-curso").textContent = `el curso ${codigo}`;
   document.getElementById("titulo-curso").textContent = `Curso ${codigo}`;

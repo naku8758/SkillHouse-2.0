@@ -78,25 +78,41 @@ deja en la página con un cartel de "Reintentar"). La sesión no se toca.
 
 Es el dueño de la plataforma. Lo que hace:
 
-- **Crear los cursos** (601, 602...) y ponerle un director a cada uno.
+- **Crear los cursos**: solo pone grado, letra de grupo y año. El código lo arma
+  la plataforma (6 + A = **601**, 6 + B = **602**…) porque es el ID del documento
+  y a la vez la referencia que usan estudiantes y clases; nadie lo teclea y por
+  eso no se puede escribir un curso repetido o con otra forma. En la tabla de
+  Cursos cada fila tiene su botón **Copiar código**, que es el que se le pasa al
+  director. Ponerle un director a cada curso también se hace ahí.
 - **Crear cuentas**: estudiante, profesor, director o administrador, con materia
   y curso. Le autogenera el correo y el PIN, y le muestra la clave una sola vez
   para copiarla o descargar el CSV.
-- **👥 Usuarios**: el padrón de todas las cuentas. Esto lo hice en esta última
-  entrega y es la pantalla más useful del panel. Cruza la colección `usuarios`
+- **👥 Usuarios**: el padrón de todas las cuentas. Cruza la colección `usuarios`
   con la ficha de rol, así que es la única que te dice si una cuenta está de
   verdad lista para entrar. No es una tabla plana: los estudiantes salen
   **agrupados por curso** (y el título de cada bloque dice quién es el director
   de ese curso) y los profesores **agrupados por la materia que dan**. Si un
   profe da dos materias aparece en los dos bloques, que es como se lee un
-  directorio de colegio real. Cada fila muestra el **PIN** de esa cuenta, y tiene
+  directorio real. Cada fila muestra el **PIN** de esa cuenta, y tiene
   un botón para ocultarlos (por si compartes pantalla en una reunión) y un botón
-  "Nueva clave" para resetearla sin irse a otra página. Filtros por rol, por
-  curso y por materia, buscador, "solo con fallas" y exportar CSV.
-  Ojo con el CSV: trae las claves, no lo mandes por chat.
+  "Nueva clave" para resetearla sin irse a otra página. Filtros por **rol, año,
+  curso y materia**, buscador, "solo con fallas" y exportar CSV. El filtro de
+  año y el de curso se reordenan solos según el rol que elijas, y un curso que
+  acabas de crear —aunque no tenga nadie— aparece igual en la lista.
+  En la fila de un estudiante el **Curso** es un selector: desde ahí lo mueves
+  de curso sin borrar la cuenta. Ojo con el CSV: trae las claves, no lo mandes
+  por chat.
+- **Borrar cualquier cuenta, incluidos otros administradores.** El botón
+  **Borrar** está en cada fila de 👥 Usuarios, pide dos confirmaciones (la
+  segunda escribe `SI`) y borra de una: el usuario de Firebase Auth, su ficha de
+  rol, su documento de índice, sus clases si era profesor, su asistencia e
+  historial, y los pedidos de clave pendientes. Dos seguridades: si es el último
+  administrador que queda, se niega; y si te borras a ti mismo, la sesión se
+  cierra sola. Cómo lo hace sin Admin SDK está explicado en §7.
 - **🔑 Claves**: la misma información pero en tabla plana, y acá está la bandeja
   de **solicitudes de cambio** (los pedidos de "no recuerdo mi PIN"). Cuando
-  atiendes un pedido le generas el PIN nuevo y se lo entregas en persona.
+  atiendes un pedido le generas el PIN nuevo y se lo entregas en persona. Aquí no
+  se borra nadie: el borrado vive solo en Usuarios, para que haya un único sitio.
 - **Cursos, Clases, Materias, Reportes**: altas y bajas de grados, inventario de
   todas las clases, el catálogo con cuántas clases usan cada tema, y promedios
   por materia, por curso y por estudiante con la nota de 1 a 5.
@@ -122,6 +138,9 @@ ficha), así que la plataforma nunca se la vuelve a preguntar.
   uno, e Iniciar / En espera / Cerrar / Vaciar sala / Copiar código.
 - **Estudiantes** (esto solo lo ve un **director de curso**): matricular
   estudiantes de su grado, exportar credenciales y ver las clases del curso.
+  Arriba le aparece la tarjeta **Código de tu curso** con el código grande y un
+  botón Copiar: es el que reparte entre sus estudiantes, y es el mismo que ve el
+  administrador en Cursos. Sirve de "plan b" (ver §3, Estudiante).
 
 La diferencia entre un profesor normal y un director:
 
@@ -145,6 +164,17 @@ La diferencia entre un profesor normal y un director:
   abra la clase. Se prende solo, sin recargar la página.
 - **Mis clases**, **Biblioteca** (historial de partidas con porcentaje y nota de
   cada una), **Perfil** y **Configuración**.
+- **El "plan b" del curso** (Mi Perfil): si a un estudiante se le queda el curso
+  vacío —porque le movieron la ficha, porque el curso se borró y se volvió a
+  crear, o porque alguien lo tocó a mano en Firebase Console—, en su Perfil
+  aparece el bloque *¿Tu curso desapareció?*. Escribe ahí el código de tres
+  dígitos que le dio su director y vuelve a matricularse solo, sin esperar al
+  administrador. Esto **no** es un registro abierto: la plataforma no deja que
+  nadie se cree cuenta ni se una a un curso ajeno, y el campo solo funciona si su
+  curso estaba vacío. Si lo que está mal es el curso que ya tiene (se equivocaron
+  de 601 a 602), eso lo corrige el administrador con el selector de la fila, en
+  👥 Usuarios. Las reglas de Firestore repiten la misma condición en el servidor,
+  así que escribirlo directo en la consola tampoco lo deja.
 
 ### Invitado
 
@@ -278,6 +308,36 @@ alguien que tenga acceso real al proyecto. Si algún día esto se usa con correo
 reales y claves serias, el campo `clave` tiene que desaparecer y el restablecerse
 tiene que pasar a una función de servidor con el Admin SDK.
 
+### Y cómo la borra: el mismo truco, aplicado al revés
+
+Borrar el documento de Firestore es fácil, pero el usuario de **Firebase Auth**
+no se puede borrar desde el navegador sin el Admin SDK —y este proyecto está en
+el plan gratuito (Spark), que no tiene Cloud Functions—. Se resuelve igual que
+el cambio de clave: como el PIN guardado **es** la contraseña real de Auth,
+`js/credenciales.js:eliminarCuenta` abre una app secundaria, firma como el
+interesado con su PIN y llama a `deleteUser()`. `deleteUser()` sí procede porque
+esa sesión es la del propio usuario.
+
+Después vienen los documentos, en lotes de 400 operaciones: la ficha del rol, el
+índice `usuarios/{uid}`, sus filas en `grupos/*/miembros`, `sala` y
+`solicitudes`, su ficha en `grupos/*/resultados`, su historial en
+`estudiantes/{uid}/resultados`, sus `solicitudes_clave`, el `miembrosUids` de
+cada clase (se saca con `arrayRemove`) y el `directorUid` de los cursos que
+dirigía. **Firestore no borra subdocumentos en cascada**, así que eso está
+escrito a mano y hay que mantenerlo a la par si aparece una colección nueva.
+
+Tres cosas que conviene saber:
+
+- Si el PIN guardado ya no es la contraseña de Auth (alguien la cambió a mano en
+  Firebase Console), la firma falla: la plataforma **avisa en pantalla** y sigue
+  borrando lo de Firestore. El correo queda ocupado hasta que esa cuenta se borre
+  también en Console.
+- Un profesor borrado se lleva **sus clases** (los grupos y todo lo de adentro).
+  Es la única forma de no dejar clases sin profesor.
+- El **último administrador no se puede borrar**. Si no, nadie podría volver a
+  crear cuentas ni restaurar claves. Con dos administradores sí se puede borrar
+  cualquiera, incluido uno mismo: en ese caso la sesión se cierra sola.
+
 ### Las reglas de seguridad, en cristiano
 
 `firestore.rules` es lo que sostiene todo el tema de permisos. Lo que hace:
@@ -298,6 +358,17 @@ tiene que pasar a una función de servidor con el Admin SDK.
   de la clase y la clase sigue activa.
 - Un profesor que ya no dirige un curso no puede seguir creando clases en él
   (esto se arregló junto con el lote de "Mover director", más abajo).
+- El admin puede **borrar** (`allow delete: if esAdmin()`) en `usuarios`,
+  `estudiantes`, `profesores`, `administradores`, `grupos` y sus subcolecciones,
+  `solicitudes_clave` y los resultados de cada cuenta. Sin esas líneas el botón
+  Borrar se cae a mitad del lote y deja la cuenta a medias.
+- El `curso` de `estudiantes/{uid}` lo puede escribir el propio estudiante
+  **solo para rellenar un curso vacío** y solo si ese curso existe de verdad; el
+  admin lo puede cambiar sin esa restricción. Es la parte de servidor del
+  "plan b": sin ella, saberse el código de otro grado bastaría para matricularse
+  en él.
+- `estudiantes/{uid}/resultados` ahora también lo lee el admin, porque es la
+  única forma de borrar el historial junto con la cuenta.
 
 El admin además ya puede escribir en `profesores/{uid}` los campos `curso`,
 `materias` y `tipoProfesor`, que antes estaban bloqueados. Antes por eso cambiar
@@ -306,8 +377,10 @@ correo, nombre y rol siguen inmutables desde el cliente.
 
 **Estas reglas hay que volver a publicarlas** después de actualizar el código. No
 se aplican solas por estar en el zip. Si no las publicas, el admin no puede
-escribir `usuarios/{uid}.clave`, la página Claves sale vacía y la sala de clase no
-funciona (subcolección nueva).
+escribir `usuarios/{uid}.clave`, la página Claves sale vacía, la sala de clase no
+funciona (subcolección nueva) y, lo más visible, **fallan con `permission-denied`
+el botón Borrar, el selector de curso de cada fila y el reingreso del estudiante
+desde Mi Perfil**.
 
 ## 8. Dónde está cada cosa en el código
 
@@ -318,9 +391,10 @@ ayuda.html / ayuda.css      preguntas frecuentes y formulario de sugerencias
 firestore.rules             reglas de seguridad (publicarlas, ver §9)
 
 css/
-  tokens.css                variables de diseño, tipografía, botones
-  style.css                 portada e invitado
-  juegos.css                componentes que comparten los 3 paneles y los juegos
+  tokens.css                ÚNICO archivo con colores: variables de diseño y tipografía
+  style.css                 portada e invitado (la cara lúdica de la marca)
+  panel.css                 carcasa de los 3 paneles: barra lateral, cabecera, pie
+  juegos.css                componentes que comparten los paneles y los juegos
 
 imag/                       logo y avatares
 
@@ -330,8 +404,8 @@ js/
   sesion.js                 "quién está conectado": índice + ficha de rol
   guard.js                  protege las páginas de panel (rol, menú, saludo)
   catalogo.js               MATERIAS, MATERIAS_PROXIMAS y JUEGOS
-  cursos.js                 CRUD de cursos (601, 602...) y su director
-  credenciales.js           correo autogenerado + PIN de 6 dígitos + crear cuentas
+  cursos.js                 CRUD de cursos (el código se arma con grado+grupo) y su director
+  credenciales.js           correo + PIN de 6 dígitos + crear y borrar cuentas
   claves.js                 ver el PIN de cualquiera, generar uno nuevo, bandeja de pedidos
   cambiar-clave.js          el "cambiar mi contraseña" del perfil propio
   lista-credenciales.js     tabla de credenciales de la sesión, copiar y CSV
@@ -355,9 +429,20 @@ interfaz-estudiante/        homepagea, materia, sala, mis-clases, biblioteca,
 juegos/                     quiz, puzzle, carrera (HTML + su motor JS)
 ```
 
-Cada carpeta de panel tiene su CSS (`stylea.css`, `styleb.css`, `stylec.css`) y
-las tres comparten `css/juegos.css` para tarjetas, formularios, tablas y
-estadísticas. Si cambias un componente en `juegos.css` cambia en los tres lados.
+Los tres paneles comparten un solo CSS: `css/panel.css` para la carcasa (menú
+lateral, cabecera, pie) y `css/juegos.css` para los componentes (tarjetas,
+formularios, tablas, estadísticas). Antes cada rol tenía su hoja
+(`stylea.css`, `styleb.css`, `stylec.css`); se eliminaron porque las tres estaban
+empezando a divergir y lo único que las diferenciaba era el menú. Si cambias un
+componente en `juegos.css`, cambia en los tres lados.
+
+**Ningún archivo de CSS escribe un color literal salvo `tokens.css`**, y los
+paneles no usan los nombres de la marca sino alias (`--sh-accent` para la acción,
+`--sh-rojo` solo para lo destructivo, `--sh-verde`/`--sh-oro` para estados). Por
+eso la portada puede seguir con su forma redondeada y sus degradados mientras los
+paneles van en radio corto y botones de 34 px: el radio apretado se redefine
+dentro de `body` en `panel.css`, y solo alcanza a las páginas que lo cargan.
+Para cambiar de identidad se toca `tokens.css` y nada más.
 
 Los tres juegos son motores: reciben el tema y la dificultad de la clase, no
 tienen preguntas propias hardcodeadas. Son Quiz de Lógica (opción múltiple),
@@ -425,7 +510,8 @@ esa hay que cambiarla una vez desde Firebase Console → Authentication.
 
 Con esto recorres todos los roles y te deja de quedar ninguna pantalla sin ver:
 
-1. Crea el administrador (§10) → entra y crea el curso **601**.
+1. Crea el administrador (§10) → entra y crea el curso con grado **6** y
+   grupo **A**: el código `601` sale solo en la vista previa.
 2. Crea un **director de Inglés** del 601.
 3. Entra con ese director y crea **3 estudiantes** del 601. Anota los PINes.
 4. Crea una **clase de Inglés del 601**. Entra a **📺 Sala de clase** con ella:
@@ -474,6 +560,30 @@ clase desde el menú "Mis clases", sin entrar por la tarjeta de un curso. Y si u
 código de Matemáticas se escribe en la página de Inglés tiene que salir el aviso
 de que es de otra materia.
 
+Y estas cuatro, que son de lo último que se agregó:
+
+- **Cursos**: con grado 6 y grupo B tiene que salir `602` en la vista previa antes
+  de guardar, y crear el mismo par otra vez tiene que responder "El curso 602
+  —grado 6B— ya existe" en vez de crear un duplicado. El botón **Copiar código**
+  de cada fila copia el código.
+- **Usuarios por año**: crea un curso de otro año (o cámbiale el `anio` en la
+  consola) y usa el filtro **Año**. Al elegir un año, el selector de curso se
+  queda solo con los cursos de ese año, los bloques de estudiantes muestran el
+  año en el título, y los profesores estándar (que no tienen curso) salen fuera:
+  el año se hereda del curso, y quien no tiene curso tampoco tiene año.
+- **Borrar**: borra un estudiante que ya jugó y verifica en Firestore que se
+  fueron `usuarios/{uid}`, `estudiantes/{uid}`, su fila en `grupos/*/miembros`, su
+  presencia en `sala`, sus `resultados` y su carpeta `estudiantes/{uid}/resultados`.
+  Con el único administrador no deja borrarlo; con dos administradores borrarte a
+  ti mismo cierra la sesión. Si a una cuenta le cambias la clave a mano en Firebase
+  Console, Borrar tiene que mostrar el aviso de que Auth no se borró y aun así
+  limpiar el padrón.
+- **Plan b**: en el padrón, quítele el curso a un estudiante con el selector de su
+  fila (queda en "Sin curso"). Entra con él → **Perfil** → escribe el código del
+  curso y el botón lo devuelve; con un código inexistente o con 602 cuando ya está
+  en 601 tiene que negarse. El director ve el código de su curso arriba de todo en
+  **Estudiantes**.
+
 ## 12. Cuánto aguanta un colegio real
 
 Estimación para 12 cursos × 30 estudiantes (360 cuentas), con una hora de clase
@@ -504,6 +614,14 @@ corta, para que un historial de años no se trague la cuota de un día.
 ## 13. Lo que está mal o sin probar, para que nadie se lleve sorpresas
 
 Prefiero escribirlo yo antes de que lo encuentren en una sustentación:
+
+- **Las cuatro funciones recién portadas (código autogenerado, filtro por año,
+  plan b del curso y Borrar cuentas) no se han corrido contra Firestore.** Borrar
+  es la que más riesgo tiene: hace un `deleteUser()` en una app secundaria y
+  después entre 5 y 300 escrituras en lote, y solo se comprueba de verdad con una
+  cuenta real. Hazlo primero con un estudiante de prueba, nunca con el padrón
+  completo. Y antes de eso, publica `firestore.rules`: sin las reglas nuevas los
+  cuatro botones fallan con `permission-denied`.
 
 - **Ninguna prueba se corrió contra Firestore con sesiones reales.** La
   verificación de esta entrega fue estática (sintaxis de los `.js`, que cada

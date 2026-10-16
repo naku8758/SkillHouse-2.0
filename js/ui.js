@@ -11,6 +11,12 @@
 (function () {
   "use strict";
 
+  // Avisa que el JS de animaciones sí cargó. css/tokens.css sólo esconde los
+  // elementos .sh-reveal cuando esta clase está en <html>: así, si el archivo
+  // falla o está bloqueado, el contenido se ve igual y nadie se queda mirando
+  // una página en blanco.
+  document.documentElement.classList.add("sh-js");
+
   document.addEventListener("DOMContentLoaded", () => {
     try {
       initScrollReveal();
@@ -20,7 +26,7 @@
     } catch (err) {
       // Cualquier fallo aquí es puramente estético: nunca debe romper
       // el resto del sitio, así que solo lo dejamos registrado.
-      console.warn("SkillHouse UI (cosmético):", err);
+      console.warn("SkillHouse (cosmético):", err);
     }
   });
 

@@ -3,13 +3,17 @@
 
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
-import { crearCurso, obtenerCursos, asignarDirector, eliminarCurso } from "../js/cursos.js";
+import { crearCurso, obtenerCursos, asignarDirector, eliminarCurso, codigoDeCurso } from "../js/cursos.js";
+import { copiarAlPortapapeles } from "../js/lista-credenciales.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const form = document.getElementById("form-crear-curso");
 const lista = document.getElementById("lista-cursos");
 const errorEl = document.getElementById("curso-error");
 const exitoEl = document.getElementById("curso-exito");
+const inputGrado = document.getElementById("input-grado");
+const inputGrupo = document.getElementById("input-grupo");
+const vistoCodigo = document.getElementById("texto-codigo-curso");
 
 function mostrar(el, texto) {
   el.textContent = texto;
@@ -24,22 +28,31 @@ function escapar(texto) {
 
 document.getElementById("input-anio").value = new Date().getFullYear();
 
+// El código se ve mientras se escribe para que el administrador sepa de antemano
+// qué curso va a quedar creado (y cuál le va a decir al director).
+function actualizarVistoCodigo() {
+  vistoCodigo.textContent = codigoDeCurso(inputGrado.value, inputGrupo.value) || "—";
+}
+[inputGrado, inputGrupo].forEach((el) => el.addEventListener("input", actualizarVistoCodigo));
+actualizarVistoCodigo();
+
 form.addEventListener("submit", async (evento) => {
   evento.preventDefault();
   mostrar(errorEl, "");
   mostrar(exitoEl, "");
 
-  const codigo = document.getElementById("input-codigo").value.trim();
-  const nombre = document.getElementById("input-nombre-curso").value.trim();
+  const grado = inputGrado.value.trim();
+  const grupo = inputGrupo.value.trim().toUpperCase();
   const anio = Number(document.getElementById("input-anio").value);
 
   const btn = document.getElementById("btn-crear-curso");
   btn.disabled = true;
   try {
-    const curso = await crearCurso({ codigo, nombre, anio });
-    mostrar(exitoEl, `Curso ${curso.codigo} creado.`);
+    const curso = await crearCurso({ grado, grupo, anio });
+    mostrar(exitoEl, `Curso ${curso.codigo} creado — ${curso.nombre}, año ${curso.anio}.`);
     form.reset();
     document.getElementById("input-anio").value = new Date().getFullYear();
+    actualizarVistoCodigo();
     await cargar();
   } catch (err) {
     console.error(err);
@@ -85,9 +98,14 @@ async function cargar() {
       const nClases = grupos.filter((g) => g.curso === c.codigo).length;
       const opciones = [`<option value="">Sin director</option>`]
         .concat(
-          directores.map(
-            (p) => `<option value="${escapar(p.uid || p.id)}" ${c.directorUid === (p.uid || p.id) ? "selected" : ""}>${escapar(p.username)}</option>`
-          )
+          directores.map((p) => {
+            const id = p.uid || p.id;
+            // Si ya dirige otro curso se avisa en el texto: al elegarlo, ese
+            // otro curso queda sin director (lo hace asignarDirector en el
+            // mismo lote), y eso no debe sorprender después.
+            const otro = p.curso && p.curso !== c.codigo ? ` · dirige ${escapar(p.curso)}` : "";
+            return `<option value="${escapar(id)}" ${c.directorUid === id ? "selected" : ""}>${escapar(p.username)}${otro}</option>`;
+          })
         )
         .join("");
 
@@ -102,6 +120,9 @@ async function cargar() {
           <select data-director="${escapar(c.codigo)}" ${directores.length ? "" : "disabled"}>${opciones}</select>
         </td>
         <td>
+          <button class="btn-secundario" data-copiar="${escapar(c.codigo)}" title="Copiar el código para pasarlo al director">Copiar código</button>
+        </td>
+        <td>
           <button class="btn-secundario" data-borrar="${escapar(c.codigo)}" ${nEst || nClases ? "disabled title='Tiene estudiantes o clases'" : ""}>Borrar</button>
         </td>
       </tr>`;
@@ -110,7 +131,7 @@ async function cargar() {
 
   lista.innerHTML = `
     <table class="tabla-resultados">
-      <thead><tr><th>Código</th><th>Nombre</th><th>Año</th><th>Estudiantes</th><th>Clases</th><th>Director de curso</th><th></th></tr></thead>
+      <thead><tr><th>Código</th><th>Nombre</th><th>Año</th><th>Estudiantes</th><th>Clases</th><th>Director de curso</th><th></th><th></th></tr></thead>
       <tbody>${filas}</tbody>
     </table>`;
 
@@ -128,6 +149,12 @@ async function cargar() {
         mostrar(errorEl, "No se pudo asignar el director.");
         select.disabled = false;
       }
+    });
+  });
+
+  lista.querySelectorAll("[data-copiar]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      copiarAlPortapapeles(`Curso ${btn.dataset.copiar}`, btn);
     });
   });
 

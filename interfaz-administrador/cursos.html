@@ -6,8 +6,8 @@
     <link rel="icon" type="image/png" href="../imag/logo.png">
     <title>Cursos | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
-    <link rel="stylesheet" href="stylec.css?v=1">
-    <link rel="stylesheet" href="../css/juegos.css?v=3">
+    <link rel="stylesheet" href="../css/juegos.css?v=5">
+    <link rel="stylesheet" href="../css/panel.css?v=1">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("administrador");
@@ -22,16 +22,16 @@
             <p>Administrador</p>
         </div>
         <ul class="menu">
-            <li><a href="homepagec.html">🏠 Dashboard</a></li>
-            <li><a href="usuarios.html">👥 Usuarios</a></li>
-            <li><a href="crear-cuenta.html">➕ Crear usuario</a></li>
-            <li><a href="claves.html">🔑 Claves</a></li>
-            <li><a href="cursos.html" class="is-active">🎓 Cursos</a></li>
-            <li><a href="clases.html">📚 Clases</a></li>
-            <li><a href="materias.html">📝 Materias</a></li>
-            <li><a href="reportes.html">📊 Reportes</a></li>
-            <li><a href="configuracion.html">⚙️ Configuración</a></li>
-            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+            <li><a href="homepagec.html">Dashboard</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li><a href="crear-cuenta.html">Crear usuario</a></li>
+            <li><a href="claves.html">Claves</a></li>
+            <li><a href="cursos.html" class="is-active">Cursos</a></li>
+            <li><a href="clases.html">Clases</a></li>
+            <li><a href="materias.html">Materias</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="configuracion.html">Configuración</a></li>
+            <li><a href="#" id="logout-link">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
@@ -48,20 +48,24 @@
 
         <section class="panel-box sh-reveal">
             <h2>Nuevo curso</h2>
-            <p class="panel-sub">El código son tres dígitos: 601, 602, 603… Un curso solo puede tener un director.</p>
+            <p class="panel-sub">Solo pon el grado, la letra del grupo y el año: el código se arma solo (6 + A = <strong>601</strong>, 6 + B = <strong>602</strong>…), que es la forma en que la plataforma numera sus cursos. Ese código es además el que el director comparte con sus estudiantes para que vuelvan a su curso si se quedan sin vínculo. Un curso solo puede tener un director.</p>
             <form id="form-crear-curso">
                 <div class="form-fila">
                     <div class="campo">
-                        <label for="input-codigo">Código</label>
-                        <input type="text" id="input-codigo" placeholder="Ej. 601" required inputmode="numeric" maxlength="3" pattern="[0-9]{3}">
+                        <label for="input-grado">Grado</label>
+                        <input type="text" id="input-grado" placeholder="Ej. 6" required inputmode="numeric" maxlength="1" autocomplete="off">
                     </div>
                     <div class="campo">
-                        <label for="input-nombre-curso">Nombre</label>
-                        <input type="text" id="input-nombre-curso" placeholder="Ej. Grado 601" maxlength="40">
+                        <label for="input-grupo">Grupo</label>
+                        <input type="text" id="input-grupo" placeholder="Ej. A" required maxlength="1" autocomplete="off" style="text-transform:uppercase;">
                     </div>
                     <div class="campo">
                         <label for="input-anio">Año</label>
                         <input type="number" id="input-anio" min="2020" max="2100">
+                    </div>
+                    <div class="campo">
+                        <label for="texto-codigo-curso">Código (se arma solo)</label>
+                        <output class="codigo-curso" id="texto-codigo-curso">—</output>
                     </div>
                     <div class="campo" style="flex:none;">
                         <label>&nbsp;</label>

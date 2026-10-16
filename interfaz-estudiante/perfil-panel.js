@@ -7,6 +7,7 @@ import { suscribirSesion } from "../js/sesion.js";
 import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { obtenerMateria, obtenerJuego } from "../js/catalogo.js";
 import { obtenerGruposDelEstudiante, obtenerHistorialEstudiante } from "../js/grupos.js";
+import { matricularEnCurso } from "../js/cursos.js";
 import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
 import { NOMBRE_SALA, estadoDeSala } from "../js/sala.js";
 
@@ -33,6 +34,52 @@ function formatearFecha(timestamp) {
   });
 }
 
+/* ---------------------- Plan b: volver al curso con el código ---------------------- */
+//
+// El estudiante nace matriculado (el director o el administrador lo crearon con
+// su curso), pero si ese vínculo se pierde se queda fuera de todas las clases.
+// Con el código de tres dígitos que le da su director se reengancha solo, desde
+// aquí, sin esperar al administrador. js/cursos.js y firestore.rules no dejan
+// usarlo para CAMBIARSE de curso: solo para rellenar un curso vacío.
+
+const cajaReingreso = document.getElementById("caja-reingreso");
+const inputCodigo = document.getElementById("input-codigo-curso");
+const btnReingresar = document.getElementById("btn-reingresar");
+const errorReingreso = document.getElementById("reingreso-error");
+const exitoReingreso = document.getElementById("reingreso-exito");
+const filaReingreso = cajaReingreso.querySelector(".form-fila");
+
+let cuentaUid = null;
+
+function mensajeReingreso(el, texto) {
+  el.textContent = texto;
+  el.style.display = texto ? "block" : "none";
+}
+
+btnReingresar.addEventListener("click", async () => {
+  const codigo = (inputCodigo.value || "").trim();
+  mensajeReingreso(errorReingreso, "");
+  mensajeReingreso(exitoReingreso, "");
+  if (!cuentaUid) return;
+
+  if (!/^\d{3}$/.test(codigo)) {
+    return mensajeReingreso(errorReingreso, "El código son tres dígitos, por ejemplo 601.");
+  }
+
+  btnReingresar.disabled = true;
+  try {
+    const curso = await matricularEnCurso({ uid: cuentaUid, codigo, porEstudiante: true });
+    document.getElementById("perfil-curso").textContent =
+      `Curso ${curso.codigo}${curso.nombre ? ` · ${curso.nombre}` : ""}`;
+    filaReingreso.style.display = "none";
+    mensajeReingreso(exitoReingreso, `Listo: ya estás en el curso ${curso.codigo}. Recarga la página (o sal y vuelve a entrar) para ver tus clases.`);
+  } catch (err) {
+    console.error(err);
+    mensajeReingreso(errorReingreso, err.message || "No se pudo volver a vincular el curso.");
+    btnReingresar.disabled = false;
+  }
+});
+
 // sesion.js deduplica las emisiones: con onAuthStateChanged a pelo, cada
 // refresco de token volvía a ejecutar este bloque y volvía a enganchar el
 // botón "Guardar cambios", así que un click mandaba dos escrituras.
@@ -44,14 +91,19 @@ suscribirSesion("estudiante", async (cuenta) => {
   const correo = cuenta.email;
   const fechaRegistro = formatearFecha(datos.creadoEn);
 
+  cuentaUid = cuenta.uid;
+  const cursoPropio = datos.curso || "";
+  cajaReingreso.style.display = cursoPropio ? "none" : "block";
+  filaReingreso.style.display = "flex";
+
   const circuloAvatar = document.getElementById("perfil-avatar");
   document.getElementById("perfil-nombre").textContent = nombre;
   document.getElementById("perfil-correo").textContent = correo;
   document.getElementById("perfil-desde").textContent = fechaRegistro
     ? `Miembro desde el ${fechaRegistro}`
     : "";
-  document.getElementById("perfil-curso").textContent = datos.curso
-    ? `Curso ${datos.curso}${datos.creadoPorNombre ? ` · director(a): ${datos.creadoPorNombre}` : ""}`
+  document.getElementById("perfil-curso").textContent = cursoPropio
+    ? `Curso ${cursoPropio}${datos.creadoPorNombre ? ` · director(a): ${datos.creadoPorNombre}` : ""}`
     : "Tu cuenta aún no está vinculada a un curso.";
 
   inicializarSelectorAvatar({

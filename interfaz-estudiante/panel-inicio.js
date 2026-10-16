@@ -42,10 +42,13 @@ suscribirSesion("estudiante", async (cuenta) => {
       </div>`
   ).join("");
 
+  // `creadoPorNombre` es quien creó la cuenta, que puede ser el director o el
+  // administrador: llamarlo "director(a) de curso" le decía al estudiante que
+  // su director era la persona equivocada cuando lo había matriculado el admin.
   const curso = cuenta.datos.curso;
   document.getElementById("curso-alumno").textContent = curso
-    ? `Curso ${curso} · director(a) de curso: ${cuenta.datos.creadoPorNombre || "sin asignar"}`
-    : "Pídele a tu director de curso que cree tu cuenta: así quedas vinculado(a) a tu grado.";
+    ? `Curso ${curso} · tu cuenta la creó ${cuenta.datos.creadoPorNombre || "el administrador"}`
+    : "Pídele a tu director de curso o al administrador que te cree la cuenta: así quedas vinculado(a) a tu grado.";
 
   let grupos = [];
   let historial = [];

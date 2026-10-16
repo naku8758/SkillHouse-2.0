@@ -6,8 +6,8 @@
     <link rel="icon" type="image/png" href="../imag/logo.png">
     <title>Mi Perfil | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
-    <link rel="stylesheet" href="stylea.css">
-    <link rel="stylesheet" href="../css/juegos.css?v=3">
+    <link rel="stylesheet" href="../css/juegos.css?v=5">
+    <link rel="stylesheet" href="../css/panel.css?v=1">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("estudiante");
@@ -22,12 +22,12 @@
             <p>Estudiante</p>
         </div>
         <ul class="menu">
-            <li><a href="homepagea.html">🏠 Materias</a></li>
-            <li><a href="mis-clases.html">📝 Mis clases</a></li>
-            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
-            <li><a href="perfil.html" class="is-active">👤 Mi Perfil</a></li>
-            <li><a href="configuracion.html">⚙️ Configuración</a></li>
-            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+            <li><a href="homepagea.html">Materias</a></li>
+            <li><a href="mis-clases.html">Mis clases</a></li>
+            <li><a href="biblioteca.html">Mi Biblioteca</a></li>
+            <li><a href="perfil.html" class="is-active">Mi Perfil</a></li>
+            <li><a href="configuracion.html">Configuración</a></li>
+            <li><a href="#" id="logout-link">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
@@ -37,7 +37,7 @@
                 <div class="page-hero-icon">🎓</div>
                 <div class="page-hero-text">
                     <h1 id="titulo-pagina">Mi Perfil</h1>
-                    <p>Tu información y un resumen de tu actividad en SkillHouse.</p>
+                    <p>Tu información y un resumen de tu actividad en la plataforma.</p>
                 </div>
             </div>
         </header>
@@ -48,11 +48,39 @@
                 <div>
                     <div class="perfil-nombre" id="perfil-nombre">Cargando...</div>
                     <div class="perfil-meta" id="perfil-correo"></div>
-                    <span class="perfil-rol-badge">🎓 Estudiante</span>
+                    <span class="perfil-rol-badge">Estudiante</span>
                 </div>
             </div>
             <p class="perfil-meta" id="perfil-desde"></p>
             <p class="perfil-meta" id="perfil-curso"></p>
+        </section>
+
+        <section class="panel-box sh-reveal" id="caja-reingreso" style="display:none;">
+            <h2>¿Tu curso desapareció?</h2>
+            <p class="panel-sub">
+                Tu cuenta se crea ya matriculada en un curso, y ese curso es el que decide a qué
+                clases puedes entrar. Si aquí aparece <strong>"aún no está vinculada"</strong> —porque
+                alguien tocó tu ficha, porque el curso se borró o lo que sea—, escribe el código de
+                tres dígitos que te da tu director de curso (por ejemplo <strong>601</strong>) y vuelves
+                a tu grado sin tener que esperar a que lo arregle el administrador.
+            </p>
+            <p class="panel-sub">
+                Solo funciona si tu curso está vacío. Si lo que está mal es el curso que ya tienes,
+                ese lo corrige el administrador desde su panel de Usuarios: así un compañero no puede
+                pasarse a otro grado simplemente porque se sabe el código.
+            </p>
+            <div class="form-fila">
+                <div class="campo">
+                    <label for="input-codigo-curso">Código de tu curso</label>
+                    <input type="text" id="input-codigo-curso" placeholder="Ej. 601" inputmode="numeric" maxlength="3" autocomplete="off">
+                </div>
+                <div class="campo" style="flex:none;">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn-accion" id="btn-reingresar">Volver a mi curso</button>
+                </div>
+            </div>
+            <p id="reingreso-error" class="mensaje-error" style="display:none;"></p>
+            <p id="reingreso-exito" class="mensaje-exito" style="display:none;"></p>
         </section>
 
         <section class="panel-box sh-reveal">

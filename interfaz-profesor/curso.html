@@ -6,8 +6,8 @@
     <link rel="icon" type="image/png" href="../imag/logo.png">
     <title>Estudiantes de mi curso | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
-    <link rel="stylesheet" href="styleb.css">
-    <link rel="stylesheet" href="../css/juegos.css?v=3">
+    <link rel="stylesheet" href="../css/juegos.css?v=5">
+    <link rel="stylesheet" href="../css/panel.css?v=1">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("profesor");
@@ -21,14 +21,14 @@
             <p>Maestro</p>
         </div>
         <ul class="menu">
-            <li><a href="homepageb.html">🏠 Inicio</a></li>
-            <li data-solo="director"><a href="curso.html" class="is-active">👥 Estudiantes</a></li>
-<li><a href="materia.html">📝 Mis clases</a></li>
-            <li><a href="sala.html">📺 Sala de clase</a></li>
-            <li><a href="biblioteca.html">📚 Mi Biblioteca</a></li>
-            <li><a href="perfil.html">👤 Mi Perfil</a></li>
-            <li><a href="configuracion.html">⚙️ Configuración</a></li>
-            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+            <li><a href="homepageb.html">Inicio</a></li>
+            <li data-solo="director"><a href="curso.html" class="is-active">Estudiantes</a></li>
+<li><a href="materia.html">Mis clases</a></li>
+            <li><a href="sala.html">Sala de clase</a></li>
+            <li><a href="biblioteca.html">Mi Biblioteca</a></li>
+            <li><a href="perfil.html">Mi Perfil</a></li>
+            <li><a href="configuracion.html">Configuración</a></li>
+            <li><a href="#" id="logout-link">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
@@ -39,13 +39,28 @@
             <div class="page-hero-icon">🎓</div>
             <div class="page-hero-text">
                 <h1 id="titulo-curso">Estudiantes de mi curso</h1>
-                <p id="subtitulo-curso">Tú creas las cuentas de los estudiantes de tu curso; el administrador solo crea profesores.</p>
+                <p id="subtitulo-curso">Tú creas las cuentas de los estudiantes de tu curso. Esta lista muestra solo las que creaste tú: las que matricula el administrador quedan en su panel de Usuarios.</p>
             </div>
         </div>
     </header>
 
     <section class="panel-box sh-reveal" id="caja-sin-curso" style="display:none;">
         <p class="estado-vacio">El administrador no te ha asignado ningún curso. Esta pantalla se activa en cuanto te ponga al frente de uno.</p>
+    </section>
+
+    <section class="panel-box sh-reveal" id="caja-codigo-curso" style="display:none;">
+        <h2>Código de tu curso</h2>
+        <p class="panel-sub">
+            Es el código que le pasas a tus estudiantes. Por lo normal no lo necesitan: sus cuentas
+            ya nacen matriculadas en tu curso. Sirve de <strong>plan b</strong> —si a alguien se le
+            pierde el vínculo con el curso, lo escribe en <strong>Mi Perfil</strong> y vuelve a su
+            grado sin esperar al administrador— y para crear clases, porque el curso se elige por su
+            código. Repártelo solo entre los de tu curso.
+        </p>
+        <div class="grupo-acciones">
+            <span class="codigo-curso" id="codigo-curso">—</span>
+            <button type="button" class="btn-secundario" id="btn-copiar-curso">Copiar</button>
+        </div>
     </section>
 
     <section class="panel-box sh-reveal">
@@ -91,8 +106,8 @@
         <h2>Credenciales de esta sesión</h2>
         <p class="panel-sub">Descárgalas o imprímelas y repártelas. Al cerrar esta sesión la lista desaparece de tu pantalla: si un estudiante pierde su PIN, el administrador lo consulta y le genera uno nuevo desde su panel de Claves.</p>
         <div class="grupo-acciones" style="margin-bottom:14px;">
-            <button class="btn-secundario" id="btn-descargar">⬇ Descargar CSV</button>
-            <button class="btn-secundario" id="btn-copiar">⧉ Copiar</button>
+            <button class="btn-secundario" id="btn-descargar">Descargar CSV</button>
+            <button class="btn-secundario" id="btn-copiar">Copiar</button>
         </div>
         <div id="lista-credenciales">
             <p class="estado-vacio">Aún no has creado ninguna cuenta en esta sesión.</p>

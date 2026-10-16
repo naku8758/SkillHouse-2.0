@@ -6,8 +6,8 @@
     <link rel="icon" type="image/png" href="../imag/logo.png">
     <title>Usuarios | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
-    <link rel="stylesheet" href="stylec.css?v=1">
-    <link rel="stylesheet" href="../css/juegos.css?v=3">
+    <link rel="stylesheet" href="../css/juegos.css?v=5">
+    <link rel="stylesheet" href="../css/panel.css?v=1">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("administrador");
@@ -22,16 +22,16 @@
             <p>Administrador</p>
         </div>
         <ul class="menu">
-            <li><a href="homepagec.html">🏠 Dashboard</a></li>
-            <li><a href="usuarios.html" class="is-active">👥 Usuarios</a></li>
-            <li><a href="crear-cuenta.html">➕ Crear usuario</a></li>
-            <li><a href="claves.html">🔑 Claves</a></li>
-            <li><a href="cursos.html">🎓 Cursos</a></li>
-            <li><a href="clases.html">📚 Clases</a></li>
-            <li><a href="materias.html">📝 Materias</a></li>
-            <li><a href="reportes.html">📊 Reportes</a></li>
-            <li><a href="configuracion.html">⚙️ Configuración</a></li>
-            <li><a href="#" id="logout-link">🚪 Cerrar Sesión</a></li>
+            <li><a href="homepagec.html">Dashboard</a></li>
+            <li><a href="usuarios.html" class="is-active">Usuarios</a></li>
+            <li><a href="crear-cuenta.html">Crear usuario</a></li>
+            <li><a href="claves.html">Claves</a></li>
+            <li><a href="cursos.html">Cursos</a></li>
+            <li><a href="clases.html">Clases</a></li>
+            <li><a href="materias.html">Materias</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="configuracion.html">Configuración</a></li>
+            <li><a href="#" id="logout-link">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
@@ -57,7 +57,10 @@
             <p class="panel-sub">
                 El padrón viene <strong>agrupado</strong>: los estudiantes por el curso en que fueron
                 creados o asignados, y los profesores por la materia que dictan (si un profesor da dos
-                materias, sale en las dos). Aquí ves también el <strong>PIN de cada cuenta</strong>:
+                materias, sale en las dos). Filtra por <strong>año</strong>, <strong>curso</strong> o
+                <strong>materia</strong> y la lista se reordena sola: el año y el curso salen de los
+                cursos que creaste, así que un curso vacío también aparece y se le pueden asignar
+                estudiantes. Aquí ves también el <strong>PIN de cada cuenta</strong>:
                 solo lo ve el administrador, porque es el único rol al que Firestore le deja listar la
                 colección de usuarios. Si compartes pantalla o descargas el CSV, recuerda que ese
                 archivo contiene todas las claves.
@@ -66,8 +69,8 @@
                 "Registro incompleto" significa que la cuenta existe en Firebase y que esta plataforma
                 guardó su ficha. Si pone <strong>Registro incompleto</strong>, esa cuenta se creó a
                 mano en Firebase Console y no tiene curso ni materia: el estudiante no puede jugar
-                y el profesor no puede crear clases. Borra esa cuenta en Console y créala de nuevo
-                desde ➕ <a href="crear-cuenta.html">Crear usuario</a>.
+                y el profesor no puede crear clases. Bórrala de aquí con <strong>Borrar</strong> y
+                créala de nuevo desde ➕ <a href="crear-cuenta.html">Crear usuario</a>.
             </p>
             <div class="form-fila" style="margin-bottom:14px;">
                 <div class="campo">
@@ -78,6 +81,12 @@
                         <option value="profesor">Profesores</option>
                         <option value="director">Directores de curso</option>
                         <option value="administrador">Administradores</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="filtro-anio">Filtrar por año</label>
+                    <select id="filtro-anio">
+                        <option value="">Todos</option>
                     </select>
                 </div>
                 <div class="campo">
@@ -116,7 +125,7 @@
 
         <section class="panel-box sh-reveal">
             <h2>Clases y partidas por curso</h2>
-            <p class="panel-sub">Lo que cada curso ha usado de la plataforma. Una clase aparece "abierta" cuando su profesor la inició desde 📺 Sala de clase.</p>
+            <p class="panel-sub">Lo que cada curso ha usado de la plataforma. Una clase aparece "abierta" cuando su profesor la inició desde Sala de clase.</p>
             <div id="usuarios-cursos"><p class="estado-vacio">Cargando clases...</p></div>
         </section>
 

@@ -48,16 +48,16 @@
 
         <section class="panel-box sh-reveal">
             <h2>Nuevo curso</h2>
-            <p class="panel-sub">Solo pon el grado, la letra del grupo y el año: el código se arma solo (6 + A = <strong>601</strong>, 6 + B = <strong>602</strong>…), que es la forma en que la plataforma numera sus cursos. Ese código es además el que el director comparte con sus estudiantes para que vuelvan a su curso si se quedan sin vínculo. Un curso solo puede tener un director.</p>
+            <p class="panel-sub">Solo pon el grado, el número del grupo y el año: el código se arma solo (6 + 1 = <strong>601</strong>, 6 + 11 = <strong>611</strong>…), que es la forma en que la plataforma numera sus cursos. En los grados de dos cifras (10° y 11°) el código sale de cuatro dígitos: 11 + 3 = <strong>1103</strong>. Ese código es además el que el director comparte con sus estudiantes para que vuelvan a su curso si se quedan sin vínculo. Un curso solo puede tener un director.</p>
             <form id="form-crear-curso">
                 <div class="form-fila">
                     <div class="campo">
                         <label for="input-grado">Grado</label>
-                        <input type="text" id="input-grado" placeholder="Ej. 6" required inputmode="numeric" maxlength="1" autocomplete="off">
+                        <input type="text" id="input-grado" placeholder="Ej. 6" required inputmode="numeric" maxlength="2" autocomplete="off">
                     </div>
                     <div class="campo">
                         <label for="input-grupo">Grupo</label>
-                        <input type="text" id="input-grupo" placeholder="Ej. A" required maxlength="1" autocomplete="off" style="text-transform:uppercase;">
+                        <input type="text" id="input-grupo" placeholder="Ej. 1" required inputmode="numeric" maxlength="2" autocomplete="off">
                     </div>
                     <div class="campo">
                         <label for="input-anio">Año</label>

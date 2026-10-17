@@ -24,31 +24,43 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-const PATRON_CODIGO = /^\d{3}$/;
+const PATRON_CODIGO = /^\d{3,4}$/;
 
 function validarCodigoCurso(codigo) {
   if (!PATRON_CODIGO.test(codigo)) {
-    return "El código debe ser de tres dígitos, por ejemplo 601.";
+    return "El código son tres o cuatro dígitos, por ejemplo 601 u 1103.";
   }
   return "";
 }
 
 /**
- * El código del curso se arma solo: grado + letra de grupo.
- *   6 + A -> "601"     6 + B -> "602"     6 + G -> "607"
+ * El código del curso se arma solo: grado + grupo en dos dígitos.
+ *   6 + 1 -> "601"     6 + 11 -> "611"     11 + 3 -> "1103"
  *
- * Es la convención de la plataforma (601 a 607 son los grupos A a G del
- * mismo grado), así que el código generado coincide con los cursos que ya existen y
- * con los que el administrador pueda haber escrito a mano. Por eso el grado va
- * limitado a un dígito: con "10" o "11" el código dejaría de medir tres dígitos
- * y rompería la forma en que `estudiantes.curso` y `grupos.curso` lo referencian.
+ * Es la convención de la plataforma, y coincide con como los colegios numeran
+ * sus grupos, así que el administrador escribe el grado y el grupo tal como los
+ * ve en el listado. Los dos dígitos del grupo son los que permiten 601…611 (los
+ * grupos A a K de un mismo grado) sin que el código se vuelva ambiguo: los
+ * últimos dos dígitos siempre son el grupo y lo que queda antes es el grado.
+ *
+ * La letra se sigue aceptando (A = 1, B = 2, …, K = 11) por costumbre y porque
+ * los cursos creados antes con "6 + A" ya viven en Firestore con el código
+ * "601": los dos caminos apuntan al mismo documento, así que no se duplica nada.
  */
 export function codigoDeCurso(grado, grupo) {
   const n = Number(String(grado ?? "").trim());
-  const letra = String(grupo ?? "").trim().toUpperCase();
-  if (!Number.isInteger(n) || n < 1 || n > 9) return "";
-  if (!/^[A-Z]$/.test(letra)) return "";
-  return `${n}${String(letra.charCodeAt(0) - 64).padStart(2, "0")}`;
+  const g = String(grupo ?? "").trim().toUpperCase();
+  if (!Number.isInteger(n) || n < 1 || n > 11) return "";
+  let num = 0;
+  if (/^\d{1,2}$/.test(g)) num = Number(g);
+  else if (/^[A-Z]$/.test(g)) num = g.charCodeAt(0) - 64;
+  if (num < 1 || num > 99) return "";
+  return `${n}${String(num).padStart(2, "0")}`;
+}
+
+/** Como el usuario escribió el grupo, para los mensajes y el nombre. */
+function grupoVisible(grupo) {
+  return String(grupo ?? "").trim().toUpperCase();
 }
 
 /** Todos los cursos, ordenados por código. */
@@ -66,23 +78,24 @@ export async function obtenerCurso(codigo) {
 }
 
 /**
- * Crea un curso a partir del grado y la letra de grupo. El código nunca lo
+ * Crea un curso a partir del grado y el número de grupo. El código nunca lo
  * teclea nadie: lo arma `codigoDeCurso`, y como además es el ID del documento,
  * un grado+grupo repetido choca contra el curso que ya existe y se rechaza.
  */
 export async function crearCurso({ grado, grupo, anio, nombre }) {
   const limpio = codigoDeCurso(grado, grupo);
   if (!limpio) {
-    throw new Error("Elige un grado del 1 al 9 y una letra de grupo (A, B, C…).");
+    throw new Error("Elige un grado del 1 al 11 y un grupo del 1 al 99.");
   }
+  const g = grupoVisible(grupo);
 
   if (await obtenerCurso(limpio)) {
-    throw new Error(`El curso ${limpio} —grado ${grado}${String(grupo).toUpperCase()}— ya existe.`);
+    throw new Error(`El curso ${limpio} —grado ${String(grado).trim()}, grupo ${g}— ya existe.`);
   }
 
   const curso = {
     codigo: limpio,
-    nombre: (nombre || "").trim() || `Grado ${String(grado).trim()}${String(grupo).toUpperCase()}`,
+    nombre: (nombre || "").trim() || `Grado ${String(grado).trim()} - Grupo ${g}`,
     anio: Number(anio) || new Date().getFullYear(),
     directorUid: "",
     directorNombre: "",

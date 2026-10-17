@@ -78,10 +78,15 @@ deja en la página con un cartel de "Reintentar"). La sesión no se toca.
 
 Es el dueño de la plataforma. Lo que hace:
 
-- **Crear los cursos**: solo pone grado, letra de grupo y año. El código lo arma
-  la plataforma (6 + A = **601**, 6 + B = **602**…) porque es el ID del documento
+- **Crear los cursos**: solo pone grado, número de grupo y año. El código lo arma
+  la plataforma (6 + 1 = **601**, 6 + 11 = **611**, 11 + 3 = **1103**…) porque es
+  el ID del documento
   y a la vez la referencia que usan estudiantes y clases; nadie lo teclea y por
-  eso no se puede escribir un curso repetido o con otra forma. En la tabla de
+  eso no se puede escribir un curso repetido o con otra forma. Los últimos dos
+  dígitos son el grupo y lo de antes el grado, así que caben grupos del 1 al 99
+  y grados del 1 al 11. La letra también
+  entra y equivale al número (A = 1, B = 2 … K = 11), así que un curso ya creado con
+  "6 + A" sigue siendo `601`. En la tabla de
   Cursos cada fila tiene su botón **Copiar código**, que es el que se le pasa al
   director. Ponerle un director a cada curso también se hace ahí.
 - **Crear cuentas**: estudiante, profesor, director o administrador, con materia
@@ -511,7 +516,7 @@ esa hay que cambiarla una vez desde Firebase Console → Authentication.
 Con esto recorres todos los roles y te deja de quedar ninguna pantalla sin ver:
 
 1. Crea el administrador (§10) → entra y crea el curso con grado **6** y
-   grupo **A**: el código `601` sale solo en la vista previa.
+   grupo **1**: el código `601` sale solo en la vista previa.
 2. Crea un **director de Inglés** del 601.
 3. Entra con ese director y crea **3 estudiantes** del 601. Anota los PINes.
 4. Crea una **clase de Inglés del 601**. Entra a **📺 Sala de clase** con ella:
@@ -562,9 +567,9 @@ de que es de otra materia.
 
 Y estas cuatro, que son de lo último que se agregó:
 
-- **Cursos**: con grado 6 y grupo B tiene que salir `602` en la vista previa antes
+- **Cursos**: con grado 6 y grupo 2 tiene que salir `602` en la vista previa antes
   de guardar, y crear el mismo par otra vez tiene que responder "El curso 602
-  —grado 6B— ya existe" en vez de crear un duplicado. El botón **Copiar código**
+  —grado 6, grupo 2— ya existe" en vez de crear un duplicado. El botón **Copiar código**
   de cada fila copia el código.
 - **Usuarios por año**: crea un curso de otro año (o cámbiale el `anio` en la
   consola) y usa el filtro **Año**. Al elegir un año, el selector de curso se

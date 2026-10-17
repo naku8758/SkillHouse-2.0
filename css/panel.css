@@ -212,7 +212,7 @@ body{
 
 /* Código de curso autogenerado. Es un dato de lectura, no un campo: se dibuja
    como los inputs de su fila para que la vista previa del formulario no baile,
-   y en monoespaciada porque son tres dígitos que hay que dictar sin error. */
+   y en monoespaciada porque es un código corto que hay que dictar sin error. */
 .codigo-curso{
     display:flex;
     align-items:center;

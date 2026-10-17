@@ -38,7 +38,7 @@ function formatearFecha(timestamp) {
 //
 // El estudiante nace matriculado (el director o el administrador lo crearon con
 // su curso), pero si ese vínculo se pierde se queda fuera de todas las clases.
-// Con el código de tres dígitos que le da su director se reengancha solo, desde
+// Con el código del curso que le da su director se reengancha solo, desde
 // aquí, sin esperar al administrador. js/cursos.js y firestore.rules no dejan
 // usarlo para CAMBIARSE de curso: solo para rellenar un curso vacío.
 
@@ -62,8 +62,8 @@ btnReingresar.addEventListener("click", async () => {
   mensajeReingreso(exitoReingreso, "");
   if (!cuentaUid) return;
 
-  if (!/^\d{3}$/.test(codigo)) {
-    return mensajeReingreso(errorReingreso, "El código son tres dígitos, por ejemplo 601.");
+  if (!/^\d{3,4}$/.test(codigo)) {
+    return mensajeReingreso(errorReingreso, "El código son tres o cuatro dígitos, por ejemplo 601 u 1103.");
   }
 
   btnReingresar.disabled = true;

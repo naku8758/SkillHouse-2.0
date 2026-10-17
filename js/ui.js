@@ -48,7 +48,10 @@
           }
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+      // El 0 en el umbral no es de sobra: un bloque más alto que la ventana
+      // nunca llega al 15% de su área visible, y con threshold:0.15 a secas se
+      // quedaba invisible para siempre en pantallas bajas.
+      { threshold: [0, 0.15], rootMargin: "0px 0px -40px 0px" }
     );
 
     targets.forEach((el) => observer.observe(el));
@@ -88,7 +91,7 @@
           }
         });
       },
-      { threshold: 0.4 }
+      { threshold: [0, 0.4] }
     );
     counters.forEach((el) => observer.observe(el));
   }

@@ -123,10 +123,43 @@
             <div id="lista-usuarios"><p class="estado-vacio">Cargando cuentas...</p></div>
         </section>
 
+        <section class="panel-box" id="panel-ajuste" style="display:none;">
+            <h2 id="ajuste-titulo">Ajustar profesor</h2>
+            <p class="panel-sub" id="ajuste-sub">Materias que dicta y grados donde puede crear clases.</p>
+
+            <div class="form-fila">
+                <div class="campo">
+                    <label>Materias que dicta</label>
+                    <div class="marcas-materias" id="ajuste-materias"></div>
+                </div>
+                <div class="campo">
+                    <label>Grados donde puede crear clases</label>
+                    <div class="marcas-materias" id="ajuste-grados"></div>
+                    <p class="grupo-meta">Si no marcas ninguno, puede crear clases en cualquier curso, que era como funcionaba antes.</p>
+                </div>
+            </div>
+
+            <p id="ajuste-error" class="mensaje-error" style="display:none;"></p>
+            <p id="ajuste-exito" class="mensaje-exito" style="display:none;"></p>
+            <div class="grupo-acciones">
+                <button type="button" class="btn-accion" id="btn-ajuste-guardar">Guardar cambios</button>
+                <button type="button" class="btn-secundario" id="btn-ajuste-cerrar">Cerrar</button>
+            </div>
+        </section>
+
+        <section class="panel-box" id="panel-ficha" style="display:none;">
+            <h2 id="ficha-titulo">Ficha</h2>
+            <p class="panel-sub" id="ficha-sub"></p>
+            <div id="ficha-datos" class="stats-grid"></div>
+            <div id="ficha-contenido"><p class="estado-vacio">Cargando...</p></div>
+            <div class="grupo-acciones" style="margin-top:14px;">
+                <button type="button" class="btn-secundario" id="btn-ficha-cerrar">Cerrar</button>
+            </div>
+        </section>
+
         <section class="panel-box sh-reveal">
             <h2>Clases y partidas por curso</h2>
-            <p class="panel-sub">Lo que cada curso ha usado de la plataforma. Una clase aparece "abierta" cuando su profesor la inició desde Sala de clase.</p>
-            <div id="usuarios-cursos"><p class="estado-vacio">Cargando clases...</p></div>
+            <p class="panel-sub">Lo que cada curso ha usado de la plataforma. Una clase aparece "abierta" cuando su profesor la inició desde Sala de clase.</p>            <div id="usuarios-cursos"><p class="estado-vacio">Cargando clases...</p></div>
         </section>
 
     </main>

@@ -17,9 +17,9 @@
 import { suscribirSesion, signOut, auth, MOTIVO } from "./sesion.js";
 
 const SALUDOS = {
-  estudiante: (nombre) => `Bienvenid@, ${nombre} 👋`,
-  profesor: (nombre) => `Bienvenid@, profe ${nombre} 👋`,
-  administrador: (nombre) => `Panel Administrativo — ${nombre}`
+  estudiante: (nombre) => `Bienvenid@, ${nombre}`,
+  profesor: (nombre) => `Bienvenid@, profe ${nombre}`,
+  administrador: (nombre) => `Panel de Coordinación — ${nombre}`
 };
 
 /**
@@ -54,7 +54,7 @@ function mostrarPanel(cuenta, alListo) {
   const bienvenida = document.getElementById("bienvenida");
   if (bienvenida) {
     const saludar = SALUDOS[cuenta.rol];
-    bienvenida.textContent = saludar ? saludar(cuenta.username) : `Bienvenid@, ${cuenta.username} 👋`;
+    bienvenida.textContent = saludar ? saludar(cuenta.username) : `Bienvenid@, ${cuenta.username}`;
   }
 
   // Un profesor estándar no ve "Estudiantes"; un director sí.
@@ -76,11 +76,11 @@ function mostrarAvisoDeRed() {
   // juegos.css, y este aviso tiene que verse bien en las tres carpetas.
   aviso.style.cssText =
     "margin:16px 0; padding:14px 16px; border-radius:12px; text-align:center;" +
-    "background:#fff4f2; color:#c0392b; border:1px solid #f3c6bd; font-size:.95rem;";
+    "background:#F5EEFB; color:#7C1DAB; border:1px solid #DCC7EE; font-size:.95rem;";
   aviso.innerHTML = `
     No se pudieron cargar tus datos por un corte momentáneo de conexión.
     Tu sesión sigue abierta.
-    <button type="button" id="btn-reintentar" style="margin-left:12px; padding:7px 14px; border-radius:9px; border:1px solid #c0392b; background:#fff; color:#c0392b; font-weight:700; cursor:pointer;">Reintentar</button>`;
+    <button type="button" id="btn-reintentar" style="margin-left:12px; padding:7px 14px; border-radius:9px; border:1px solid #7C1DAB; background:#fff; color:#7C1DAB; font-weight:700; cursor:pointer;">Reintentar</button>`;
 
   const main = document.querySelector("main") || document.body;
   main.insertBefore(aviso, main.firstChild);

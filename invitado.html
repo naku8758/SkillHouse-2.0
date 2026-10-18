@@ -54,7 +54,7 @@
             <span class="badge">🕹️ Sin necesidad de cuenta</span>
             <h1 class="titulo-principal">Juega como invitado</h1>
             <div class="text">
-                <p>Elige materia, tema y dificultad, y entra directo a jugar. No necesitas cuenta — aunque tampoco se guarda tu resultado.</p>
+                <p>Elige el grado, la materia, el tema y la dificultad, y entra directo a jugar. No necesitas cuenta — aunque tampoco se guarda tu resultado.</p>
             </div>
         </div>
     </main>
@@ -62,8 +62,12 @@
     <main class="secciones" style="padding:0 6% 70px;">
         <section class="selector-card sh-reveal">
             <h2 style="margin-bottom:6px;">🎯 Elige qué practicar</h2>
-            <p class="section-intro" style="margin-bottom:22px;">Selecciona la materia, el tema y el nivel antes de escoger un juego.</p>
+            <p class="section-intro" style="margin-bottom:22px;">El grado define cómo se juega: en 1° y 2° hay dos opciones, sin reloj y con la pregunta leída en voz alta; en 10° y 11°, cuatro opciones, hasta doce preguntas y tiempo corto.</p>
             <div class="form-fila">
+                <div class="campo">
+                    <label for="select-grado-invitado">Grado</label>
+                    <select id="select-grado-invitado"></select>
+                </div>
                 <div class="campo">
                     <label for="select-materia-invitado">Materia</label>
                     <select id="select-materia-invitado"></select>
@@ -81,6 +85,7 @@
                     </select>
                 </div>
             </div>
+            <p class="section-intro" id="aviso-ciclo-invitado"></p>
         </section>
 
         <section style="padding-top:50px;">
@@ -129,7 +134,7 @@
                 <label>Contraseña</label>
                 <input type="password" name="password" placeholder="********" required>
             </div>
-            <p id="login-error" style="color:#c0392b; display:none; margin-top:10px; font-size:0.9rem;"></p>
+            <p id="login-error" style="color:#7C1DAB; display:none; margin-top:10px; font-size:0.9rem;"></p>
             <button type="submit" class="btn-login" style="width: 100%; margin-top: 20px; cursor: pointer; border: none; font-size: 1rem;">Entrar</button>
         </form>
         </div>

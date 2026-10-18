@@ -3,8 +3,9 @@
 // real y su propio resumen de juego.
 
 import { suscribirSesion } from "../js/sesion.js";
-import { MATERIAS, MATERIAS_PROXIMAS } from "../js/catalogo.js";
-import { obtenerGruposDelEstudiante, obtenerHistorialEstudiante } from "../js/grupos.js";
+import { MATERIAS, materiasDelGrado, temasDelGrado } from "../js/catalogo.js";
+import { gradoDeCurso } from "../js/malla.js";
+import { clasesDelEstudiante, obtenerHistorialEstudiante } from "../js/grupos.js";
 import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
 
 function tarjeta({ href, icono, titulo, etiqueta, color }) {
@@ -24,23 +25,22 @@ function promedioDe(historial) {
 suscribirSesion("estudiante", async (cuenta) => {
   if (!cuenta) return; // guard.js redirige
 
-  document.getElementById("mis-materias").innerHTML = MATERIAS.map((materia) =>
-    tarjeta({
+  // El estudiante ve las áreas que sí se dictan en su grado. Sin curso
+  // asignado todavía (cuenta suelta) se muestran todas, para que la página
+  // no quede en blanco y él entienda que falta el vinculo.
+  const grado = gradoDeCurso(cuenta.datos.curso);
+  const areas = grado ? materiasDelGrado(grado) : MATERIAS;
+
+  document.getElementById("mis-materias").innerHTML = areas.map((materia) => {
+    const temas = grado ? temasDelGrado(grado, { materiaId: materia.id }).length : 0;
+    return tarjeta({
       href: `materia.html?m=${encodeURIComponent(materia.id)}`,
       icono: materia.icono,
       titulo: materia.nombre,
-      etiqueta: "Juegos disponibles",
+      etiqueta: grado ? `${temas} temas para ${grado}°` : "Juegos disponibles",
       color: materia.color
-    })
-  ).join("");
-
-  document.getElementById("materias-proximas").innerHTML = MATERIAS_PROXIMAS.map(
-    (materia) => `
-      <div class="materia-card ${materia.color} materia-card--proximamente">
-        <h3>${materia.icono} ${materia.nombre}</h3>
-        <span class="materia-tag">Próximamente</span>
-      </div>`
-  ).join("");
+    });
+  }).join("");
 
   // `creadoPorNombre` es quien creó la cuenta, que puede ser el director o el
   // administrador: llamarlo "director(a) de curso" le decía al estudiante que
@@ -54,11 +54,11 @@ suscribirSesion("estudiante", async (cuenta) => {
   let historial = [];
   try {
     [grupos, historial] = await Promise.all([
-      obtenerGruposDelEstudiante(cuenta.uid),
+      clasesDelEstudiante({ uid: cuenta.uid, curso }),
       obtenerHistorialEstudiante(cuenta.uid)
     ]);
   } catch (err) {
-    console.error("SkillHouse (resumen del estudiante):", err);
+    console.error("SkillHouse:", err);
     return;
   }
 
@@ -69,7 +69,7 @@ suscribirSesion("estudiante", async (cuenta) => {
 
   document.getElementById("resumen-inicio").style.display = "block";
   document.getElementById("stats-inicio").innerHTML = `
-    <div class="stat-card"><div class="stat-valor">${grupos.length}</div><div class="stat-label">Clases activas</div></div>
+    <div class="stat-card"><div class="stat-valor">${grupos.length}</div><div class="stat-label">Clases de tu curso</div></div>
     <div class="stat-card"><div class="stat-valor">${materiasConClases}</div><div class="stat-label">Materias con clases</div></div>
     <div class="stat-card"><div class="stat-valor">${historial.length}</div><div class="stat-label">Partidas guardadas</div></div>
     <div class="stat-card"><div class="stat-valor">${nota == null ? "—" : formatearNota(nota)}</div><div class="stat-label">Nota definitiva (1 a 5)</div></div>

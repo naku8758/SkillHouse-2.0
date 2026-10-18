@@ -106,7 +106,7 @@ body{
     color:var(--sh-on-dark);
 }
 .menu a.is-active{
-    background:rgba(233,180,52,.11);
+    background:rgba(158,52,233,.11);
     color:#fff;
     font-weight:600;
     box-shadow:inset 2px 0 0 var(--sh-oro-claro);
@@ -340,6 +340,20 @@ body{
 .curso-check:hover{ border-color:var(--sh-linea-fuerte); }
 .curso-check input{ width:16px; height:16px; accent-color:var(--sh-accent); cursor:pointer; }
 
+/* Encabezado de grupo en el Inicio del profesor: "Tu curso de dirección"
+   frente a "Otros cursos". */
+.curso-seccion{
+    margin:26px 0 12px;
+    font-size:.95rem;
+    font-weight:700;
+    letter-spacing:.01em;
+    color:var(--sh-ink-900);
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.curso-seccion:first-child{ margin-top:0; }
+
 /* =====================================
    ÁREAS "PRÓXIMAMENTE" (aún sin contenido)
 ===================================== */
@@ -367,14 +381,14 @@ body{
    la marca ya usaba para sus tarjetas. Lo consume .materia-card a través
    de --sh-accento, así que agregar una materia nueva es una línea aquí.
 ===================================== */
-.card1{ --sh-accento:#C1121F; }  /* Matemáticas            · rojo de marca */
+.card1{ --sh-accento:#9E12C1; }  /* Matemáticas            · rojo de marca */
 .card2{ --sh-accento:#131B7C; }  /* Lengua Castellana      · azul noche */
-.card3{ --sh-accento:#0E8F5E; }  /* Ciencias Naturales     · verde */
+.card3{ --sh-accento:#0E448F; }  /* Ciencias Naturales     · verde */
 .card4{ --sh-accento:#7C0BA8; }  /* Inglés                 · magenta */
-.card5{ --sh-accento:#B8790D; }  /* Ciencias Sociales      · ámbar */
+.card5{ --sh-accento:#700FB6; }  /* Ciencias Sociales      · ámbar */
 .card6{ --sh-accento:#5B2EFF; }  /* Tecnología             · índigo */
-.card7{ --sh-accento:#C4187C; }  /* Educación Artística    · rosa fuerte */
-.card8{ --sh-accento:#0E7A9C; }  /* Educación Física       · cian oscuro */
+.card7{ --sh-accento:#A218C4; }  /* Educación Artística    · rosa fuerte */
+.card8{ --sh-accento:#0E6D9C; }  /* Educación Física       · cian oscuro */
 .card9{ --sh-accento:#5B3BA8; }  /* Ética y Valores        · violeta */
 
 /* =====================================

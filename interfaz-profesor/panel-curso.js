@@ -255,7 +255,7 @@ suscribirSesion("profesor", async (c) => {
   const nombreCurso = curso?.nombre || `Grado ${codigo}`;
   document.getElementById("subtitulo-curso").textContent =
     `${nombreCurso} · ${c.datos.materias?.length || 0} materia(s) a tu cargo`;
-  document.title = `Curso ${codigo} | SkillHouse`;
+  document.title = `Curso ${codigo} · SkillHouse`;
 
   await Promise.all([cargarEstudiantes(), cargarClases()]);
 

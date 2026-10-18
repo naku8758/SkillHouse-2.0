@@ -1,10 +1,16 @@
 // js/grupos.js
 // Capa de datos de las "clases": un profesor crea una clase para un curso y
 // una materia concretos, eligiendo tema, dificultad y juego; obtiene un
-// código de 6 caracteres y lo comparte. Los estudiantes se unen con ese
-// código desde la página de ESA materia, y solo si el curso del grupo
-// coincide con el suyo. Los resultados quedan guardados para que el profesor
-// los revise.
+// código que siempre está activo y lo comparte. El código lo que hace es
+// matricular: el estudiante queda en ese curso y desde ahí ve TODAS las clases
+// activas de su curso y su materia, sin volver a escribir códigos. Los
+// resultados quedan guardados para que el profesor los revise.
+//
+// Quién puede jugar una clase: el estudiante matriculado en el curso de la
+// clase (o que ya entró con el código alguna vez). Antes había además una
+// solicitud que el profesor tenía que aceptar; se quitó, porque en un salón de
+// 30 niños el cuello de botella era esperar el visto bueno y el aula ya está
+// acotada por el curso: el código de 601 no abre una clase de 602.
 //
 // Estructura en Firestore:
 //   grupos/{grupoId}
@@ -12,7 +18,6 @@
 //       profesorId, profesorNombre, codigo, activo, sala, miembrosUids, creadoEn }
 //
 //   grupos/{grupoId}/miembros/{uid}     { uid, username, unidoEn }
-//   grupos/{grupoId}/solicitudes/{uid}  { uid, username, estado, solicitadoEn }
 //   grupos/{grupoId}/sala/{uid}         { uid, nombre, desde }   -> ver js/sala.js
 //   grupos/{grupoId}/resultados/{autoId}{ uid, username, juego, puntaje,
 //                                          total, porcentaje, nota, fecha }
@@ -35,7 +40,9 @@ import {
   arrayRemove,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-import { MATERIAS } from "./catalogo.js";
+import { MATERIAS, existeTema, obtenerTema, nombreDelTema } from "./catalogo.js";
+import { alinearTemaAlCurso, cicloDeCurso } from "./malla.js";
+import { matricularEnCurso } from "./cursos.js";
 import { SALA, salaBloqueaJuego, salaCerroClase } from "./sala.js";
 import { notaDesdeFraccion, notaDeResultado } from "./nota.js";
 
@@ -67,6 +74,35 @@ async function generarCodigoUnico() {
     if (await codigoEstaLibre(candidato)) return candidato;
   }
   throw new Error("No se pudo generar un código único. Intenta de nuevo.");
+}
+
+/**
+ * Tema que debe guardarse en la clase. El profesor puede elegir un tema de
+ * otro grado o mover la clase de curso después de crearla: sin este control un
+ * curso de 2° jugaría con preguntas de 11°. Se valida que el tema exista, que
+ * sea de la materia de la clase y que pertenezca al ciclo del curso.
+ */
+function temaParaCurso(tema, curso, materia) {
+  if (!tema) {
+    throw new Error("Selecciona un tema.");
+  }
+  if (!existeTema(tema)) {
+    throw new Error("El tema elegido ya no está en el catálogo.");
+  }
+
+  const info = obtenerTema(tema);
+  if (materia && info.materiaId && info.materiaId !== materia) {
+    throw new Error("El tema elegido no es de la materia de esta clase.");
+  }
+
+  const alineado = alinearTemaAlCurso(tema, curso, existeTema);
+  const cicloCurso = cicloDeCurso(curso);
+  if (alineado === tema && cicloCurso && info.cicloId && info.cicloId !== cicloCurso) {
+    throw new Error(
+      `"${nombreDelTema(tema)}" no tiene contenido para el curso ${curso}. Elige un tema de ese grado.`
+    );
+  }
+  return alineado;
 }
 
 /* ---------------------- PROFESOR ---------------------- */
@@ -106,13 +142,11 @@ export async function crearGrupo({
     throw new Error("Selecciona el curso al que pertenece esta clase.");
   }
 
-  if (!tema) {
-    throw new Error("Selecciona un tema.");
-  }
-
   if (![1, 2, 3].includes(Number(dificultad))) {
     throw new Error("Selecciona una dificultad válida.");
   }
+
+  const temaFinal = temaParaCurso(tema, curso, materia);
 
   const codigo = await generarCodigoUnico();
 
@@ -121,7 +155,7 @@ export async function crearGrupo({
     juego,
     materia,
     curso,
-    tema,
+    tema: temaFinal,
     dificultad: Number(dificultad),
     profesorId,
     profesorNombre: profesorNombre || "",
@@ -178,7 +212,6 @@ export async function actualizarGrupo({ grupoId, nombre, curso, tema, dificultad
   }
 
   if (tema !== undefined) {
-    if (!tema) throw new Error("Selecciona un tema.");
     cambios.tema = tema;
   }
 
@@ -187,6 +220,21 @@ export async function actualizarGrupo({ grupoId, nombre, curso, tema, dificultad
       throw new Error("Selecciona una dificultad válida.");
     }
     cambios.dificultad = Number(dificultad);
+  }
+
+  if (tema !== undefined || curso !== undefined) {
+    // La materia no se edita, así que se toma de la clase guardada para
+    // comprobar que el tema nuevo siga siendo de esa materia.
+    const actual = await getDoc(doc(db, "grupos", grupoId));
+    if (!actual.exists()) throw new Error("La clase no existe o fue borrada.");
+    const datos = actual.data();
+    const cursoFinal = cambios.curso || datos.curso;
+    const temaFinal = tema !== undefined ? tema : datos.tema;
+    cambios.tema = temaParaCurso(temaFinal, cursoFinal, datos.materia);
+    // Si el tema se movió de ciclo, el nivel elegido puede no tener preguntas.
+    const dificultadFinal =
+      cambios.dificultad !== undefined ? cambios.dificultad : Number(datos.dificultad) || 2;
+    cambios.dificultad = dificultadFinal;
   }
 
   if (Object.keys(cambios).length === 0) return;
@@ -213,32 +261,44 @@ export async function quitarEstudianteDelGrupo({ grupoId, uid }) {
   await deleteDoc(doc(db, "grupos", grupoId, "miembros", uid));
 }
 
-/** Solicitudes de ingreso pendientes de un grupo (estudiantes esperando aprobación). */
-export async function obtenerSolicitudesDelGrupo(grupoId) {
-  const snap = await getDocs(collection(db, "grupos", grupoId, "solicitudes"));
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .filter((s) => s.estado === "pendiente");
+/**
+ * Matricula al estudiante en el curso de la clase cuyo código escribió, si es
+ * que todavía no tiene curso. Es el mismo `matricularEnCurso` de Mi Perfil, con
+ * la condición de que solo rellena un curso vacío: así un niño de 602 no se
+ * pasa a 601 sabiéndose un código, y el cambio de curso equivocado sigue
+ * siendo trabajo del administrador, que ve el padrón completo.
+ */
+async function matricularPorCodigo(grupo, uid) {
+  await matricularEnCurso({ uid, codigo: grupo.curso, porEstudiante: true });
 }
 
 /**
- * El profesor acepta o rechaza la solicitud de ingreso de un estudiante.
- * Aceptar: lo agrega a miembrosUids, crea su ficha en /miembros y borra la
- * solicitud (ya quedó resuelta). Rechazar: solo borra la solicitud; el
- * estudiante puede volver a intentarlo más adelante si quiere.
+ * Agrega al estudiante a la lista de la clase y le escribe su ficha. Lo hace él
+ * mismo (las reglas de Firestore le dejan agregarse solo a sí mismo y solo en
+ * una clase de su curso), así que el profesor no tiene que aceptar nada: en un
+ * salón de 30 niños esa espera era el cuello de botella del aula.
  */
-export async function responderSolicitud({ grupoId, uid, username, aceptar }) {
-  if (aceptar) {
-    await updateDoc(doc(db, "grupos", grupoId), {
-      miembrosUids: arrayUnion(uid)
-    });
-    await setDoc(doc(db, "grupos", grupoId, "miembros", uid), {
-      uid,
-      username: username || "",
-      unidoEn: serverTimestamp()
-    });
-  }
-  await deleteDoc(doc(db, "grupos", grupoId, "solicitudes", uid));
+async function agregarseALaClase(grupo, uid, username) {
+  await updateDoc(doc(db, "grupos", grupo.id), {
+    miembrosUids: arrayUnion(uid)
+  });
+  await setDoc(
+    doc(db, "grupos", grupo.id, "miembros", uid),
+    { uid, username: username || "", unidoEn: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+/**
+ * Entrada a una clase desde la lista del curso, sin código: si el niño no estaba
+ * en la lista, se agrega. Devuelve false si la clase ya no existe.
+ */
+export async function anotarParticipacion({ grupoId, uid, username }) {
+  const grupo = await obtenerGrupo(grupoId);
+  if (!grupo) return false;
+  if ((grupo.miembrosUids || []).includes(uid)) return true;
+  await agregarseALaClase(grupo, uid, username);
+  return true;
 }
 
 /**
@@ -314,9 +374,40 @@ async function obtenerGrupo(grupoId) {
 }
 
 /**
+ * Curso en el que está matriculado un estudiante. Se lee de su ficha; si no
+ * tiene ficha o no tiene curso, devuelve cadena vacía.
+ */
+export async function cursoDelEstudiante(uid) {
+  if (!uid) return "";
+  try {
+    const snap = await getDoc(doc(db, "estudiantes", uid));
+    return snap.exists() ? snap.data().curso || "" : "";
+  } catch (err) {
+    console.error("SkillHouse:", err);
+    return "";
+  }
+}
+
+/**
+ * Puede el estudiante estar en esta clase: ya está en su lista, o es del mismo
+ * curso. Lo segundo es lo que hace que el niño no necesite ningún código para
+ * jugar: la clase que el profesor abrió para 601 es la clase de 601.
+ *
+ * `curso` es opcional: si no viene, se lee la ficha del estudiante. Se deja
+ * pasar porque las pantallas que ya conocen el curso (la de la materia, la
+ * sala) no pagan una lectura extra por él.
+ */
+async function accesoAlGrupo(grupo, uid, curso) {
+  if ((grupo.miembrosUids || []).includes(uid)) return true;
+  if (!grupo.curso) return false;
+  const cursoDelNino = curso !== undefined ? curso : await cursoDelEstudiante(uid);
+  return !!cursoDelNino && cursoDelNino === grupo.curso;
+}
+
+/**
  * Valida antes de dejar jugar dentro de una clase: la clase existe, sigue
- * activa, corresponde al juego de esta pantalla y el estudiante está aceptado
- * como miembro. Devuelve null en cualquier otro caso.
+ * activa, corresponde al juego de esta pantalla y el estudiante es del curso de
+ * la clase (o ya entró con el código). Devuelve null en cualquier otro caso.
  *
  * Sin esta comprobación bastaba con escribir en la barra de direcciones
  * juegos/quiz.html?grupo=ID de una clase ajena para jugarla (el resultado no
@@ -328,7 +419,7 @@ async function obtenerGrupo(grupoId) {
  * y confundía al niño. Cuando el profesor cierra la clase se marca
  * `claseCerrada`.
  */
-export async function grupoJugable(grupoId, uid, juegoEsperado) {
+export async function grupoJugable(grupoId, uid, juegoEsperado, curso) {
   if (!grupoId) return null;
 
   let grupo;
@@ -340,25 +431,27 @@ export async function grupoJugable(grupoId, uid, juegoEsperado) {
 
   if (!grupo || !grupo.activo) return null;
   if (juegoEsperado && grupo.juego !== juegoEsperado) return null;
-  if (!(grupo.miembrosUids || []).includes(uid)) return null;
+  if (!(await accesoAlGrupo(grupo, uid, curso))) return null;
 
   if (salaBloqueaJuego(grupo)) return { ...grupo, sinEmpezar: true };
   if (salaCerroClase(grupo)) return { ...grupo, claseCerrada: true };
 
-  return grupo;
+  // Un grupo antiguo, o una clase que el profesor movió de curso, puede traer
+  // un tema de otro grado: se traduce al ciclo del curso antes de que el juego
+  // baje las preguntas.
+  return { ...grupo, tema: alinearTemaAlCurso(grupo.tema, grupo.curso, existeTema) };
 }
 
 /**
- * Envía una solicitud de ingreso a una clase a partir de su código. Ya NO
- * une directamente: el profesor debe aceptar la solicitud primero (ver
- * responderSolicitud). Si el estudiante ya es miembro, o ya tiene una
- * solicitud pendiente, se le informa en vez de duplicar la solicitud.
+ * El código que reparte el profesor: con él el estudiante se matricula en el
+ * curso de la clase (si no tenía curso) y entra a la lista de esa clase. No hay
+ * aprobación pendiente: en cuanto el código es válido, ya está dentro.
  *
- * `materiaEsperada` y `cursoEsperado` son la clave del aislamiento por
- * materia y por curso: un código de Matemáticas deja de servir en la página
- * de Inglés, y un estudiante de 601 no puede colarse en una clase de 602.
+ * `materiaEsperada` y `cursoEsperado` son la clave del aislamiento por materia
+ * y por curso: un código de Matemáticas deja de servir en la página de Inglés,
+ * y un estudiante de 601 no puede colarse en una clase de 602.
  *
- * @returns {Promise<{grupo:Object, estado:"miembro"|"pendiente"}>}
+ * @returns {Promise<{grupo:Object, estado:"miembro", matriculado:boolean}>}
  */
 export async function unirseAGrupo({ codigo, uid, username, materiaEsperada, cursoEsperado }) {
   const codigoLimpio = (codigo || "").trim().toUpperCase();
@@ -377,42 +470,33 @@ export async function unirseAGrupo({ codigo, uid, username, materiaEsperada, cur
     );
   }
 
-  // El curso ya no es opcional: firestore.rules exige que el curso del
-  // estudiante coincida con el de la clase, así que una cuenta sin curso
-  // recibiría un permission-denido incomprensible. Se avisa aquí, en español.
-  if (!cursoEsperado) {
-    throw new Error("Tu cuenta todavía no está vinculada a un curso. Pídele a tu director de curso que te matricule antes de unirte a una clase.");
-  }
-
-  if (grupo.curso !== cursoEsperado) {
-    throw new Error(
-      `Esa clase es del curso ${grupo.curso || "sin curso"} y tú estás en ${cursoEsperado}. Solo puedes unirte a las clases de tu curso.`
-    );
-  }
-
   if (!grupo.activo) {
     throw new Error("Esta clase ya no está activa. Pídele a tu profesor un código vigente.");
   }
 
+  // Caso "mi cuenta no tiene curso": el código lo reengancha. matricularEnCurso
+  // solo rellena un curso vacío y las reglas no dejan moverse entre dos cursos
+  // que existan, así que un niño de 602 que se sepa un código de 601 no se cuela
+  // en 601: se queda con su curso y la comparación de abajo lo frena.
+  let curso = cursoEsperado;
+  if (!curso) {
+    if (!grupo.curso) {
+      throw new Error("Esta clase no tiene curso asignado. Pídele a tu director de curso el código del tuyo.");
+    }
+    await matricularPorCodigo(grupo, uid);
+    curso = grupo.curso;
+  } else if (grupo.curso !== curso) {
+    throw new Error(
+      `Esa clase es del curso ${grupo.curso || "sin curso"} y tú estás en ${curso}. Solo puedes unirte a las clases de tu curso.`
+    );
+  }
+
   if ((grupo.miembrosUids || []).includes(uid)) {
-    return { grupo, estado: "miembro" };
+    return { grupo, estado: "miembro", matriculado: false };
   }
 
-  const solicitudRef = doc(db, "grupos", grupo.id, "solicitudes", uid);
-  const solicitudExistente = await getDoc(solicitudRef);
-  if (solicitudExistente.exists() && solicitudExistente.data().estado === "pendiente") {
-    return { grupo, estado: "pendiente" };
-  }
-
-  await setDoc(solicitudRef, {
-    uid,
-    username: username || "",
-    curso: grupo.curso || "",
-    estado: "pendiente",
-    solicitadoEn: serverTimestamp()
-  });
-
-  return { grupo, estado: "pendiente" };
+  await agregarseALaClase(grupo, uid, username);
+  return { grupo, estado: "miembro", matriculado: !cursoEsperado };
 }
 
 function nombreDeMateria(id) {
@@ -440,6 +524,29 @@ export async function obtenerGruposDelEstudiante(uid) {
   return grupos;
 }
 
+/**
+ * Clases que un estudiante ve en su pantalla: las de su curso (que puede jugar
+ * sin escribir ningún código) más las que ya lo tienen en su lista, por si
+ * entró con un código o si su curso cambió después.
+ *
+ * Se unen las dos lecturas en lugar de bastaarse de una porque la lista del
+ * curso es la que trae las clases nuevas del profe, y la pertenencia es la que
+ * conserva las que él mismo abrió con código.
+ */
+export async function clasesDelEstudiante({ uid, curso }) {
+  const [delCurso, mias] = await Promise.all([
+    curso ? obtenerGruposDelCurso(curso) : Promise.resolve([]),
+    obtenerGruposDelEstudiante(uid).catch(() => [])
+  ]);
+
+  const porId = new Map();
+  [...delCurso, ...mias].forEach((g) => porId.set(g.id, g));
+
+  const grupos = [...porId.values()];
+  grupos.sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0));
+  return grupos;
+}
+
 /* ---------------------- RESULTADOS (ambos roles) ---------------------- */
 
 /**
@@ -447,11 +554,12 @@ export async function obtenerGruposDelEstudiante(uid) {
  * partida era "modo práctica" y no se guarda en Firestore (evita ruido de
  * datos de clases que no existen).
  *
- * Antes de guardar comprueba que el uid está en la lista de miembros y de
- * que la clase sigue activa: las reglas de Firestore permiten escribir un
- * resultado a cualquier usuario autenticado (no pueden conocerse de otra
- * forma el ID del grupo y el del estudiante), así que este filtro es lo que
- * evita que alguien con la URL de una clase le meta resultados falsos.
+ * Antes de guardar comprueba que el uid sea miembro de la clase o estudiante
+ * del mismo curso, y de que la clase siga activa: las reglas de Firestore
+ * permiten escribir un resultado a cualquier usuario autenticado (no pueden
+ * conocerse de otra forma el ID del grupo y el del estudiante), así que este
+ * filtro es lo que evita que alguien con la URL de una clase le meta
+ * resultados falsos.
  *
  * Además del resultado dentro de la clase, se guarda una copia en el
  * historial personal del estudiante (estudiantes/{uid}/resultados) para que
@@ -465,8 +573,14 @@ export async function guardarResultado({ grupoId, uid, username, juego, puntaje,
   if (!grupoSnap.exists()) throw new Error("La clase ya no existe.");
 
   const grupo = grupoSnap.data();
+  if (!(await accesoAlGrupo(grupo, uid))) {
+    throw new Error("Esta clase no es de tu curso. Pídele a tu profesor el código de tu curso.");
+  }
+  // El juego directo (el botón de la tarjeta) no pasa por la sala, así que la
+  // lista de la clase se completa aquí: si juega y no estaba, se anota. Si la
+  // escritura de la lista falla, la partida igual se guarda.
   if (!(grupo.miembrosUids || []).includes(uid)) {
-    throw new Error("No estás registrado como estudiante de esta clase.");
+    await agregarseALaClase(grupo, uid, username).catch(() => {});
   }
   if (!grupo.activo) throw new Error("Esta clase ya no está aceptando resultados.");
   // Segunda barrera, además del bloqueo en el juego: sin esto, escribir la URL

@@ -1,16 +1,22 @@
 // interfaz-profesor/mis-clases.js
 // Crear y gestionar las clases de un profesor.
 //
-// Tres reglas mandan aquí, y son las que antes no existían:
+// Tres reglas mandan aquí:
 //  1. El profesor solo puede crear clases de las materias que tiene asignadas
 //     (la lista de materias se lee de su documento, no del catálogo completo).
-//  2. Cada clase pertenece a un curso. Un director de curso solo puede crear
-//     dentro del curso que dirige; un profesor estándar puede elegir cualquiera.
+//  2. Cada clase pertenece a un curso, y el curso sale de los grados que el
+//     administrador le asignó. El director además tiene siempre visible el curso
+//     que dirige, aunque no lo haya marcado.
 //  3. La pantalla puede abrirse ya filtrada por materia y curso
 //     (materia.html?m=matematicas&c=601), que es como llega uno desde el
 //     inicio: la materia y el curso quedan fijos y solo se elige el tema.
+//
+// Ya no hay solicitudes que aceptar: los niños del curso entran solos con el
+// código, así que la lista de estudiantes es solo el registro de quién ha
+// jugado, no un permiso.
 
-import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego, JUEGOS } from "../js/catalogo.js";
+import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego, temasDelGrado, temasDeMateria, JUEGOS } from "../js/catalogo.js";
+import { gradoDeCurso, cicloPorId, NOMBRE_GRADO } from "../js/malla.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { cursosDelProfesor } from "../js/cursos.js";
 import { NOMBRE_SALA, estadoDeSala } from "../js/sala.js";
@@ -22,9 +28,7 @@ import {
   eliminarGrupo,
   obtenerResultadosDelGrupo,
   actualizarGrupo,
-  obtenerSolicitudesDelGrupo,
   obtenerMiembrosDelGrupo,
-  responderSolicitud,
   quitarEstudianteDelGrupo
 } from "../js/grupos.js";
 
@@ -97,7 +101,7 @@ let grupoEnEdicionId = null;
 
 const panelEstudiantes = document.getElementById("panel-estudiantes");
 const estudiantesTitulo = document.getElementById("estudiantes-titulo");
-const solicitudesContenido = document.getElementById("solicitudes-contenido");
+const estudiantesSub = document.getElementById("estudiantes-sub");
 const miembrosContenido = document.getElementById("miembros-contenido");
 let grupoEstudiantesId = null;
 
@@ -125,14 +129,38 @@ function materiaActiva() {
   return MATERIA_PARAMETRO || selectMateria.value || materiasPermitidas[0]?.id || "";
 }
 
-function poblarTemas(select, materiaId, { conVacio }) {
-  const materia = obtenerMateria(materiaId);
-  const opciones = (materia?.temas || []).map(
-    (tema) => `<option value="${escapar(tema.id)}">${escapar(tema.nombre)}</option>`
-  );
-  select.innerHTML = conVacio
-    ? `<option value="">Selecciona un tema</option>${opciones.join("")}`
-    : opciones.join("");
+/**
+ * Temas disponibles para una materia. Con curso elegido solo aparecen los del
+ * ciclo de ese grado (un profe no puede seleccionar en 2° un tema de 11°, y
+ * así el juego ya recibe las condiciones correctas); sin curso se muestran
+ * todos, agrupados por banda de grados.
+ */
+function poblarTemas(select, materiaId, codigoCurso, { conVacio }) {
+  const opcion = (tema) => `<option value="${escapar(tema.id)}">${escapar(tema.nombre)}</option>`;
+  const grado = gradoDeCurso(codigoCurso);
+
+  let html = "";
+  if (grado) {
+    html = temasDelGrado(grado, { materiaId }).map(opcion).join("");
+  } else {
+    const porCiclo = new Map();
+    for (const tema of temasDeMateria(materiaId)) {
+      if (!porCiclo.has(tema.cicloId)) porCiclo.set(tema.cicloId, []);
+      porCiclo.get(tema.cicloId).push(tema);
+    }
+    html = [...porCiclo.entries()]
+      .map(([cicloId, temas]) => {
+        const ciclo = cicloPorId(cicloId);
+        return `<optgroup label="Grados ${escapar(ciclo ? ciclo.nombre : cicloId)}">${temas.map(opcion).join("")}</optgroup>`;
+      })
+      .join("");
+  }
+
+  select.innerHTML = conVacio ? `<option value="">Selecciona un tema</option>${html}` : html;
+  select.disabled = !html;
+  if (grado && !html) {
+    select.innerHTML = `<option value="">Sin temas para ${NOMBRE_GRADO[grado] || grado + "°"}</option>`;
+  }
 }
 
 function poblarCursos(select, { incluirVacio }) {
@@ -196,13 +224,15 @@ suscribirSesion("profesor", async (c) => {
   const subtituloPagina = document.getElementById("subtitulo-pagina");
   const volver = document.getElementById("volver-inicio");
 
-  // Cursos visibles: un director solo ve el suyo; un profesor estándar, todos.
+  // Cursos visibles: los grados que el administrador le asignó, y en el caso del
+  // director siempre además el curso que dirige.
   avisar("Cargando tus cursos y temas...");
   try {
     cursosDisponibles = await cursosDelProfesor({
       uid: c.uid,
       esDirector: c.datos.tipoProfesor === "director",
-      curso: c.datos.curso
+      curso: c.datos.curso,
+      grados: c.datos.grados
     });
   } catch (error) {
     console.error(error);
@@ -237,9 +267,10 @@ suscribirSesion("profesor", async (c) => {
     tituloPagina.textContent = "Curso no disponible";
     avisar("");
     listaGrupos.innerHTML = `<p class="estado-vacio">
+      El curso ${escapar(CURSO_PARAMETRO)} no está entre tus cursos.
       ${c.datos.tipoProfesor === "director"
-        ? `El curso ${escapar(CURSO_PARAMETRO)} no es el que diriges.`
-        : `El curso ${escapar(CURSO_PARAMETRO)} ya no existe o el administrador no lo ha creado.`}
+        ? "Como director ves el curso que diriges más los grados que te asignó el administrador."
+        : "Pídele al administrador que te asigne ese grado en Usuarios."}
     </p>`;
     document.getElementById("caja-crear").style.display = "none";
     return;
@@ -251,14 +282,14 @@ suscribirSesion("profesor", async (c) => {
     tituloPagina.textContent = `${materia.nombre} · ${CURSO_PARAMETRO}`;
     subtituloPagina.textContent =
       "Clases de esta materia para este curso. Crea una y comparte el código con tus estudiantes.";
-    document.title = `${materia.nombre} ${CURSO_PARAMETRO} | SkillHouse`;
+    document.title = `${materia.nombre} ${CURSO_PARAMETRO} · SkillHouse`;
     volver.innerHTML = `← Volver a ${escapar(materia.nombre)} (todos los cursos)`;
     volver.setAttribute("href", `materia.html?m=${encodeURIComponent(materia.id)}`);
   } else if (materia) {
     tituloPagina.textContent = materia.nombre;
     subtituloPagina.textContent =
       "Elige el curso al crear la clase; abajo solo se muestran las clases de esta materia.";
-    document.title = `${materia.nombre} | SkillHouse`;
+    document.title = `${materia.nombre} · SkillHouse`;
     volver.textContent = "← Volver al Inicio";
   } else if (materiasPermitidas.length === 1) {
     // Con una sola materia no hace falta el selector: ya está decidida.
@@ -275,12 +306,15 @@ suscribirSesion("profesor", async (c) => {
   const esDirector = c.datos.tipoProfesor === "director";
 
   if (!cursosDisponibles.length) {
+    const sinGrados = (c.datos.grados || []).length > 0;
     selectCurso.innerHTML = `<option value="">Sin cursos disponibles</option>`;
     selectCurso.disabled = true;
     botonCrear.disabled = true;
     mostrarMensaje(errorEl, esDirector
-      ? "No tienes ningún curso a cargo. Pídele al administrador que te asigne uno en Cursos."
-      : "El administrador todavía no ha creado cursos. Sin curso no se pueden crear clases.");
+      ? "No tienes ningún curso visible. Como director te toca el curso que diriges; si no aparece, el administrador aún no lo ha creado."
+      : sinGrados
+        ? `El administrador te asignó ${escapar((c.datos.grados || []).map((g) => `${g}°`).join(", "))}, pero ninguno de esos grados tiene curso creado todavía.`
+        : "El administrador todavía no ha creado cursos. Sin curso no se pueden crear clases.");
     avisar("");
   } else {
     // Con un solo curso se elige solo. Con varios y sin ?c= se exige la
@@ -304,7 +338,7 @@ suscribirSesion("profesor", async (c) => {
   }
 
   const materiaInicial = MATERIA_PARAMETRO || materiasPermitidas[0].id;
-  poblarTemas(selectTema, materiaInicial, { conVacio: true });
+  poblarTemas(selectTema, materiaInicial, selectCurso.value, { conVacio: true });
   selectTema.disabled = false;
   avisar("");
 
@@ -314,8 +348,14 @@ suscribirSesion("profesor", async (c) => {
   if (cursosDisponibles.length) botonCrear.disabled = false;
 
   selectMateria.addEventListener("change", () => {
-    poblarTemas(selectTema, selectMateria.value, { conVacio: true });
+    poblarTemas(selectTema, selectMateria.value, selectCurso.value, { conVacio: true });
     cargarGruposCon(promesaGrupos);
+  });
+
+  // Cambiar de curso cambia la banda de edad: los temas se vuelven a listar
+  // para que nadie quede con un tema de otro grado seleccionado.
+  selectCurso.addEventListener("change", () => {
+    poblarTemas(selectTema, materiaActiva(), selectCurso.value, { conVacio: true });
   });
 
   await cargarGruposCon(promesaGrupos);
@@ -365,7 +405,7 @@ form?.addEventListener("submit", async (evento) => {
     form.reset();
     if (CURSO_PARAMETRO) selectCurso.value = CURSO_PARAMETRO;
     if (materiasPermitidas.length > 1 && !MATERIA_PARAMETRO) {
-      poblarTemas(selectTema, materiaActiva(), { conVacio: true });
+      poblarTemas(selectTema, materiaActiva(), selectCurso.value, { conVacio: true });
     }
     await cargarGrupos();
   } catch (error) {
@@ -435,12 +475,11 @@ async function cargarGruposCon(promesa) {
   listaGrupos.innerHTML = grupos
     .map((grupo) => {
       const juego = obtenerJuego(grupo.juego) || { icono: "🎲", nombre: grupo.juego || "Juego" };
-      const tema = obtenerTema(grupo.materia, grupo.tema);
+      const tema = obtenerTema(grupo.tema);
       const materia = obtenerMateria(grupo.materia);
       const estado = estadoDeSala(grupo);
-      // Un director de curso no duplica: por diseño dirige uno solo, así que el
-      // panel de duplicación siempre le saldría vacío.
-      const puedeDuplicar = cuenta?.datos.tipoProfesor !== "director";
+      // Duplicar solo sirve si hay otro curso donde copiar la clase.
+      const puedeDuplicar = cursosDisponibles.length > 1;
       return `
       <div class="grupo-card grupo-card--${escapar(grupo.juego)}">
         <div class="grupo-header">
@@ -639,7 +678,7 @@ function mostrarEditar(grupoId) {
   mostrarMensaje(editarError, "");
   mostrarMensaje(editarExito, "");
 
-  poblarTemas(editarTema, grupo.materia, { conVacio: false });
+  poblarTemas(editarTema, grupo.materia, grupo.curso, { conVacio: false });
   poblarCursos(editarCurso, { incluirVacio: false });
 
   document.getElementById("editar-nombre").value = grupo.nombre || "";
@@ -773,13 +812,18 @@ document.getElementById("btn-cerrar-duplicar")?.addEventListener("click", () => 
   grupoDuplicado = null;
 });
 
-/* ---------------------- Estudiantes y solicitudes ---------------------- */
+/* ---------------------- Estudiantes ---------------------- */
 
 async function mostrarEstudiantes(grupoId, nombreGrupo) {
+  const grupo = gruposCache.find((g) => g.id === grupoId) || {};
   grupoEstudiantesId = grupoId;
   estudiantesTitulo.textContent = `Estudiantes — ${nombreGrupo}`;
-  solicitudesContenido.innerHTML = `<p class="estado-vacio">Cargando...</p>`;
-  miembrosContenido.innerHTML = "";
+  if (estudiantesSub) {
+    estudiantesSub.textContent =
+      `Curso ${grupo.curso || "—"}. Los estudiantes de este curso entran con el código de la clase; ` +
+      `aquí solo ves quiénes ya se anotaron.`;
+  }
+  miembrosContenido.innerHTML = `<p class="estado-vacio">Cargando...</p>`;
   panelEstudiantes.style.display = "block";
   panelEstudiantes.scrollIntoView({ behavior: "smooth", block: "start" });
   await recargarEstudiantes();
@@ -790,63 +834,28 @@ async function recargarEstudiantes() {
   const grupoId = grupoEstudiantesId;
 
   try {
-    const [solicitudes, miembros] = await Promise.all([
-      obtenerSolicitudesDelGrupo(grupoId),
-      obtenerMiembrosDelGrupo(grupoId)
-    ]);
-
-    solicitudesContenido.innerHTML = !solicitudes.length
-      ? `<p class="estado-vacio">No hay solicitudes pendientes.</p>`
-      : solicitudes
-          .map(
-            (s) => `
-            <div class="grupo-card" style="margin-bottom:10px;">
-              <div class="grupo-header"><h3>${escapar(s.username || "Estudiante")}</h3></div>
-              <p class="grupo-meta">Curso: ${escapar(s.curso || "—")}</p>
-              <div class="grupo-acciones">
-                <button class="btn-accion" data-solicitud-accion="aceptar" data-uid="${escapar(s.uid)}" data-nombre="${escapar(s.username || "")}">Permitir ingreso</button>
-                <button class="btn-secundario" data-solicitud-accion="rechazar" data-uid="${escapar(s.uid)}">Rechazar</button>
-              </div>
-            </div>`
-          )
-          .join("");
+    const miembros = await obtenerMiembrosDelGrupo(grupoId);
 
     miembrosContenido.innerHTML = !miembros.length
-      ? `<p class="estado-vacio">Todavía no hay estudiantes en esta clase.</p>`
+      ? `<p class="estado-vacio">
+          Todavía nadie se ha anotado en esta clase. Pasa el código y entrarán solos;
+          no necesitas aprobar a nadie.
+        </p>`
       : miembros
           .map(
             (m) => `
             <div class="grupo-card" style="margin-bottom:10px;">
               <div class="grupo-header"><h3>${escapar(m.username || "Estudiante")}</h3></div>
               <div class="grupo-acciones">
-                <button class="btn-secundario" data-miembro-accion="quitar" data-uid="${escapar(m.uid)}">Quitar de la clase</button>
+                <button class="btn-secundario" data-miembro-accion="quitar" data-uid="${escapar(m.uid)}">Quitar de la lista</button>
               </div>
             </div>`
           )
           .join("");
 
-    solicitudesContenido.querySelectorAll("[data-solicitud-accion]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        btn.disabled = true;
-        try {
-          await responderSolicitud({
-            grupoId,
-            uid: btn.dataset.uid,
-            username: btn.dataset.nombre,
-            aceptar: btn.dataset.solicitudAccion === "aceptar"
-          });
-          await recargarEstudiantes();
-          await cargarGrupos();
-        } catch (error) {
-          alert("No se pudo procesar la solicitud.");
-          btn.disabled = false;
-        }
-      });
-    });
-
     miembrosContenido.querySelectorAll("[data-miembro-accion]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm("¿Quitar a este estudiante de la clase?")) return;
+        if (!confirm("¿Quitar a este estudiante de la lista? Sigue siendo de tu curso y podrá volver a entrar con el código.")) return;
         btn.disabled = true;
         try {
           await quitarEstudianteDelGrupo({ grupoId, uid: btn.dataset.uid });
@@ -859,7 +868,7 @@ async function recargarEstudiantes() {
       });
     });
   } catch (error) {
-    solicitudesContenido.innerHTML = `<p class="estado-vacio">No se pudieron cargar los estudiantes.</p>`;
+    miembrosContenido.innerHTML = `<p class="estado-vacio">No se pudieron cargar los estudiantes.</p>`;
   }
 }
 

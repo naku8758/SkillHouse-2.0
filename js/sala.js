@@ -137,7 +137,7 @@ export function escucharSala(grupoId, alCambiar) {
       emitir();
     },
     (error) => {
-      console.error("SkillHouse (sala):", error);
+      console.error("SkillHouse:", error);
       emitir();
     }
   );
@@ -151,7 +151,7 @@ export function escucharSala(grupoId, alCambiar) {
       emitir();
     },
     (error) => {
-      console.error("SkillHouse (asistentes):", error);
+      console.error("SkillHouse:", error);
       emitir();
     }
   );
@@ -171,7 +171,7 @@ export function escucharEstadoSala(grupoId, alCambiar) {
     doc(db, "grupos", grupoId),
     (snap) => alCambiar(snap.exists() ? { id: snap.id, ...snap.data() } : null),
     (error) => {
-      console.error("SkillHouse (sala):", error);
+      console.error("SkillHouse:", error);
       alCambiar(null);
     }
   );

@@ -2,6 +2,11 @@
 // Juego "Quiz de Lógica". Puede jugarse en modo práctica (sin guardar
 // resultado) o dentro de un grupo creado por un profesor (?grupo=ID), en
 // cuyo caso el resultado final se guarda en Firestore.
+//
+// Las condiciones del juego no están escritas aquí: vienen del ciclo del tema
+// (js/malla.js + js/games/ajustes.js). Un tema de 1° se juega con dos opciones
+// y la pregunta leída en voz alta; el mismo eje en 11° sale con cuatro opciones
+// y redacción abstracta.
 
 import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -9,7 +14,10 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase
 import { guardarResultado, grupoJugable } from "../js/grupos.js";
 import { pantallaDeEspera, pantallaDeClaseCerrada } from "../js/espera.js";
 import { notaDesdeFraccion, formatearNota, desempenio } from "../js/nota.js";
-import { obtenerPreguntasPorTema, nombreDelTema, temaAleatorio } from "../js/games/contenido-temas.js";
+import { nombreDelTema, obtenerMateria } from "../js/catalogo.js";
+import { gradoDeCurso } from "../js/malla.js";
+import { obtenerPreguntasPorTema, resolverTemaAleatorio } from "../js/games/banco.js";
+import { ajustesDe, aplicarCiclo, hablar, hayVoz, detenerVoz } from "../js/games/ajustes.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
@@ -18,9 +26,11 @@ const esInvitado = params.get("invitado") === "1";
 
 let usuarioActual = null;
 let usuarioNombre = "";
+let cursoDelUsuario = "";
 let grupoActual = null;
 let temaId = "";
 let dificultad = 2;
+let ajustes = ajustesDe("");
 let preguntasRonda = [];
 let indiceActual = 0;
 let puntaje = 0;
@@ -48,12 +58,36 @@ function rutaMateria(materiaId) {
     : "../interfaz-estudiante/homepagea.html";
 }
 
+function escapeHtml(texto) {
+  const div = document.createElement("div");
+  div.textContent = texto;
+  return div.innerHTML;
+}
+
+/**
+ * Grado con el que se juega. En una clase manda el curso del grupo; en
+ * práctica, el curso de la cuenta del estudiante; en invitado, el ?grado= que
+ * eligió en la página. Solo se usa para elegir tema al azar: una vez hay tema,
+ * el ciclo viene dentro del propio identificador.
+ */
+function gradoEnJuego() {
+  if (grupoActual?.curso) return gradoDeCurso(grupoActual.curso);
+  const porParametro = Number(params.get("grado")) || gradoDeCurso(params.get("c"));
+  if (porParametro) return porParametro;
+  return gradoDeCurso(cursoDelUsuario);
+}
+
+async function elegirTema() {
+  const explicito = params.get("tema");
+  if (explicito) return explicito;
+  return resolverTemaAleatorio({ materiaId: params.get("m") || "", grado: gradoEnJuego() });
+}
+
 async function iniciar() {
   if (esInvitado) {
-    // Modo invitado: sin sesión, sin grupo, nunca se guarda resultado.
-    temaId = params.get("tema") || temaAleatorio();
+    temaId = await elegirTema();
     dificultad = Number(params.get("dificultad")) || 2;
-    prepararRonda();
+    await prepararRonda();
     renderPregunta();
     return;
   }
@@ -70,6 +104,7 @@ async function iniciar() {
     try {
       const snap = await getDoc(doc(db, "usuarios", user.uid));
       usuarioNombre = snap.exists() ? snap.data().username || user.email : user.email;
+      cursoDelUsuario = snap.exists() ? snap.data().curso || "" : "";
     } catch (err) {
       usuarioNombre = user.email;
     }
@@ -96,24 +131,26 @@ async function iniciar() {
       // Modo práctica: si viene con ?tema= y ?dificultad= (desde el selector
       // de práctica libre), se usan esos; si no, se elige un tema al azar
       // en dificultad media.
-      temaId = params.get("tema") || temaAleatorio();
+      temaId = await elegirTema();
       dificultad = Number(params.get("dificultad")) || 2;
     }
 
-    prepararRonda();
+    await prepararRonda();
     renderPregunta();
   });
 }
 
-function prepararRonda() {
-  preguntasRonda = obtenerPreguntasPorTema(temaId, dificultad);
+async function prepararRonda() {
+  ajustes = ajustesDe(temaId);
+  aplicarCiclo(contenedor, temaId);
+  preguntasRonda = await obtenerPreguntasPorTema(temaId, dificultad);
   indiceActual = 0;
   puntaje = 0;
 }
 
 const AVISO_ACCESO = {
   titulo: "No puedes jugar esta clase",
-  texto: "La clase no existe, tu profesor aún no acepta tu solicitud o ya no está activa. Pide el código otra vez en la página de la materia."
+  texto: "La clase no existe, ya no está activa o no es de tu curso. Pide el código otra vez en la página de la materia."
 };
 
 const AVISO_CONTENIDO = {
@@ -122,6 +159,7 @@ const AVISO_CONTENIDO = {
 };
 
 function mostrarAviso(aviso) {
+  detenerVoz();
   contenedor.innerHTML = `
     <div class="resultado-final">
       <div class="resultado-emoji">⚠️</div>
@@ -147,18 +185,20 @@ function renderPregunta() {
 
   const p = preguntasRonda[indiceActual];
   const progreso = Math.round((indiceActual / total) * 100);
+  const materia = obtenerMateria(params.get("m") || "");
 
   contenedor.innerHTML = `
     <div class="juego-topbar">
       <div>
         <h1>🎮 Quiz de Lógica</h1>
-        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"}</p>
+        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"}${materia ? " · " + escapeHtml(materia.nombre) : ""}</p>
       </div>
       <div class="juego-grupo-nombre">Pregunta ${indiceActual + 1} de ${total}</div>
     </div>
     <div class="juego-progreso"><div class="juego-progreso-relleno" style="width:${progreso}%"></div></div>
 
     <span class="pregunta-categoria">${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}</span>
+    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">🔊 Escuchar la pregunta</button>` : ""}
     <p class="pregunta-texto">${escapeHtml(p.enunciado)}</p>
 
     <div class="opciones-lista" id="opciones-lista">
@@ -174,11 +214,17 @@ function renderPregunta() {
   document.querySelectorAll(".opcion-btn").forEach((btn) => {
     btn.addEventListener("click", () => seleccionarOpcion(Number(btn.dataset.indice)));
   });
+
+  if (ajustes.voz && hayVoz()) {
+    document.getElementById("btn-escuchar")?.addEventListener("click", () => hablar(p.enunciado));
+    hablar(p.enunciado);
+  }
 }
 
 function seleccionarOpcion(indiceElegido) {
   if (respondida) return;
   respondida = true;
+  detenerVoz();
 
   const p = preguntasRonda[indiceActual];
   const botones = document.querySelectorAll(".opcion-btn");
@@ -203,6 +249,7 @@ function seleccionarOpcion(indiceElegido) {
 }
 
 async function terminarRonda() {
+  detenerVoz();
   const total = preguntasRonda.length;
   const porcentaje = Math.round((puntaje / total) * 100);
 
@@ -244,17 +291,11 @@ async function terminarRonda() {
       </div>
     </div>`;
 
-  document.getElementById("btn-jugar-de-nuevo").addEventListener("click", () => {
-    prepararRonda();
+  document.getElementById("btn-jugar-de-nuevo").addEventListener("click", async () => {
+    await prepararRonda();
     renderPregunta();
   });
   document.getElementById("btn-volver").addEventListener("click", () => volverA(rutaVolver()));
-}
-
-function escapeHtml(texto) {
-  const div = document.createElement("div");
-  div.textContent = texto;
-  return div.innerHTML;
 }
 
 iniciar();

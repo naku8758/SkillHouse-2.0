@@ -65,7 +65,7 @@ function mostrarMensaje(texto, esError) {
   if (!mensajeEl) return;
   mensajeEl.textContent = texto;
   mensajeEl.style.display = texto ? "block" : "none";
-  mensajeEl.style.color = esError ? "#c0392b" : "#0E8F5E";
+  mensajeEl.style.color = esError ? "#7C1DAB" : "#1D5FBF";
 }
 
 btnEnviar?.addEventListener("click", async () => {

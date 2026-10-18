@@ -90,11 +90,11 @@ nav a.nav-link:hover::after{ transform:scaleX(1); }
 .btn-registro {
     background: var(--sh-grad-brand);
     border:2px solid transparent;
-    box-shadow: 0 6px 18px rgba(255,62,165,.35);
+    box-shadow: 0 6px 18px rgba(208,76,241,.35);
 }
 .btn-registro:hover{
     transform:translateY(-3px);
-    box-shadow: 0 10px 26px rgba(255,62,165,.5);
+    box-shadow: 0 10px 26px rgba(208,76,241,.5);
 }
 
 /* --- HERO --- */
@@ -123,8 +123,8 @@ nav a.nav-link:hover::after{ transform:scaleX(1); }
         420px 200px 0 -2px rgba(255,255,255,.5),
         620px 90px 0 -1px rgba(255,255,255,.9),
         780px 180px 0 -2px rgba(255,255,255,.6),
-        900px 40px 0 -1px rgba(34,211,238,.8),
-        1040px 140px 0 -2px rgba(255,62,165,.7);
+        900px 40px 0 -1px rgba(35,170,237,.8),
+        1040px 140px 0 -2px rgba(208,76,241,.7);
     opacity:.8;
     animation: sh-twinkle 4s ease-in-out infinite;
 }
@@ -199,6 +199,18 @@ nav a.nav-link:hover::after{ transform:scaleX(1); }
     color:transparent;
 }
 .stats p{ color: var(--sh-on-dark-soft); font-size:.9rem; margin-top:2px; }
+.stats dt {
+    font-family: var(--sh-font-display);
+    font-weight:700;
+    font-size:2.1rem;
+    line-height:1.1;
+    background: var(--sh-grad-cyan);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    font-variant-numeric: tabular-nums;
+}
+.stats dd{ color: var(--sh-on-dark-soft); font-size:.9rem; margin-top:2px; }
 
 .hero-image {
     flex: 1;
@@ -227,7 +239,7 @@ nav a.nav-link:hover::after{ transform:scaleX(1); }
     position:absolute;
     inset:-30px -30px auto auto;
     width:220px; height:220px;
-    background: radial-gradient(circle, rgba(255,62,165,.35), transparent 70%);
+    background: radial-gradient(circle, rgba(208,76,241,.35), transparent 70%);
     filter:blur(10px);
     z-index:-1;
     animation: sh-spin-slow 18s linear infinite;
@@ -316,6 +328,15 @@ h2 {
 }
 .nivel-card h3{ font-family:var(--sh-font-display); color:var(--sh-navy-800); font-size:1.25rem; margin-bottom:6px; }
 .nivel-card p{ color:var(--sh-ink-400); font-size:.92rem; margin-bottom:14px; }
+.nivel-meta{
+    margin-top:13px;
+    padding-top:11px;
+    border-top:1px solid var(--sh-linea);
+    font-size:.74rem;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--sh-ink-400);
+}
 
 .nivel-estrellas{ letter-spacing:3px; color:var(--sh-amber); font-size:.95rem; }
 .nivel-estrellas .apagada{ color:var(--sh-cloud-200); }
@@ -469,7 +490,7 @@ footer .link-ayuda:hover{ color:#fff; }
 .form-group select:focus {
     outline: none;
     border-color: var(--sh-cyan);
-    box-shadow: 0 0 0 3px rgba(34,211,238,.2);
+    box-shadow: 0 0 0 3px rgba(35,170,237,.2);
 }
 
 button[type="submit"] {

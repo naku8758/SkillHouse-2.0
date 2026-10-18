@@ -4,6 +4,10 @@
 // pista; una respuesta incorrecta o el tiempo agotado no lo mueve. Puede
 // jugarse en modo práctica o dentro de un grupo (?grupo=ID), en cuyo caso
 // el resultado final se guarda en Firestore.
+//
+// El reloj no es fijo: lo manda el ciclo del tema (js/malla.js). En 1° y 2° no
+// hay contrarreloj, porque un niño que todavía lee despacio no puede competir
+// contra una barra que baja; en 10° y 11° la pista es de once segundos.
 
 import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -11,18 +15,27 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase
 import { guardarResultado, grupoJugable } from "../js/grupos.js";
 import { pantallaDeEspera, pantallaDeClaseCerrada } from "../js/espera.js";
 import { notaDesdeFraccion, formatearNota, desempenio } from "../js/nota.js";
-import { obtenerPreguntasPorTema, nombreDelTema, temaAleatorio, tiempoPorPregunta } from "../js/games/contenido-temas.js";
+import { nombreDelTema, obtenerMateria } from "../js/catalogo.js";
+import { gradoDeCurso } from "../js/malla.js";
+import { obtenerPreguntasPorTema, resolverTemaAleatorio } from "../js/games/banco.js";
+import { ajustesDe, aplicarCiclo, hablar, hayVoz, detenerVoz } from "../js/games/ajustes.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
 const grupoId = params.get("grupo");
 const esInvitado = params.get("invitado") === "1";
 
+// La dificultad estira o encoge el tiempo del ciclo: fácil da aire, difícil lo
+// aprieta, y el ciclo sigue mandando la base.
+const FACTOR_DIFICULTAD = { 1: 1.25, 2: 1, 3: 0.8 };
+
 let usuarioActual = null;
 let usuarioNombre = "";
+let cursoDelUsuario = "";
 let grupoActual = null;
 let temaId = "";
 let dificultad = 2;
+let ajustes = ajustesDe("");
 let tiempoPorPreguntaMs = 12000;
 let problemasRonda = [];
 let indiceActual = 0;
@@ -59,12 +72,24 @@ function escapeHtml(texto) {
   return div.innerHTML;
 }
 
+function gradoEnJuego() {
+  if (grupoActual?.curso) return gradoDeCurso(grupoActual.curso);
+  const porParametro = Number(params.get("grado")) || gradoDeCurso(params.get("c"));
+  if (porParametro) return porParametro;
+  return gradoDeCurso(cursoDelUsuario);
+}
+
+async function elegirTema() {
+  const explicito = params.get("tema");
+  if (explicito) return explicito;
+  return resolverTemaAleatorio({ materiaId: params.get("m") || "", grado: gradoEnJuego() });
+}
+
 async function iniciar() {
   if (esInvitado) {
-    temaId = params.get("tema") || temaAleatorio();
+    temaId = await elegirTema();
     dificultad = Number(params.get("dificultad")) || 2;
-    tiempoPorPreguntaMs = tiempoPorPregunta(dificultad);
-    prepararRonda();
+    await prepararRonda();
     renderPregunta();
     return;
   }
@@ -81,6 +106,7 @@ async function iniciar() {
     try {
       const snap = await getDoc(doc(db, "usuarios", user.uid));
       usuarioNombre = snap.exists() ? snap.data().username || user.email : user.email;
+      cursoDelUsuario = snap.exists() ? snap.data().curso || "" : "";
     } catch (err) {
       usuarioNombre = user.email;
     }
@@ -104,25 +130,29 @@ async function iniciar() {
       temaId = grupoActual.tema;
       dificultad = grupoActual.dificultad || 2;
     } else {
-      temaId = params.get("tema") || temaAleatorio();
+      temaId = await elegirTema();
       dificultad = Number(params.get("dificultad")) || 2;
     }
-    tiempoPorPreguntaMs = tiempoPorPregunta(dificultad);
 
-    prepararRonda();
+    await prepararRonda();
     renderPregunta();
   });
 }
 
-function prepararRonda() {
-  problemasRonda = obtenerPreguntasPorTema(temaId, dificultad);
+async function prepararRonda() {
+  ajustes = ajustesDe(temaId);
+  aplicarCiclo(contenedor, temaId);
+  tiempoPorPreguntaMs = ajustes.tiempo
+    ? Math.round(ajustes.tiempo * (FACTOR_DIFICULTAD[dificultad] || 1))
+    : 0;
+  problemasRonda = await obtenerPreguntasPorTema(temaId, dificultad);
   indiceActual = 0;
   puntaje = 0;
 }
 
 const AVISO_ACCESO = {
   titulo: "No puedes jugar esta clase",
-  texto: "La clase no existe, tu profesor aún no acepta tu solicitud o ya no está activa. Pide el código otra vez en la página de la materia."
+  texto: "La clase no existe, ya no está activa o no es de tu curso. Pide el código otra vez en la página de la materia."
 };
 
 const AVISO_CONTENIDO = {
@@ -131,6 +161,8 @@ const AVISO_CONTENIDO = {
 };
 
 function mostrarAviso(aviso) {
+  detenerVoz();
+  clearInterval(intervaloTiempo);
   contenedor.innerHTML = `
     <div class="resultado-final">
       <div class="resultado-emoji">⚠️</div>
@@ -156,12 +188,13 @@ function renderPregunta() {
 
   const p = problemasRonda[indiceActual];
   const progresoPista = Math.round((puntaje / total) * 100);
+  const materia = obtenerMateria(params.get("m") || "");
 
   contenedor.innerHTML = `
     <div class="juego-topbar">
       <div>
         <h1>🚀 Carrera Espacial</h1>
-        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"} · ${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}</p>
+        <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"} · ${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}${materia ? " · " + escapeHtml(materia.nombre) : ""}</p>
       </div>
       <div class="juego-grupo-nombre">Problema ${indiceActual + 1} de ${total}</div>
     </div>
@@ -171,11 +204,14 @@ function renderPregunta() {
       <div class="carrera-rocket" id="carrera-rocket" style="left:${progresoPista}%">🚀</div>
     </div>
 
-    <div class="juego-progreso">
-      <div class="juego-progreso-relleno" id="barra-tiempo" style="width:100%"></div>
-    </div>
+    <div class="juego-progreso">${
+      tiempoPorPreguntaMs
+        ? `<div class="juego-progreso-relleno" id="barra-tiempo" style="width:100%"></div>`
+        : `<div class="juego-progreso-relleno" style="width:100%"></div>`
+    }</div>
 
-    <span class="pregunta-categoria">Resuelve antes de que se acabe el tiempo</span>
+    <span class="pregunta-categoria">${tiempoPorPreguntaMs ? "Resuelve antes de que se acabe el tiempo" : "Resuelve a tu ritmo, sin reloj"}</span>
+    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">🔊 Escuchar el problema</button>` : ""}
     <p class="pregunta-texto carrera-enunciado">${escapeHtml(p.enunciado)}</p>
 
     <div class="opciones-lista opciones-grid" id="opciones-lista">
@@ -192,13 +228,19 @@ function renderPregunta() {
     btn.addEventListener("click", () => seleccionarOpcion(Number(btn.dataset.indice)));
   });
 
+  if (ajustes.voz && hayVoz()) {
+    document.getElementById("btn-escuchar")?.addEventListener("click", () => hablar(p.enunciado));
+    hablar(p.enunciado);
+  }
+
   iniciarTemporizador();
 }
 
 function iniciarTemporizador() {
   inicioPregunta = Date.now();
-  const barra = document.getElementById("barra-tiempo");
   clearInterval(intervaloTiempo);
+  if (!tiempoPorPreguntaMs) return; // 1° y 2°: sin contrarreloj
+  const barra = document.getElementById("barra-tiempo");
   intervaloTiempo = setInterval(() => {
     const transcurrido = Date.now() - inicioPregunta;
     const restante = Math.max(0, tiempoPorPreguntaMs - transcurrido);
@@ -215,6 +257,7 @@ function seleccionarOpcion(indiceElegido) {
   if (respondida) return;
   respondida = true;
   clearInterval(intervaloTiempo);
+  detenerVoz();
 
   const p = problemasRonda[indiceActual];
   const botones = document.querySelectorAll(".opcion-btn");
@@ -283,8 +326,8 @@ async function terminarRonda() {
       </div>
     </div>`;
 
-  document.getElementById("btn-jugar-de-nuevo").addEventListener("click", () => {
-    prepararRonda();
+  document.getElementById("btn-jugar-de-nuevo").addEventListener("click", async () => {
+    await prepararRonda();
     renderPregunta();
   });
   document.getElementById("btn-volver").addEventListener("click", () => volverA(rutaVolver()));

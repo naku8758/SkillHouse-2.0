@@ -40,7 +40,7 @@ function conectarSolicitud(cuenta) {
 
   obtenerMiSolicitudPendiente(cuenta.uid).then((pendiente) => {
     if (pendiente) marcarPendiente();
-  }).catch((err) => console.error("SkillHouse (solicitud):", err));
+  }).catch((err) => console.error("SkillHouse:", err));
 
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
@@ -63,7 +63,7 @@ function conectarSolicitud(cuenta) {
       // aquí era un paso que se deshacía solo dos líneas más abajo.
       marcarPendiente();
     } catch (err) {
-      console.error("SkillHouse (solicitud):", err);
+      console.error("SkillHouse:", err);
       mostrar(error, "No se pudo enviar el pedido. Revisa tu conexión e inténtalo de nuevo.");
       boton.disabled = false;
     }

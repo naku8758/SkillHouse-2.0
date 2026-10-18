@@ -71,7 +71,7 @@ function renderizar() {
       <tbody>
         ${visibles
           .map((g) => {
-            const tema = obtenerTema(g.materia, g.tema);
+            const tema = obtenerTema(g.tema);
             return `
             <tr>
               <td>${escapar(g.nombre)}</td>

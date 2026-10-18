@@ -6,6 +6,7 @@
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS } from "../js/catalogo.js";
+import { GRADOS, NOMBRE_GRADO, gradoDeCurso } from "../js/malla.js";
 import { crearCuenta, generarClave, baseDelCorreo, DOMINIO_CORREO } from "../js/credenciales.js";
 import { obtenerCursos } from "../js/cursos.js";
 import {
@@ -30,6 +31,7 @@ const inputRol = document.getElementById("input-rol");
 const inputPassword = document.getElementById("input-password");
 const filaProfesor = document.getElementById("fila-profesor");
 const cajaMaterias = document.getElementById("materias-crear");
+const cajaGrados = document.getElementById("grados-crear");
 const campoCursoDirigido = document.getElementById("campo-curso-dirigido");
 const selectCursoDirigido = document.getElementById("select-curso-dirigido");
 const campoCursoEstudiante = document.getElementById("campo-curso-estudiante");
@@ -88,6 +90,20 @@ cajaMaterias.innerHTML = MATERIAS.map(
 
 const materiasElegidas = () =>
   [...cajaMaterias.querySelectorAll("input:checked")].map((i) => i.value);
+
+// Los grados donde el profesor dicta su materia. Se guardan como números
+// (profesores.grados = [6, 7]) porque es como `cursos.anio` y el código del
+// curso guardan el grado, y así las reglas de Firestore comparan
+// `docCurso(curso).anio in docProfesor().grados` sin traducir nada.
+cajaGrados.innerHTML = GRADOS.map(
+  (g) => `<label class="marca-materia">
+    <input type="checkbox" value="${g}">
+    <span>${escapar(NOMBRE_GRADO[g] || `${g}°`)}</span>
+  </label>`
+).join("");
+
+const gradosElegidos = () =>
+  [...cajaGrados.querySelectorAll("input:checked")].map((i) => Number(i.value));
 
 function poblarCursos(select, { incluirVacio }) {
   const opciones = cursos.map((c) => `<option value="${escapar(c.codigo)}">${escapar(c.codigo)} — ${escapar(c.nombre)}</option>`);
@@ -182,6 +198,10 @@ form.addEventListener("submit", async (evento) => {
     const materias = materiasElegidas();
     if (!materias.length) return mostrarMensaje(errorEl, "Marca por qué materia dicta este profesor.");
     const nombreMaterias = materias.map((id) => NOMBRE_MATERIA[id]).join(" y ");
+    const grados = gradosElegidos();
+    const nombreGrados = grados.length
+      ? ` · ${grados.map((g) => NOMBRE_GRADO[g] || `${g}°`).join(", ")}`
+      : " · todos los grados";
 
     if (esDirector) {
       const curso = selectCursoDirigido.value;
@@ -189,11 +209,17 @@ form.addEventListener("submit", async (evento) => {
       if (cursos.find((c) => c.codigo === curso && c.directorUid)) {
         return mostrarMensaje(errorEl, `El curso ${curso} ya tiene un director asignado.`);
       }
-      perfil = { tipoProfesor: "director", materias, curso };
+      // El grado que dirige entra en su lista aunque el administrador se haya
+      // olvidado de marcarlo: sin ese grado no vería su propio curso.
+      const gradoDirigido = gradoDeCurso(curso);
+      const conDirigido = gradoDirigido && !grados.includes(gradoDirigido)
+        ? [...grados, gradoDirigido].sort((a, b) => a - b)
+        : grados;
+      perfil = { tipoProfesor: "director", materias, grados: conDirigido, curso };
       detalle = `Director del ${curso} · ${nombreMaterias}`;
     } else {
-      perfil = { tipoProfesor: "estandar", materias };
-      detalle = nombreMaterias;
+      perfil = { tipoProfesor: "estandar", materias, grados };
+      detalle = nombreMaterias + nombreGrados;
     }
   } else {
     perfil = {};

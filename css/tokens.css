@@ -14,13 +14,18 @@
   --sh-navy-800:#161B4A;
   --sh-navy-700:#20265F;
 
+  /* Paleta estricta: la marca SkillHouse solo usa morado, azul y blanco.
+     Los nombres de abajo se conservan por historia del código, pero todos
+     los valores caen en esas familias. Los estados que antes se distinguían
+     por color (acierto / error) llevan además un símbolo, así que siguen
+     legibles sin depender del tono. */
   /* --- Acentos --- */
   --sh-indigo:#5B2EFF;
   --sh-indigo-light:#8B6BFF;
-  --sh-cyan:#22D3EE;
-  --sh-pink:#FF3EA5;
-  --sh-amber:#FFC145;
-  --sh-mint:#34D399;
+  --sh-cyan:#23AAED;
+  --sh-pink:#D04CF1;
+  --sh-amber:#AF53F1;
+  --sh-mint:#3476D3;
 
   /* --- Superficies claras --- */
   --sh-cloud-50:#F6F7FD;
@@ -36,9 +41,9 @@
   --sh-on-dark-soft:#B7BBE8;
 
   /* --- Gradientes de marca --- */
-  --sh-grad-brand: linear-gradient(115deg, #5B2EFF 0%, #8B2EFF 45%, #FF3EA5 100%);
-  --sh-grad-brand-soft: linear-gradient(115deg, rgba(91,46,255,.14), rgba(255,62,165,.14));
-  --sh-grad-cyan: linear-gradient(115deg, #22D3EE 0%, #5B2EFF 100%);
+  --sh-grad-brand: linear-gradient(115deg, #5B2EFF 0%, #8B2EFF 45%, #D04CF1 100%);
+  --sh-grad-brand-soft: linear-gradient(115deg, rgba(91,46,255,.14), rgba(208,76,241,.14));
+  --sh-grad-cyan: linear-gradient(115deg, #23AAED 0%, #5B2EFF 100%);
   --sh-grad-night: radial-gradient(120% 140% at 15% 0%, #171d52 0%, #0E1338 45%, #080B21 100%);
 
   /* --- Forma --- */
@@ -70,14 +75,14 @@
   --sh-accent-ring:rgba(91,46,255,.28);
   --sh-on-accent:#FFFFFF;
 
-  --sh-rojo:#B3261E;          /* solo peligro: borrar, cerrar, error */
-  --sh-rojo-hondo:#8E1D17;
-  --sh-verde:#0E9E72;
+  --sh-rojo:#751EB3;          /* solo peligro: borrar, cerrar, error */
+  --sh-rojo-hondo:#5C178E;
+  --sh-verde:#0E4A9E;
   --sh-verde-vivo:var(--sh-mint);
-  --sh-oro:#D97706;
+  --sh-oro:#7F11CE;
   --sh-oro-claro:var(--sh-amber);
-  --sh-celeste:#7DD3E8;
-  --sh-azul:#0E7A9C;
+  --sh-celeste:#7DC4E8;
+  --sh-azul:#0E6D9C;
 
   --sh-papel:var(--sh-cloud-50);
   --sh-linea:#E1E5F5;
@@ -90,8 +95,8 @@
   --sh-veil:rgba(8,11,33,.55);
 
   --sh-danger:var(--sh-rojo);
-  --sh-exito:#0E7A50;
-  --sh-aviso:#8A6116;
+  --sh-exito:#0E3B7A;
+  --sh-aviso:#5A168A;
 
   /* --- Movimiento --- */
   --sh-ease: cubic-bezier(.22,1,.36,1);
@@ -199,5 +204,8 @@ html.sh-js .sh-reveal-stagger.is-visible > *:nth-child(6){ transition-delay:.33s
     transition-duration:.001ms !important;
     scroll-behavior:auto !important;
   }
-  .sh-reveal, .sh-reveal-stagger > *{ opacity:1; transform:none; }
+  /* Con `sh-js` la regla de arriba gana por especificidad, así que el estado
+     inicial invisible se levanta acá y no solo cuando el observador dispara. */
+  .sh-reveal, .sh-reveal-stagger > *,
+  html.sh-js .sh-reveal, html.sh-js .sh-reveal-stagger > *{ opacity:1; transform:none; }
 }

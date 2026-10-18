@@ -1,15 +1,22 @@
 rules_version = '2';
 
-// Reglas de Firestore para SkillHouse.
+// Reglas de Firestore para el SkillHouse (skillhouse).
 // (Consola de Firebase > Firestore Database > Reglas > pegar y publicar)
 //
 // Roles:
-//   administrador  -> crea profesores y cursos; lee y escribe todo lo suyo.
-//   profesor       -> dicta solo las materias que se le asignaron, en cualquier
-//                     curso existente.
-//     tipoProfesor == "director" -> además dirige un curso, crea las cuentas de
-//     los estudiantes de ESE curso y solo puede abrir clases de él.
-//   estudiante     -> se une a clases de SU curso y juega en las aceptadas.
+//   administrador (en la interfaz se llama "administrador") -> crea profesores,
+//                     cursos y asigna materias, grados y directores.
+//   profesor       -> dicta solo las materias que se le asignaron, en los
+//                     cursos de los grados que se le asignaron.
+//     tipoProfesor == "director" -> además dirige un curso y crea las cuentas de
+//     los estudiantes de ESE curso. Es la única diferencia con un profesor
+//     estándar: puede crear estudiantes.
+//   estudiante     -> se matricula con el código de una clase de su curso y
+//                     juega las clases activas de ese curso sin más código.
+//
+// El rol interno sigue escribiéndose "administrador" (usuarios/{uid}.rol, la
+// colección administradores/ y las rutas de Firebase); solo cambió el nombre
+// que ve la gente en pantalla.
 //
 // Estas reglas están escritas a la par que js/grupos.js, js/cursos.js y
 // js/credenciales.js: cada escritura que hace el código tiene su permiso aquí,
@@ -65,6 +72,20 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/grupos/$(grupoId)).data;
     }
 
+    // El grado de ese curso está entre los que el administrador le asignó al
+    // profesor (o el profesor no tiene grados marcados, que es el caso antiguo:
+    // dicta en todo el colegio). Es lo que abre el libro de notas del curso: el
+    // profe ve el padrón y las notas de los niños del grado que le toca, y nada
+    // más que eso.
+    function dictaEseCurso(codigo) {
+      return esProfesor()
+        && codigo != ''
+        && exists(/databases/$(database)/documents/cursos/$(codigo))
+        && (!('grados' in docProfesor())
+            || docProfesor().grados.size() == 0
+            || docCurso(codigo).anio in docProfesor().grados);
+    }
+
     function esDuenoDelGrupo(grupoId) {
       return estaAutenticado() && docGrupo(grupoId).profesorId == request.auth.uid;
     }
@@ -79,6 +100,31 @@ service cloud.firestore {
     function comparteCursoConElGrupo(grupoId, uid) {
       return exists(/databases/$(database)/documents/estudiantes/$(uid))
         && docGrupo(grupoId).curso == get(/databases/$(database)/documents/estudiantes/$(uid)).data.curso;
+    }
+
+    // Quién puede estar en una clase: el que ya entró con el código (miembro) o
+    // el que es del curso de la clase. Lo segundo es lo que permite el aula
+    // estilo Kahoot: el niño no escribe ningún código para jugar, la clase de su
+    // curso ya es suya. La lista de miembros sigue existiendo porque es el
+    // padrón que el profesor ve en pantalla.
+    function puedeParticipar(grupoId, uid) {
+      return esMiembro(grupoId, uid) || comparteCursoConElGrupo(grupoId, uid);
+    }
+
+    function esEstudiante() {
+      return estaAutenticado()
+        && exists(/databases/$(database)/documents/estudiantes/$(request.auth.uid));
+    }
+
+    // El estudiante que entra a una clase de su curso se agrega a sí mismo a la
+    // lista: es la única escritura que puede hacer sobre el documento del grupo,
+    // no puede quitar a nadie, ni cambiarse el curso, ni tocar el resto de
+    // campos.
+    function soloSeAgregaASiMismo(grupoId, uid) {
+      const cambios = request.resource.data.miembrosUids.diff(resource.data.miembrosUids);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['miembrosUids'])
+        && cambios.removed().size() == 0
+        && cambios.added().toSet().difference([uid].toSet()).size() == 0;
     }
 
     // ------------------- Índice ligero de cada cuenta -------------------
@@ -117,19 +163,26 @@ service cloud.firestore {
     // ------------------- Estudiantes -------------------
 
     match /estudiantes/{uid} {
-      // El dueño, el administrador y el director que lo matriculó.
+      // El dueño, el administrador, el director que lo matriculó y cualquier
+      // profesor al que le asignaron el grado de su curso: este último necesita
+      // la ficha para armar el libro de notas del curso (nombre y curso).
       allow get: if estaAutenticado() && (
         request.auth.uid == uid
         || esAdmin()
         || (esDirector() && resource.data.creadoPorUid == request.auth.uid)
+        || ('curso' in resource.data && dictaEseCurso(resource.data.curso))
       );
       // El admin lista a todos. Un director solo puede listar filtrando por
       // creadoPorUid: la condición se revalida documento a documento, así
       // que una consulta sin ese filtro devuelve "permission denied" en vez
       // de revelarle los estudiantes de otros directores.
+      // El profesor lista el curso que dicta: la misma regla se revalida por
+      // documento, así que un "getDocs(estudiantes)" sin filtro de curso sigue
+      // estando rechazado.
       allow list: if estaAutenticado() && (
         esAdmin()
         || (esDirector() && resource.data.creadoPorUid == request.auth.uid)
+        || ('curso' in resource.data && dictaEseCurso(resource.data.curso))
       );
 
       // El director solo matricula estudiantes del curso que dirige, y siempre
@@ -197,7 +250,7 @@ service cloud.firestore {
         (request.auth.uid == uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar', 'colorFondo']))
         || (esAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso', 'materias', 'tipoProfesor']))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso', 'materias', 'tipoProfesor', 'grados']))
       );
       // Borrar a un profesor se hace desde el panel del administrador; eso
       // arrastra sus clases, que se eliminan en el mismo lote (grupos/).
@@ -240,30 +293,46 @@ service cloud.firestore {
         // Solo materias que tiene asignadas: un profesor de Inglés no puede
         // abrir una clase de Matemáticas.
         && request.resource.data.materia in docProfesor().materias
-        // Debe indicar curso, y si es director de curso, ese curso debe ser
-        // el suyo.
+        // Debe indicar un curso que existe de verdad.
         && request.resource.data.curso is string
         && request.resource.data.curso != ''
-        && (docProfesor().tipoProfesor != 'director' || dirigeEseCurso(request.resource.data.curso));
+        && exists(/databases/$(database)/documents/cursos/$(request.resource.data.curso))
+        // El administrador le asignó grados (profesores.grados): solo puede
+        // abrir clases en cursos de esos grados. Sin `grados` —cuentas creadas
+        // antes de este cambio, o un profesor al que el administrador todavía no
+        // le marca grados— puede usar cualquier curso, que es como funcionaba.
+        // El director de curso perdió su restricción de un solo curso: ahora
+        // dirige uno pero dicta su materia en los demás grados que le asignen.
+        && (!('grados' in docProfesor())
+            || docProfesor().grados.size() == 0
+            || docCurso(request.resource.data.curso).anio in docProfesor().grados);
 
       // Solo el profesor dueño puede modificar o borrar su clase. El
       // administrador también: al borrar una cuenta hay que sacarla de
       // `miembrosUids` de las clases ajenas y llevarse por completo las clases
       // del profesor que se va (js/credenciales.js:eliminarCuenta).
-      allow update: if esDuenoDelGrupo(grupoId) || esAdmin();
+      // El estudiante tiene un caso aparte y angostísimo: agregarse a sí mismo
+      // a la lista de una clase de su curso (soloSeAgregaASiMismo).
+      allow update: if esDuenoDelGrupo(grupoId)
+                    || esAdmin()
+                    || (esEstudiante()
+                        && soloSeAgregaASiMismo(grupoId, request.auth.uid)
+                        && comparteCursoConElGrupo(grupoId, request.auth.uid));
       allow delete: if esDuenoDelGrupo(grupoId) || esAdmin();
 
-      // Ficha del estudiante dentro de la clase. La escribe solo el profesor al
-      // aceptar; el alumno puede sacarse a sí mismo de ella.
+      // Ficha del estudiante dentro de la clase. La escribe el profesor dueño o
+      // el propio alumno cuando entra a una clase de su curso; el alumno también
+      // puede sacarse de ella.
       //
       // setDoc() sobre un miembro que ya existe cuenta como UPDATE, no como
       // create, así que el permiso tiene que cubrir los dos: con
-      // "allow update: if false" re-aceptar a un estudiante que ya estaba
-      // rechazado devolvía permission-denied y dejaba la clase a medias
+      // "allow update: if false" volver a entrar a una clase donde ya estaba
+      // devolvía permission-denied y dejaba la lista a medias
       // (miembrosUids actualizado, ficha sin escribir).
       match /miembros/{uid} {
         allow get, list: if esDuenoDelGrupo(grupoId) || esAdmin();
-        allow create, update: if esDuenoDelGrupo(grupoId);
+        allow create, update: if esDuenoDelGrupo(grupoId)
+          || (esEstudiante() && request.auth.uid == uid && puedeParticipar(grupoId, uid));
         allow delete: if esDuenoDelGrupo(grupoId) || esAdmin() || request.auth.uid == uid;
       }
 
@@ -277,13 +346,13 @@ service cloud.firestore {
       // objetivo del modo Kahoot. No expone correos ni PINes, solo el nombre.
       match /sala/{uid} {
         allow get, list: if estaAutenticado()
-          && (esDuenoDelGrupo(grupoId) || esAdmin() || esMiembro(grupoId, uid));
+          && (esDuenoDelGrupo(grupoId) || esAdmin() || puedeParticipar(grupoId, uid));
 
-        // Solo uno anota su propia asistencia, solo si es estudiante aceptado
-        // de la clase y solo mientras la clase siga activa.
+        // Solo uno anota su propia asistencia, solo si puede estar en la clase
+        // y solo mientras la clase siga activa.
         allow create, update: if estaAutenticado() && request.auth.uid == uid
           && request.resource.data.uid == uid
-          && esMiembro(grupoId, uid)
+          && puedeParticipar(grupoId, uid)
           && docGrupo(grupoId).activo == true;
 
         // El profesor vacía la sala entre sesiones; el estudiante puede borrar
@@ -292,36 +361,18 @@ service cloud.firestore {
         allow delete: if esDuenoDelGrupo(grupoId) || esAdmin() || request.auth.uid == uid;
       }
 
-      // Solicitudes de ingreso: el estudiante crea la suya, el profesor la
-      // resuelve (aceptar = crear miembro + borrar solicitud).
-      match /solicitudes/{uid} {
-        allow get: if estaAutenticado() && (request.auth.uid == uid || esDuenoDelGrupo(grupoId) || esAdmin());
-        allow list: if esDuenoDelGrupo(grupoId) || esAdmin();
-
-        // Aquí se cierra el hueco que solo existía en la interfaz: sin estas
-        // condiciones, cualquier estudiante autenticado podía escribir una
-        // solicitud en cualquier clase con curl, saltándose el filtro de curso
-        // y el de clase activa.
-        allow create, update: if estaAutenticado() && request.auth.uid == uid
-          && request.resource.data.uid == uid
-          && request.resource.data.estado == 'pendiente'
-          && docGrupo(grupoId).activo == true
-          && comparteCursoConElGrupo(grupoId, uid);
-        allow delete: if estaAutenticado() && (request.auth.uid == uid || esDuenoDelGrupo(grupoId) || esAdmin());
-      }
-
       match /resultados/{resultadoId} {
         allow get: if esDuenoDelGrupo(grupoId) || esAdmin()
                    || (estaAutenticado() && resource.data.uid == request.auth.uid);
         allow list: if esDuenoDelGrupo(grupoId) || esAdmin()
-                    || (estaAutenticado() && esMiembro(grupoId, request.auth.uid));
+                    || (estaAutenticado() && puedeParticipar(grupoId, request.auth.uid));
         // Antes bastaba con conocer el ID de una clase para meterle resultados
         // falsos desde la consola: la pertenencia se comprobaba solo en el
         // cliente. Ahora también aquí, y el código sigue comprobándola para dar
         // un mensaje claro.
         allow create: if estaAutenticado()
           && request.resource.data.uid == request.auth.uid
-          && esMiembro(grupoId, request.auth.uid);
+          && puedeParticipar(grupoId, request.auth.uid);
         allow update: if false;
         // Las notas de una cuenta que se borra se borran con ella (petición de
         // datos de menor, Ley 1581 de 2012).

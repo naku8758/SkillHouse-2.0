@@ -241,8 +241,8 @@
     background:var(--sh-cloud-50);
 }
 .grupo-card--quiz .grupo-juego-icono{ background:var(--sh-accent-tint); border-color:var(--sh-accent-ring); }
-.grupo-card--puzzle .grupo-juego-icono{ background:rgba(76,115,98,.09); border-color:rgba(76,115,98,.24); }
-.grupo-card--carrera .grupo-juego-icono{ background:rgba(185,138,34,.10); border-color:rgba(185,138,34,.26); }
+.grupo-card--puzzle .grupo-juego-icono{ background:rgba(62,90,129,.09); border-color:rgba(62,90,129,.24); }
+.grupo-card--carrera .grupo-juego-icono{ background:rgba(122,34,185,.10); border-color:rgba(122,34,185,.26); }
 
 .grupo-estado{
     display:inline-flex;
@@ -513,12 +513,22 @@
 .opcion-btn:disabled{ cursor:default; }
 .opcion-correcta{
     border-color:var(--sh-verde) !important;
-    background:rgba(76,115,98,.09) !important;
+    background:rgba(62,90,129,.09) !important;
 }
 .opcion-incorrecta{
     border-color:var(--sh-danger) !important;
-    background:rgba(163,35,31,.06) !important;
+    background:rgba(108,31,163,.06) !important;
 }
+/* Los aciertos y los fallos se distinguen también sin color: la opción buena
+   lleva un tilde y la mala una equis, que es lo que hace legible el juego
+   cuando todo es morado y azul. */
+.opcion-correcta::after,
+.opcion-incorrecta::after{
+    content:"\2713";
+    margin-left:8px;
+    font-weight:800;
+}
+.opcion-incorrecta::after{ content:"\2717"; }
 
 /* =====================================
    PUZZLE (lista arrastrable)
@@ -580,8 +590,8 @@
     transition:border-color var(--sh-fast), color var(--sh-fast);
 }
 .btn-flecha:hover{ border-color:var(--sh-accent); color:var(--sh-accent); }
-.puzzle-item.correcto{ border-color:var(--sh-verde); background:rgba(76,115,98,.08); }
-.puzzle-item.incorrecto{ border-color:var(--sh-danger); background:rgba(163,35,31,.05); }
+.puzzle-item.correcto{ border-color:var(--sh-verde); background:rgba(62,90,129,.08); }
+.puzzle-item.incorrecto{ border-color:var(--sh-danger); background:rgba(108,31,163,.05); }
 
 /* =====================================
    CARRERA (pista de progreso)
@@ -859,10 +869,10 @@
     border-radius:var(--sh-r-sm);
     border:1px solid transparent;
 }
-.nota-nivel--superior{ background:#E8F3EC; color:#1F5B3F; border-color:#BFDDCA; }
+.nota-nivel--superior{ background:#E8F3EC; color:#1F385B; border-color:#BDCBDF; }
 .nota-nivel--alto{ background:#EAF0F6; color:#2C4E73; border-color:#C6D7E8; }
-.nota-nivel--basico{ background:#FAF2DC; color:#7A5514; border-color:#E8D6A8; }
-.nota-nivel--inferior{ background:#F8E9E8; color:#8A2A25; border-color:#E7C6C3; }
+.nota-nivel--basico{ background:#EEDCFA; color:#4F147A; border-color:#CDA8E8; }
+.nota-nivel--inferior{ background:#F8E9E8; color:#60258A; border-color:#D8C3E7; }
 .nota-nivel--sin-nota{ background:var(--sh-cloud-100); color:var(--sh-ink-400); border-color:var(--sh-linea); }
 
 /* Celdas de nota en tablas (resultados del profe, historial, reportes). */
@@ -934,9 +944,9 @@
     border-radius:var(--sh-r-sm);
     border:1px solid transparent;
 }
-.sala-estado--esperando{ background:rgba(233,180,52,.14); color:var(--sh-oro-claro); border-color:rgba(233,180,52,.34); }
-.sala-estado--abierta{ background:rgba(88,128,111,.18); color:#9CC3AF; border-color:rgba(88,128,111,.4); }
-.sala-estado--cerrada{ background:rgba(165,11,14,.2); color:#E4A9A9; border-color:rgba(165,11,14,.45); }
+.sala-estado--esperando{ background:rgba(158,52,233,.14); color:var(--sh-oro-claro); border-color:rgba(158,52,233,.34); }
+.sala-estado--abierta{ background:rgba(70,102,146,.18); color:#94ABCB; border-color:rgba(70,102,146,.4); }
+.sala-estado--cerrada{ background:rgba(133,13,163,.2); color:#CBA9E4; border-color:rgba(133,13,163,.45); }
 .sala-estado .dot{ width:8px; height:8px; border-radius:50%; background:currentColor; }
 .sala-estado--esperando .dot{ animation:sala-latido 1.6s ease-in-out infinite; }
 
@@ -998,7 +1008,7 @@
 .sala-controles button:hover:not(:disabled){ filter:brightness(.9); }
 .sala-controles button:disabled{ opacity:.4; cursor:not-allowed; }
 .sala-btn-iniciar{ background:var(--sh-verde); color:#fff; }
-.sala-btn-esperar{ background:var(--sh-oro-claro); color:#3D2A05; }
+.sala-btn-esperar{ background:var(--sh-oro-claro); color:#26053D; }
 .sala-btn-cerrar{ background:var(--sh-rojo); color:#fff; }
 .sala-btn-secundario{
     background:transparent;
@@ -1042,6 +1052,41 @@
     border-radius:var(--sh-r-sm);
     margin-bottom:9px;
 }
-.grupo-sala--esperando{ background:#FAF2DC; color:#7A5514; border-color:#E8D6A8; }
-.grupo-sala--abierta{ background:#E8F3EC; color:#1F5B3F; border-color:#BFDDCA; }
-.grupo-sala--cerrada{ background:#F8E9E8; color:#8A2A25; border-color:#E7C6C3; }
+.grupo-sala--esperando{ background:#EEDCFA; color:#4F147A; border-color:#CDA8E8; }
+.grupo-sala--abierta{ background:#E8F3EC; color:#1F385B; border-color:#BDCBDF; }
+.grupo-sala--cerrada{ background:#F8E9E8; color:#60258A; border-color:#D8C3E7; }
+
+/* ============================================================
+   Adaptación por ciclo (js/games/ajustes.js + js/malla.js)
+   El juego recibe el tema, el tema lleva su ciclo en el id y
+   esta clase agranda la letra para los más pequeños.
+   ============================================================ */
+
+.juego-caja.ciclo-c1{ --fuente-juego:1.35; }
+.juego-caja.ciclo-c2{ --fuente-juego:1.2; }
+.juego-caja.ciclo-c3{ --fuente-juego:1.05; }
+.juego-caja.ciclo-c4{ --fuente-juego:1; }
+.juego-caja.ciclo-c5{ --fuente-juego:1; }
+
+/* En 1° y 2° una sola columna: dos botones grandes, uno abajo del otro,
+   son más fáciles de apuntar que cuatro en rejilla. */
+.juego-caja.ciclo-c1 .opciones-grid,
+.juego-caja.ciclo-c2 .opciones-grid{ grid-template-columns:1fr; }
+
+.btn-voz{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:var(--sh-font-body);
+    font-size:.86rem;
+    font-weight:600;
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid var(--sh-linea-fuerte);
+    background:var(--sh-white);
+    color:var(--sh-ink-900);
+    cursor:pointer;
+    margin-bottom:14px;
+}
+.btn-voz:hover{ border-color:var(--sh-accent); background:var(--sh-accent-tint); }
+

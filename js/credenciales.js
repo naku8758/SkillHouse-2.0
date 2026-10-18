@@ -77,8 +77,8 @@ export function revelarClave(valorGuardada) {
 /**
  * Clave de 6 dígitos generada con la entropía del navegador (no Math.random,
  * que es predecible). Firebase exige mínimo 6 caracteres, así que un PIN de
- * 6 dígitos cumple justo; es lo bastante corto para que un estudiante de
- * un estudiante lo teclee sin errores.
+ * 6 dígitos cumple justo; es lo bastante corto para que un niño de
+ * los primeros grados lo teclee sin errores.
  */
 export function generarClave() {
   const MAX = 4294967296; // 2^32
@@ -303,7 +303,7 @@ export async function eliminarCuenta({ uid, email, rol, clave }) {
       // Sus clases se van con él. Dejarlas abiertas con un profesor que ya no
       // existe rompe la Sala de clase y las listas de asistencia.
       const subcolecciones = await Promise.all(
-        ["miembros", "sala", "solicitudes", "resultados"].map((c) =>
+        ["miembros", "sala", "resultados"].map((c) =>
           getDocs(collection(db, "grupos", snap.id, c))
         )
       );
@@ -314,8 +314,8 @@ export async function eliminarCuenta({ uid, email, rol, clave }) {
 
     // Fichas sueltas dentro de clases que son de otro profesor. Intentar borrar
     // un documento que no existe es un no-op en Firestore, así que se listan
-    // las tres sin preguntar: sale más barato que leer una por una.
-    ["miembros", "sala", "solicitudes"].forEach((c) =>
+    // las dos sin preguntar: sale más barato que leer una por una.
+    ["miembros", "sala"].forEach((c) =>
       operaciones.push({ ref: doc(db, "grupos", snap.id, c, uid) })
     );
 

@@ -21,13 +21,16 @@
 
 import { db } from "../js/firebase.js";
 import { suscribirSesion, signOut, auth } from "../js/sesion.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import { collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { listarCredenciales, restablecerClaveDe } from "../js/claves.js";
 import { eliminarCuenta } from "../js/credenciales.js";
 import { matricularEnCurso } from "../js/cursos.js";
 import { descargarTexto, copiarAlPortapapeles } from "../js/lista-credenciales.js";
-import { MATERIAS, obtenerMateria } from "../js/catalogo.js";
-import { estadoDeSala, SALA } from "../js/sala.js";
+import { MATERIAS, obtenerMateria, obtenerJuego, obtenerTema } from "../js/catalogo.js";
+import { GRADOS, NOMBRE_GRADO } from "../js/malla.js";
+import { estadoDeSala, SALA, NOMBRE_SALA } from "../js/sala.js";
+import { obtenerHistorialEstudiante, obtenerResultadosDelGrupo } from "../js/grupos.js";
+import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
 
 const SIN_DATO = { sin_curso: "Sin curso", sin_materia: "Sin materia asignada" };
 
@@ -117,6 +120,7 @@ function construir(cuentasBase, perfilesBase) {
       // año deliberately deja fuera a quien no pertenece a ningún grado.
       anio: anioDeCurso(curso),
       materias: perfil.materias || [],
+      grados: (perfil.grados || []).map((g) => Number(g)).filter(Number.isInteger),
       creadoPorNombre: perfil.creadoPorNombre || "",
       creadoEn: perfil.creadoEn || null,
       // Una cuenta creada a mano en Firebase Console tiene correo en Auth pero
@@ -234,6 +238,10 @@ function accionesCelda(c) {
     ? `¿Borrar a ${c.username}?\n\nSe borra su acceso completo: Firebase Auth, su ficha de administrador y su documento de índice. Esta plataforma no puede recuperarlo.`
     : `¿Borrar la cuenta de ${c.username} (${c.email})?\n\nSe borra su acceso, sus datos y su historial de partidas. Es irreversible.`;
   return `<span class="grupo-acciones">
+    <button class="btn-secundario" data-ficha="${escapar(c.uid)}">Ficha</button>
+    ${c.rol === "profesor"
+      ? `<button class="btn-secundario" data-ajuste="${escapar(c.uid)}">Materias y grados</button>`
+      : ""}
     <button class="btn-secundario" data-copiar="${escapar(c.uid)}">Copiar</button>
     <button class="btn-accion" data-nueva="${escapar(c.uid)}">Nueva clave</button>
     <button class="btn-borrar" data-borrar="${escapar(c.uid)}" data-confirma="${escapar(confirmacion)}" ${esAdmin ? "title='Borra también su documento de administrador'" : ""}>Borrar</button>
@@ -257,11 +265,14 @@ const COLUMNAS = {
     ]
   },
   profesor: {
-    cabecera: ["Nombre", "Rol", "Curso que dirige", "Correo", "PIN", "Creado", "Estado", ""],
+    cabecera: ["Nombre", "Rol", "Curso que dirige", "Grados asignados", "Correo", "PIN", "Creado", "Estado", ""],
     celdas: (c) => [
       escapar(c.username),
       escapar(rolEtiqueta(c)),
       `${c.curso ? `Curso ${escapar(c.curso)}${c.anio ? ` · ${c.anio}` : ""}` : "No dirige ninguno"}`,
+      c.grados.length
+        ? escapar(c.grados.map((g) => `${g}°`).join(", "))
+        : '<span class="grupo-meta">Todos (sin marcar)</span>',
       CORREO(c),
       PIN(c),
       CREADO(c),
@@ -397,7 +408,7 @@ function bloqueProfesores(filas) {
 
   return `<section class="padron-seccion">
     <h2>🧑‍🏫 Profesores por materia</h2>
-    <p class="panel-sub">Cada profesor aparece en la materia que dicta; si da dos, sale en las dos. Un profesor estándar crea clases de cualquier curso en esas materias, y el director de curso solo del suyo, que es el que figura en su columna.</p>
+    <p class="panel-sub">Cada profesor aparece en la materia que dicta; si da dos, sale en las dos. "Materias y grados" abre el ajuste de la fila: los grados marcados son los únicos cursos donde puede crear clases, y sin marcar ninguno puede usar todos, como antes. El director de curso siempre tiene además el curso que dirige.</p>
     ${cuerpo}
   </section>`;
 }
@@ -418,6 +429,14 @@ function ordenNombres(listaCuentas) {
 }
 
 function conectarBotones() {
+  lista.querySelectorAll("[data-ajuste]").forEach((btn) => {
+    btn.addEventListener("click", () => mostrarAjuste(btn.dataset.ajuste));
+  });
+
+  lista.querySelectorAll("[data-ficha]").forEach((btn) => {
+    btn.addEventListener("click", () => mostrarFicha(btn.dataset.ficha));
+  });
+
   lista.querySelectorAll("[data-copiar]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const c = cuentas.find((x) => x.uid === btn.dataset.copiar);
@@ -503,6 +522,519 @@ async function reasignarCurso(select) {
     select.disabled = false;
   }
 }
+
+/* ---------------------- Materias y grados de un profesor ---------------------- */
+
+const panelAjuste = document.getElementById("panel-ajuste");
+const cajaAjusteMaterias = document.getElementById("ajuste-materias");
+const cajaAjusteGrados = document.getElementById("ajuste-grados");
+const ajusteTitulo = document.getElementById("ajuste-titulo");
+const ajusteSub = document.getElementById("ajuste-sub");
+const ajusteError = document.getElementById("ajuste-error");
+const ajusteExito = document.getElementById("ajuste-exito");
+const btnAjusteGuardar = document.getElementById("btn-ajuste-guardar");
+let ajusteUid = null;
+
+cajaAjusteMaterias.innerHTML = MATERIAS.map(
+  (m) => `<label class="marca-materia">
+    <input type="checkbox" value="${escapar(m.id)}">
+    <span>${escapar(m.icono)} ${escapar(m.nombre)}</span>
+  </label>`
+).join("");
+
+cajaAjusteGrados.innerHTML = GRADOS.map(
+  (g) => `<label class="marca-materia">
+    <input type="checkbox" value="${g}">
+    <span>${escapar(NOMBRE_GRADO[g] || `${g}°`)}</span>
+  </label>`
+).join("");
+
+function decirEn(el, texto) {
+  el.textContent = texto;
+  el.style.display = texto ? "block" : "none";
+}
+
+function marcarCasillas(caja, valores) {
+  const set = new Set(valores.map(String));
+  caja.querySelectorAll("input").forEach((i) => {
+    i.checked = set.has(i.value);
+  });
+}
+
+const casillasElegidas = (caja) =>
+  [...caja.querySelectorAll("input:checked")].map((i) => i.value);
+
+function mostrarAjuste(uid) {
+  const c = cuentas.find((x) => x.uid === uid);
+  if (!c) return;
+
+  ajusteUid = uid;
+  decirEn(ajusteError, "");
+  decirEn(ajusteExito, "");
+
+  ajusteTitulo.textContent = `Ajustar a ${c.username}`;
+  ajusteSub.textContent = `${rolEtiqueta(c)}${c.curso ? ` · dirige el curso ${c.curso}` : ""} · ${c.email}`;
+  marcarCasillas(cajaAjusteMaterias, c.materias);
+  marcarCasillas(cajaAjusteGrados, c.grados);
+
+  panelAjuste.style.display = "block";
+  panelAjuste.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/**
+ * Asignar materias y grados a un profesor que ya existe. Es la mitad que faltaba
+ * del trabajo del administrador: en "➕ Crear usuario" se eligen al nacer la
+ * cuenta, y aquí se corrigen cuando el colegio reparte las cargas del año.
+ *
+ * Los grados se guardan como números porque así los escriben "cursos.anio" y el
+ * código del curso, y firestore.rules compara `docCurso(curso).anio in
+ * docProfesor().grados` sin traducir nada. Sin grados marcados el profesor
+ * conserva el comportamiento antiguo: puede crear clases en cualquier curso.
+ */
+async function guardarAjuste() {
+  if (!ajusteUid) return;
+  const c = cuentas.find((x) => x.uid === ajusteUid);
+  if (!c) return;
+
+  const materias = casillasElegidas(cajaAjusteMaterias);
+  const grados = casillasElegidas(cajaAjusteGrados).map(Number);
+
+  decirEn(ajusteError, "");
+  decirEn(ajusteExito, "");
+  if (!materias.length) {
+    return decirEn(ajusteError, "Marca al menos una materia: sin materia no puede crear ninguna clase.");
+  }
+
+  btnAjusteGuardar.disabled = true;
+  const original = btnAjusteGuardar.textContent;
+  btnAjusteGuardar.textContent = "Guardando...";
+
+  try {
+    await updateDoc(doc(db, "profesores", ajusteUid), { materias, grados });
+    c.materias = materias;
+    c.grados = grados;
+
+    const habilitados = grados.length
+      ? cursos.filter((x) => grados.includes(Number(x.anio))).length
+      : cursos.length;
+    decirEn(
+      ajusteExito,
+      `${c.username} ahora dicta ${materias.length} materia(s) y puede crear clases en ${habilitados} curso(s)` +
+        (grados.length ? ` de los grados ${grados.map((g) => `${g}°`).join(", ")}.` : " (no marcaste grados: cualquiera).")
+    );
+    pintarStats();
+    pintarTabla();
+  } catch (err) {
+    console.error(err);
+    decirEn(ajusteError, err?.code === "permission-denied"
+      ? "Firestore rechazó el cambio. Revisa que firestore.rules esté publicado."
+      : err.message || "No se pudo guardar el ajuste.");
+  } finally {
+    btnAjusteGuardar.disabled = false;
+    btnAjusteGuardar.textContent = original;
+  }
+}
+
+btnAjusteGuardar.addEventListener("click", guardarAjuste);
+document.getElementById("btn-ajuste-cerrar").addEventListener("click", () => {
+  panelAjuste.style.display = "none";
+  ajusteUid = null;
+});
+
+/* ---------------------- Ficha completa de una persona ---------------------- */
+
+const panelFicha = document.getElementById("panel-ficha");
+const fichaTitulo = document.getElementById("ficha-titulo");
+const fichaSub = document.getElementById("ficha-sub");
+const fichaDatos = document.getElementById("ficha-datos");
+const fichaContenido = document.getElementById("ficha-contenido");
+
+function tarjetas(pares) {
+  fichaDatos.innerHTML = pares
+    .map(([valor, etiqueta]) => `<div class="stat-card"><div class="stat-valor">${escapar(valor)}</div><div class="stat-label">${escapar(etiqueta)}</div></div>`)
+    .join("");
+}
+
+/** Encabezado común: lo personal y lo de la cuenta, que los tres roles tienen. */
+function encabezadoFicha(c) {
+  fichaTitulo.textContent = `${c.username} · ${rolEtiqueta(c)}`;
+  const piezas = [
+    c.email,
+    c.curso ? `curso ${c.curso}${c.anio ? ` · año ${c.anio}` : ""}` : "sin curso",
+    c.rol === "profesor" && c.grados.length ? `grados ${c.grados.map((g) => `${g}°`).join(", ")}` : "",
+    c.rol === "profesor" ? `${c.materias.length} materia(s)` : "",
+    c.creadoPorNombre ? `creó la cuenta ${c.creadoPorNombre}` : "sin registro de quién la creó",
+    `creada ${formatearFecha(c.creadoEn)}`
+  ].filter(Boolean);
+  fichaSub.textContent = piezas.join(" · ");
+}
+
+/**
+ * Ficha de un estudiante: sus clases y sus notas. El administrador es el único
+ * rol que puede ver el historial completo de un niño (firestore.rules deja
+ * leer `estudiantes/{uid}/resultados` solo al dueño y al administrador), y esa
+ * es justamente la pregunta que hace la rectoría: "¿cómo va este estudiante?".
+ */
+async function fichaEstudiante(c) {
+  const historial = await obtenerHistorialEstudiante(c.uid, { limite: 200 }).catch(() => []);
+
+  const notas = historial.map((r) => notaDeResultado(r));
+  const promedioPct = historial.length
+    ? Math.round(historial.reduce((s, r) => s + (r.porcentaje || 0), 0) / historial.length)
+    : 0;
+  const materiasJugadas = new Set(historial.map((r) => r.materia).filter(Boolean)).size;
+
+  // Bajo el modelo actual el niño no necesita que el profe lo inscriba: ve las
+  // clases activas de su curso. La lista de la clase se llena solo cuando juega,
+  // así que las dos cifras se muestran separadas.
+  const clasesDelNino = grupos
+    .filter((g) => c.curso && String(g.curso) === String(c.curso))
+    .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0));
+  const clasesAnotadas = grupos.filter((g) => (g.miembrosUids || []).includes(c.uid));
+
+  tarjetas([
+    [historial.length, "Partidas guardadas"],
+    [historial.length ? `${promedioPct}%` : "—", "Promedio de aciertos"],
+    [notas.length ? formatearNota(promedioDeNotas(notas)) : "—", "Nota definitiva (1 a 5)"],
+    [materiasJugadas, "Materias jugadas"],
+    [clasesDelNino.length, "Clases de su curso"],
+    [clasesAnotadas.length, "Se ha anotado a clases"]
+  ]);
+
+  const porClase = new Map();
+  historial.forEach((r) {
+    if (!r.grupoId) return;
+    const fila = porClase.get(r.grupoId) || { nombre: r.juego, notas: [], partidas: 0 };
+    fila.notas.push(notaDeResultado(r));
+    fila.partidas += 1;
+    porClase.set(r.grupoId, fila);
+  });
+
+  // El promedio de la clase completa, para que la ficha no muestre solo al niño
+  // sino cómo está parado frente a sus compañeros del curso.
+  const paraNota = clasesDelNino.filter((g) => g.activo).slice(0, MAX_CLASES_FICHA);
+  const listasClase = await Promise.all(
+    paraNota.map((g) => obtenerResultadosDelGrupo(g.id, { limite: 200 }).catch(() => []))
+  );
+  const resumenClase = new Map();
+  paraNota.forEach((g, i) => {
+    const lista = listasClase[i];
+    resumenClase.set(g.id, {
+      partidas: lista.length,
+      nota: lista.length ? promedioDeNotas(lista.map((r) => notaDeResultado(r))) : null
+    });
+  });
+
+  fichaContenido.innerHTML = `
+    <h3 style="margin:6px 0 8px;">Clases de su curso</h3>
+    ${clasesDelNino.length ? `
+      <table class="tabla-resultados">
+        <thead><tr><th>Clase</th><th>Materia</th><th>Profesor</th><th>Código</th><th>Estado</th><th>Anotados</th><th>Partidas de la clase</th><th>Nota de la clase</th><th>Él jugó</th></tr></thead>
+        <tbody>${clasesDelNino
+          .map(
+            (g) => {
+              const r = resumenClase.get(g.id);
+              const su = porClase.get(g.id);
+              const estado = g.activo ? NOMBRE_SALA[estadoDeSala(g)] || "Activa" : "Inactiva";
+              return `<tr>
+                <td>${escapar(nombreCorto(g.nombre || "", 22))}</td>
+                <td>${escapar(obtenerMateria(g.materia)?.nombre || "—")}</td>
+                <td>${escapar(g.profesorNombre || "—")}</td>
+                <td><code>${escapar(g.codigo || "—")}</code></td>
+                <td>${escapar(estado)}</td>
+                <td>${(g.miembrosUids || []).length}</td>
+                <td>${r ? r.partidas : "—"}</td>
+                <td class="nota-celda">${r && r.nota != null ? escapar(formatearNota(r.nota)) : "—"}</td>
+                <td class="nota-celda">${su ? `${su.partidas} · ${escapar(formatearNota(promedioDeNotas(su.notas)))}` : "no"}</td>
+              </tr>`;
+            }
+          )
+          .join("")}</tbody>
+      </table>
+      ${clasesDelNino.length > paraNota.length
+        ? `<p class="panel-sub" style="margin-top:8px;">Las clases inactivas o más antiguas que las ${paraNota.length} leídas salen con "—" en las columnas de rendimiento.</p>`
+        : ""}` : `<p class="estado-vacio">Su curso no tiene clases todavía. Cuando el profesor cree una, entra directo con el código de la clase.</p>`}
+
+    <h3 style="margin:18px 0 8px;">Sus notas clase por clase</h3>
+    ${porClase.size ? `
+      <table class="tabla-resultados">
+        <thead><tr><th>Clase</th><th>Partidas</th><th>Su nota en esa clase</th></tr></thead>
+        <tbody>${[...porClase.entries()]
+          .map(([grupoId, fila]) => {
+            const g = grupos.find((x) => x.id === grupoId);
+            return `<tr>
+              <td>${escapar(g?.nombre || "Clase ya borrada")}</td>
+              <td>${fila.partidas}</td>
+              <td><span class="nota-celda">${escapar(formatearNota(promedioDeNotas(fila.notas)))}</span></td>
+            </tr>`;
+          })
+          .join("")}</tbody>
+      </table>` : `<p class="estado-vacio">Sus partidas no traen clase: jugó en modo práctica, que no deja nota en ninguna clase.</p>`}
+
+    ${historial.length ? `
+      <h3 style="margin:18px 0 8px;">Últimas partidas</h3>
+      <table class="tabla-resultados">
+        <thead><tr><th>Fecha</th><th>Juego</th><th>Materia</th><th>Puntaje</th><th>Nota</th></tr></thead>
+        <tbody>${historial
+          .slice(0, 25)
+          .map(
+            (r) => `<tr>
+              <td>${formatearFecha(r.fecha)}</td>
+              <td>${escapar(obtenerJuego(r.juego)?.nombre || r.juego || "—")}</td>
+              <td>${escapar(obtenerMateria(r.materia)?.nombre || "—")}</td>
+              <td>${escapar(String(r.puntaje ?? "—"))} / ${escapar(String(r.total ?? "—"))}</td>
+              <td class="nota-celda">${escapar(formatearNota(notaDeResultado(r)))}</td>
+            </tr>`
+          )
+          .join("")}</tbody>
+      </table>
+      <p class="panel-sub" style="margin-top:8px;">Se leen las 200 partidas más recientes del historial personal; la nota definitiva sale de esas.</p>`
+      : `<p class="estado-vacio" style="margin-top:18px;">Todavía no tiene partidas guardadas, así que no hay nota que calcular. En cuanto juegue una clase de su curso esta ficha se llena sola.</p>`}`;
+}
+
+/**
+ * Códigos de curso donde el profesor puede crear clases: los grados que le
+ * asignó el administrador, más el curso que dirige si es director. Sin grados
+ * marcados son todos los cursos, que es como funcionaba antes.
+ */
+function codigosQueDicta(c) {
+  const set = new Set(
+    (c.grados.length
+      ? cursos.filter((x) => c.grados.includes(Number(x.anio)))
+      : cursos
+    ).map((x) => String(x.codigo))
+  );
+  if (c.curso) set.add(String(c.curso));
+  return [...set];
+}
+
+// Una ficha de profesor cuesta una lectura por clase. Se leen solo las más
+// recientes para que un profesor con 40 clases no congele el panel.
+const MAX_CLASES_FICHA = 15;
+
+/** Junta los datos de la ficha del profesor: sus clases y las partidas de ellas. */
+async function datosFichaProfesor(c) {
+  const suyas = grupos
+    .filter((g) => g.profesorId === c.uid)
+    .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0));
+  const leidas = suyas.slice(0, MAX_CLASES_FICHA);
+  const listas = await Promise.all(
+    leidas.map((g) => obtenerResultadosDelGrupo(g.id, { limite: 200 }).catch(() => []))
+  );
+
+  const notas = [];
+  const porClase = new Map();
+  const porNino = new Map();
+  let partidas = 0;
+
+  listas.forEach((lista, i) => {
+    const fila = { partidas: 0, sumaPct: 0, notas: [] };
+    lista.forEach((r) => {
+      const nota = notaDeResultado(r);
+      fila.notas.push(nota);
+      fila.sumaPct += Number(r.porcentaje) || 0;
+      fila.partidas += 1;
+      notas.push(nota);
+      partidas += 1;
+      if (!r.uid) return;
+      const nino = porNino.get(r.uid) || { nombre: "", notas: [], partidas: 0, sumaPct: 0 };
+      nino.nombre = nino.nombre || r.username || "";
+      nino.notas.push(nota);
+      nino.sumaPct += Number(r.porcentaje) || 0;
+      nino.partidas += 1;
+      porNino.set(r.uid, nino);
+    });
+    porClase.set(leidas[i].id, fila);
+  });
+
+  const codigos = codigosQueDicta(c);
+  const matriculados = cuentas
+    .filter((x) => x.rol === "estudiante" && codigos.includes(String(x.curso)))
+    .sort((a, b) => String(a.username).localeCompare(String(b.username), "es"));
+
+  return { suyas, leidas, notas, porClase, porNino, partidas, codigos, matriculados };
+}
+
+const nombreCorto = (texto, n) =>
+  texto.length > n ? `${texto.slice(0, n - 1)}…` : texto;
+
+/** Tabla de las clases del profesor, con el rendimiento de cada una. */
+function tablaClasesFicha({ suyas, leidas, porClase }) {
+  if (!suyas.length) {
+    return `<h3 style="margin:6px 0 8px;">Sus clases</h3><p class="estado-vacio">Todavía no ha creado clases.</p>`;
+  }
+  const filas = suyas
+    .map((g) => {
+      const r = porClase.get(g.id);
+      const estado = g.activo ? NOMBRE_SALA[estadoDeSala(g)] || "Activa" : "Inactiva";
+      return `<tr>
+        <td>${escapar(nombreCorto(g.nombre || "", 22))}</td>
+        <td>${escapar(obtenerMateria(g.materia)?.nombre || "—")}</td>
+        <td>${escapar(obtenerTema(g.tema)?.nombre || "sin tema")}</td>
+        <td>${escapar(g.curso || "—")}</td>
+        <td><code>${escapar(g.codigo || "—")}</code></td>
+        <td>${escapar(estado)}</td>
+        <td>${(g.miembrosUids || []).length}</td>
+        <td>${r ? r.partidas : "—"}</td>
+        <td class="nota-celda">${r && r.notas.length ? escapar(formatearNota(promedioDeNotas(r.notas))) : "—"}</td>
+      </tr>`;
+    })
+    .join("");
+  const aviso =
+    suyas.length > leidas.length
+      ? `<p class="panel-sub" style="margin-top:8px;">Las clases que salen con "—" son más antiguas que las ${leidas.length} leídas.</p>`
+      : "";
+  return `
+    <h3 style="margin:6px 0 8px;">Sus clases</h3>
+    <table class="tabla-resultados">
+      <thead><tr><th>Clase</th><th>Materia</th><th>Tema</th><th>Curso</th><th>Código</th><th>Estado</th><th>Anotados</th><th>Partidas</th><th>Nota</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    ${aviso}`;
+}
+
+/** Quiénes juegan en sus clases y cómo les va, del que más juega al que menos. */
+function tablaRendimientoFicha(porNino) {
+  const ninos = [...porNino.entries()]
+    .map(([uid, x]) => ({ uid, ...x }))
+    .sort((a, b) => b.partidas - a.partidas);
+  if (!ninos.length) {
+    return `<h3 style="margin:18px 0 8px;">Rendimiento de sus estudiantes</h3><p class="estado-vacio">Nadie ha jugado en sus clases todavía.</p>`;
+  }
+  const visibles = ninos.slice(0, 30);
+  const filas = visibles
+    .map((x) => {
+      const cuenta = cuentas.find((y) => y.uid === x.uid);
+      const pct = Math.round(x.sumaPct / x.partidas);
+      return `<tr>
+        <td>${escapar(cuenta?.username || x.nombre || "cuenta borrada")}</td>
+        <td>${escapar(cuenta?.curso || "—")}</td>
+        <td>${x.partidas}</td>
+        <td>${pct}%</td>
+        <td class="nota-celda">${escapar(formatearNota(promedioDeNotas(x.notas)))}</td>
+      </tr>`;
+    })
+    .join("");
+  const aviso =
+    ninos.length > visibles.length
+      ? `<p class="panel-sub" style="margin-top:8px;">Se listan los ${visibles.length} que más han jugado de ${ninos.length}.</p>`
+      : "";
+  return `
+    <h3 style="margin:18px 0 8px;">Rendimiento de sus estudiantes</h3>
+    <table class="tabla-resultados">
+      <thead><tr><th>Estudiante</th><th>Curso</th><th>Partidas</th><th>Promedio de aciertos</th><th>Nota</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    ${aviso}`;
+}
+
+/** El padrón del curso (director) o de los grados asignados (profesor normal). */
+function tablaMatriculadosFicha(matriculados) {
+  const titulo = `<h3 style="margin:18px 0 8px;">Estudiantes de sus cursos</h3>`;
+  if (!matriculados.length) {
+    return `${titulo}<p class="estado-vacio">Ningún estudiante está matriculado en los cursos donde dicta.</p>`;
+  }
+  const visibles = matriculados.slice(0, 40);
+  const filas = visibles
+    .map(
+      (x) =>
+        `<tr><td>${escapar(x.username)}</td><td>${escapar(x.curso)}</td><td>${estadoCelda(x)}</td></tr>`
+    )
+    .join("");
+  const aviso =
+    matriculados.length > visibles.length
+      ? `<p class="panel-sub" style="margin-top:8px;">${matriculados.length - visibles.length} más quedan fuera de esta vista; están todos en el padrón filtrando por curso.</p>`
+      : "";
+  return `
+    ${titulo}
+    <table class="tabla-resultados">
+      <thead><tr><th>Estudiante</th><th>Curso</th><th>Estado del registro</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    ${aviso}`;
+}
+
+/**
+ * Ficha de un profesor o director. Él no tiene notas, así que se le muestra lo
+ * que sí produce: sus clases, quién está en ellas y cómo les fue jugando.
+ */
+async function fichaProfesor(c) {
+  const datos = await datosFichaProfesor(c);
+
+  tarjetas([
+    [datos.suyas.length, "Clases creadas"],
+    [datos.suyas.filter((g) => g.activo).length, "Clases activas"],
+    [datos.codigos.length, "Cursos donde dicta"],
+    [datos.matriculados.length, "Estudiantes en esos cursos"],
+    [datos.partidas, `Partidas en sus ${datos.leidas.length} clases`],
+    [datos.notas.length ? formatearNota(promedioDeNotas(datos.notas)) : "—", "Nota promedio"]
+  ]);
+
+  fichaContenido.innerHTML =
+    tablaClasesFicha(datos) +
+    tablaRendimientoFicha(datos.porNino) +
+    tablaMatriculadosFicha(datos.matriculados);
+}
+
+/**
+ * Ficha de otro administrador: sin notas propias y sin clases, así que lo que
+ * interesa es el alcance de su cuenta, que es toda la plataforma.
+ */
+async function fichaAdministrador(c) {
+  const activas = grupos.filter((g) => g.activo && estadoDeSala(g) === SALA.ABIERTA).length;
+  tarjetas([
+    [cuentas.length, "Cuentas que administra"],
+    [cuentas.filter((x) => x.rol === "estudiante").length, "Estudiantes"],
+    [cuentas.filter((x) => x.rol === "profesor").length, "Profesores"],
+    [cursos.length, "Cursos creados"],
+    [grupos.length, "Clases en total"],
+    [activas, "Salas abiertas ahora"]
+  ]);
+
+  const dirige = cursos.filter((x) => x.directorUid === c.uid);
+  fichaContenido.innerHTML = `
+    <p class="panel-sub">Un administrador no tiene notas: su ficha no rinde, administra. Desde esta misma página ve el PIN, el curso y el historial completo de cualquier persona, y abajo la tabla de clases y partidas por curso.</p>
+    ${dirige.length
+      ? `<h3 style="margin:14px 0 8px;">Cursos donde aparece como director</h3><p class="panel-sub">${escapar(dirige.map((x) => String(x.codigo)).join(", "))}</p>`
+      : ""}`;
+}
+
+/**
+ * Abre la ficha de una persona. El administrador es el único rol con permiso en
+ * firestore.rules para leer el historial de otro, así que aquí se puede ver
+ * todo lo que esa cuenta tiene: lo personal, lo de la cuenta y lo académico.
+ */
+async function mostrarFicha(uid) {
+  const c = cuentas.find((x) => x.uid === uid);
+  if (!c) return;
+
+  panelFicha.style.display = "block";
+  fichaTitulo.textContent = `${c.username} · ${rolEtiqueta(c)}`;
+  fichaSub.textContent = "Cargando su ficha...";
+  fichaDatos.innerHTML = "";
+  fichaContenido.innerHTML = `<p class="estado-vacio">Cargando...</p>`;
+  panelFicha.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  try {
+    encabezadoFicha(c);
+    if (c.rol === "estudiante") await fichaEstudiante(c);
+    else if (c.rol === "profesor") await fichaProfesor(c);
+    else await fichaAdministrador(c);
+  } catch (err) {
+    console.error(err);
+    const texto =
+      err?.code === "permission-denied"
+        ? "Firestore no deja leer estos datos. Publica firestore.rules tal como está en la carpeta."
+        : err?.message || "No se pudo cargar la ficha. Revisa la conexión.";
+    fichaContenido.innerHTML = `<p class="mensaje-error">${escapar(texto)}</p>`;
+  }
+}
+
+document.getElementById("btn-ficha-cerrar").addEventListener("click", () => {
+  panelFicha.style.display = "none";
+  fichaDatos.innerHTML = "";
+  fichaContenido.innerHTML = "";
+});
 
 /**
  * Borra una cuenta entera. El trabajo pesado está en js/credenciales.js: firmar

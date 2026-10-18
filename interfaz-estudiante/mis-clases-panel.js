@@ -5,7 +5,7 @@
 
 import { suscribirSesion } from "../js/sesion.js";
 import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego } from "../js/catalogo.js";
-import { obtenerGruposDelEstudiante } from "../js/grupos.js";
+import { clasesDelEstudiante } from "../js/grupos.js";
 import { SALA, estadoDeSala } from "../js/sala.js";
 
 const listaClases = document.getElementById("lista-clases");
@@ -27,15 +27,15 @@ function formatearFecha(timestamp) {
 
 suscribirSesion("estudiante", (cuenta) => {
   if (!cuenta) return; // guard.js ya redirigió
-  cargarClases(cuenta.uid);
+  cargarClases(cuenta.uid, cuenta.datos.curso || "");
 });
 
-async function cargarClases(uid) {
+async function cargarClases(uid, curso) {
   listaClases.innerHTML = `<p class="estado-vacio">Cargando tus clases...</p>`;
 
   let grupos;
   try {
-    grupos = await obtenerGruposDelEstudiante(uid);
+    grupos = await clasesDelEstudiante({ uid, curso });
   } catch (err) {
     listaClases.innerHTML = `<p class="estado-vacio">No se pudieron cargar tus clases.</p>`;
     return;
@@ -44,15 +44,16 @@ async function cargarClases(uid) {
   if (!grupos.length) {
     listaClases.innerHTML = `
       <p class="estado-vacio">
-        Todavía no estás en ninguna clase. Entra a la materia correspondiente desde
-        <a href="homepagea.html">Materias</a> e ingresa el código que te dio tu profesor.
+        Todavía no hay clases para ${curso ? `tu curso ${escapeHtml(curso)}` : "tu cuenta"}. Cuando tu profesor(a) abra una,
+        aparece aquí. Si alguien te dio un código, úsalo en
+        <a href="homepagea.html">Materias</a> para matricularte.
       </p>`;
     return;
   }
 
   listaClases.innerHTML = grupos
     .map((g) => {
-      const tema = obtenerTema(g.materia, g.tema);
+      const tema = obtenerTema(g.tema);
       const materia = obtenerMateria(g.materia);
       const juego = obtenerJuego(g.juego);
       const estado = estadoDeSala(g);

@@ -30,7 +30,7 @@ function rutaClases(materiaId, codigoCurso) {
 }
 
 function tarjetaCurso(curso, conteo, esDirigido) {
-  const etiqueta = esDirigido ? "👥 Director de curso" : "🎓 Estudiantes del curso";
+  const etiqueta = esDirigido ? "👥 Curso que diriges" : "🎓 Cursos que dictas";
   const datos = conteo
     ? `${conteo.clases} clase(s) · ${conteo.estudiantes} estudiante(s)`
     : "Contando tus clases...";
@@ -42,6 +42,15 @@ function tarjetaCurso(curso, conteo, esDirigido) {
       <p class="curso-datos">${escapar(curso.nombre || `Grado ${curso.codigo}`)} · ${escapar(datos)}</p>
       <span class="curso-cta">＋ Crear clase</span>
     </a>`;
+}
+
+/**
+ * Cursos separados en los dos apartados que pide el aula: el de dirección, que
+ * es el curso donde el administrador lo puso como director (y donde crea a sus
+ * estudiantes), y los demás grados que le asignaron para su materia.
+ */
+function esCursoDirigido(curso, cuenta) {
+  return curso.directorUid === cuenta.uid || curso.codigo === cuenta.datos.curso;
 }
 
 suscribirSesion("profesor", async (cuenta) => {
@@ -83,7 +92,8 @@ suscribirSesion("profesor", async (cuenta) => {
     cursos = await cursosDelProfesor({
       uid: cuenta.uid,
       esDirector,
-      curso: cuenta.datos.curso
+      curso: cuenta.datos.curso,
+      grados: cuenta.datos.grados
     });
   } catch (err) {
     console.error(err);
@@ -116,28 +126,41 @@ suscribirSesion("profesor", async (cuenta) => {
       return { clases: delCurso.length, estudiantes: estudiantes.size };
     }
 
+    const dirigidos = cursos.filter((curso) => esCursoDirigido(curso, cuenta));
+    const otros = cursos.filter((curso) => !esCursoDirigido(curso, cuenta));
+
     contenedor.innerHTML = mias
       .map((materia) => {
-        const tarjetas = cursos
-          .map((curso) =>
-            tarjetaCurso(
-              { ...curso, _materia: materia.id, _color: materia.color || "card1" },
-              grupos ? conteoDe(materia.id, curso.codigo) : null,
-              curso.directorUid === cuenta.uid || curso.codigo === cuenta.datos.curso
-            )
-          )
-          .join("");
+        const tarjeta = (curso) =>
+          tarjetaCurso(
+            { ...curso, _materia: materia.id, _color: materia.color || "card1" },
+            grupos ? conteoDe(materia.id, curso.codigo) : null,
+            true
+          );
+
+        // El apartado de dirección solo existe para el director; para un
+        // profesor estándar todo lo suyo va en "Cursos que dictas".
+        const bloqueDireccion = dirigidos.length
+          ? `<h3 class="curso-seccion">🏠 Tu curso de dirección · ${escapar(dirigidos.map((c) => c.codigo).join(", "))}</h3>
+             <p class="panel-sub">Es el curso donde el administrador te puso como director: aquí creas a tus estudiantes y abres sus clases.</p>
+             <div class="materias-grid">${dirigidos.map(tarjeta).join("")}</div>
+             ${`<p class="panel-sub" style="margin:6px 0 18px;"><a href="curso.html">👥 Estudiantes y claves del curso ${escapar(dirigidos[0].codigo)} →</a></p>`}`
+          : "";
+
+        const otrosTitulo = dirigidos.length ? "Otros cursos" : "Cursos que dictas";
+        const otrosNota = dirigidos.length
+          ? "Los grados que el administrador te asignó para esta materia. Abre tantas clases como cursos necesites."
+          : "El administrador te asignó estos grados. Entra a un curso para crear su clase.";
 
         return `
           <section class="panel-box" style="margin-bottom:22px;">
             <h2>${escapar(materia.icono)} ${escapar(materia.nombre)}</h2>
-            <p class="panel-sub">Entra al curso para crear su clase; abajo verás las que ya existan.</p>
-            <div class="materias-grid">${tarjetas}</div>
-            ${esDirector
-              ? `<p class="panel-sub" style="margin-top:14px;">
-                   <a href="curso.html">👥 Estudiantes y claves del curso ${escapar(cuenta.datos.curso || cursos[0].codigo)} →</a>
-                 </p>`
-              : ""}
+            ${bloqueDireccion}
+            <h3 class="curso-seccion">${escapar(otrosTitulo)}</h3>
+            <p class="panel-sub">${escapar(otrosNota)}</p>
+            ${otros.length
+              ? `<div class="materias-grid">${otros.map(tarjeta).join("")}</div>`
+              : `<p class="estado-vacio">No tienes otros cursos. Pídele al administrador que te asigne grados en Usuarios.</p>`}
           </section>`;
       })
       .join("");

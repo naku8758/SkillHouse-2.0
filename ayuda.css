@@ -253,7 +253,7 @@ body{
 
 .sugerencias-box textarea:focus{
     border-color: var(--sh-cyan);
-    box-shadow: 0 0 0 3px rgba(34,211,238,.2);
+    box-shadow: 0 0 0 3px rgba(35,170,237,.2;
 }
 
 /* =========================
@@ -275,7 +275,7 @@ body{
 
 .btn-enviar:hover{
     transform:translateY(-3px);
-    box-shadow: 0 10px 24px rgba(34,211,238,.4);
+    box-shadow: 0 10px 24px rgba(35,170,237,.4;
 }
 
 /* =========================

@@ -10,7 +10,7 @@
 
 import { suscribirSesion } from "../js/sesion.js";
 import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego } from "../js/catalogo.js";
-import { grupoJugable } from "../js/grupos.js";
+import { grupoJugable, anotarParticipacion } from "../js/grupos.js";
 import {
   SALA,
   NOMBRE_SALA,
@@ -65,20 +65,20 @@ async function iniciar(cuenta) {
     return;
   }
 
-  // grupoJugable ya comprueba que la clase exista, esté activa y el niño sea
-  // miembro aceptado; devuelve el grupo marcado con sinEmpezar cuando todavía
-  // está en espera, que es justamente el caso normal de esta pantalla.
-  const grupo = await grupoJugable(GRUPO_ID, cuenta.uid, null);
+  // grupoJugable comprueba que la clase exista, esté activa y que el niño sea
+  // del curso de la clase (o esté en la lista); devuelve el grupo marcado con
+  // sinEmpezar cuando todavía está en espera, que es el caso normal aquí.
+  const grupo = await grupoJugable(GRUPO_ID, cuenta.uid, null, cuenta.datos.curso || undefined);
   if (!grupo) {
     mostrarBloqueo(
       "No puedes entrar a esta sala",
-      "La clase ya no existe, está inactiva o tu profesor todavía no te ha aceptado."
+      "La clase ya no existe, está inactiva o es de otro curso. Pide el código de tu curso."
     );
     return;
   }
 
   const juego = obtenerJuego(grupo.juego);
-  const tema = obtenerTema(grupo.materia, grupo.tema);
+  const tema = obtenerTema(grupo.tema);
   nombreEl.textContent = grupo.nombre || "Clase";
   codigoEl.textContent = grupo.codigo || "—";
   datosEl.textContent = [
@@ -90,13 +90,16 @@ async function iniciar(cuenta) {
   ].filter(Boolean).join(" · ");
 
   // Se anota la asistencia DESPUÉS de validar la pertenencia: las reglas de
-  // Firestore solo dejan escribir en sala/ a un miembro, y así el que no lo es
-  // ve el mensaje claro en vez de un error rojo en la pantalla.
+  // Firestore solo dejan escribir en sala/ a quien es del curso, y así el que
+  // no es ve el mensaje claro en vez de un error rojo en la pantalla.
+  // anotarParticipacion lo deja a él en la lista de la clase, que es lo que el
+  // profesor ve en "Estudiantes" cuando entró por su curso y no por el código.
   try {
+    await anotarParticipacion({ grupoId: GRUPO_ID, uid: cuenta.uid, username: cuenta.username });
     await anotarAsistencia(GRUPO_ID, cuenta.uid, cuenta.username);
   } catch (err) {
-    console.error("SkillHouse (asistencia):", err);
-    decir("No se pudo avisar que estás en la sala; pídele a tu profesor que te acepte primero.");
+    console.error("SkillHouse:", err);
+    decir("No se pudo avisar que estás en la sala. Revisa tu conexión y vuelve a entrar desde la tarjeta de la clase.");
   }
 
   escucharSala(GRUPO_ID, ({ grupo: actual, asistentes }) => {

@@ -3,6 +3,10 @@
 // arrastrándolos (o con las flechas ▲▼, para que funcione también en
 // tablets/celulares). Puede jugarse en modo práctica o dentro de un grupo
 // (?grupo=ID), en cuyo caso el resultado final se guarda en Firestore.
+//
+// Cuántos pasos tiene un reto también lo decide el ciclo: en 1° y 2° se ordenan
+// tres cosas, en 10° y 11° seis, y en los primeros grados el reto se lee en voz
+// alta. Ver js/malla.js y js/games/ajustes.js.
 
 import { auth, db } from "../js/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -10,7 +14,10 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase
 import { guardarResultado, grupoJugable } from "../js/grupos.js";
 import { pantallaDeEspera, pantallaDeClaseCerrada } from "../js/espera.js";
 import { notaDesdeFraccion, formatearNota, desempenio } from "../js/nota.js";
-import { obtenerRetosPorTema, nombreDelTema, temaAleatorio } from "../js/games/contenido-temas.js";
+import { nombreDelTema, obtenerMateria } from "../js/catalogo.js";
+import { gradoDeCurso } from "../js/malla.js";
+import { obtenerRetosPorTema, resolverTemaAleatorio } from "../js/games/banco.js";
+import { ajustesDe, aplicarCiclo, hablar, hayVoz, detenerVoz } from "../js/games/ajustes.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
@@ -19,9 +26,11 @@ const esInvitado = params.get("invitado") === "1";
 
 let usuarioActual = null;
 let usuarioNombre = "";
+let cursoDelUsuario = "";
 let grupoActual = null;
 let temaId = "";
 let dificultad = 2;
+let ajustes = ajustesDe("");
 let retosRonda = [];
 let indiceActual = 0;
 let puntaje = 0;
@@ -68,11 +77,24 @@ function escapeHtml(texto) {
   return div.innerHTML;
 }
 
+function gradoEnJuego() {
+  if (grupoActual?.curso) return gradoDeCurso(grupoActual.curso);
+  const porParametro = Number(params.get("grado")) || gradoDeCurso(params.get("c"));
+  if (porParametro) return porParametro;
+  return gradoDeCurso(cursoDelUsuario);
+}
+
+async function elegirTema() {
+  const explicito = params.get("tema");
+  if (explicito) return explicito;
+  return resolverTemaAleatorio({ materiaId: params.get("m") || "", grado: gradoEnJuego() });
+}
+
 async function iniciar() {
   if (esInvitado) {
-    temaId = params.get("tema") || temaAleatorio();
+    temaId = await elegirTema();
     dificultad = Number(params.get("dificultad")) || 2;
-    prepararJuego();
+    await prepararJuego();
     renderRonda();
     return;
   }
@@ -89,6 +111,7 @@ async function iniciar() {
     try {
       const snap = await getDoc(doc(db, "usuarios", user.uid));
       usuarioNombre = snap.exists() ? snap.data().username || user.email : user.email;
+      cursoDelUsuario = snap.exists() ? snap.data().curso || "" : "";
     } catch (err) {
       usuarioNombre = user.email;
     }
@@ -112,24 +135,26 @@ async function iniciar() {
       temaId = grupoActual.tema;
       dificultad = grupoActual.dificultad || 2;
     } else {
-      temaId = params.get("tema") || temaAleatorio();
+      temaId = await elegirTema();
       dificultad = Number(params.get("dificultad")) || 2;
     }
 
-    prepararJuego();
+    await prepararJuego();
     renderRonda();
   });
 }
 
-function prepararJuego() {
-  retosRonda = obtenerRetosPorTema(temaId, dificultad);
+async function prepararJuego() {
+  ajustes = ajustesDe(temaId);
+  aplicarCiclo(contenedor, temaId);
+  retosRonda = await obtenerRetosPorTema(temaId, dificultad);
   indiceActual = 0;
   puntaje = 0;
 }
 
 const AVISO_ACCESO = {
   titulo: "No puedes jugar esta clase",
-  texto: "La clase no existe, tu profesor aún no acepta tu solicitud o ya no está activa. Pide el código otra vez en la página de la materia."
+  texto: "La clase no existe, ya no está activa o no es de tu curso. Pide el código otra vez en la página de la materia."
 };
 
 const AVISO_CONTENIDO = {
@@ -138,6 +163,7 @@ const AVISO_CONTENIDO = {
 };
 
 function mostrarAviso(aviso) {
+  detenerVoz();
   contenedor.innerHTML = `
     <div class="resultado-final">
       <div class="resultado-emoji">⚠️</div>
@@ -163,6 +189,7 @@ function renderRonda() {
 
   const reto = retosRonda[indiceActual];
   const progreso = Math.round((indiceActual / total) * 100);
+  const descripcion = reto.descripcion || "Ordena los pasos desde el primero hasta el último.";
 
   ordenCorrecto = [...reto.pasos];
   ordenActual = mezclarDistinto(reto.pasos);
@@ -178,7 +205,8 @@ function renderRonda() {
     <div class="juego-progreso"><div class="juego-progreso-relleno" style="width:${progreso}%"></div></div>
 
     <span class="pregunta-categoria">${escapeHtml(reto.titulo)}</span>
-    <p class="puzzle-descripcion">${escapeHtml(reto.descripcion)}</p>
+    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">🔊 Escuchar el reto</button>` : ""}
+    <p class="puzzle-descripcion">${escapeHtml(descripcion)}</p>
 
     <ul class="puzzle-lista" id="puzzle-lista"></ul>
 
@@ -191,6 +219,12 @@ function renderRonda() {
   renderLista();
   document.getElementById("btn-comprobar").addEventListener("click", comprobarOrden);
   document.getElementById("btn-rendirse").addEventListener("click", rendirse);
+
+  if (ajustes.voz && hayVoz()) {
+    const enVozAlta = `${reto.titulo}. ${descripcion} ${ordenActual.map((paso, i) => `${i + 1}: ${paso}`).join(". ")}`;
+    document.getElementById("btn-escuchar")?.addEventListener("click", () => hablar(enVozAlta));
+    hablar(enVozAlta);
+  }
 }
 
 function mezclarDistinto(pasos) {
@@ -293,6 +327,7 @@ function rendirse() {
 }
 
 function avanzar() {
+  detenerVoz();
   indiceActual++;
   if (indiceActual < retosRonda.length) {
     renderRonda();
@@ -302,6 +337,7 @@ function avanzar() {
 }
 
 async function terminarJuego() {
+  detenerVoz();
   const total = retosRonda.length;
   const porcentaje = Math.round((puntaje / total) * 100);
 
@@ -343,8 +379,8 @@ async function terminarJuego() {
       </div>
     </div>`;
 
-  document.getElementById("btn-jugar-de-nuevo").addEventListener("click", () => {
-    prepararJuego();
+  document.getElementById("btn-jugar-de-nuevo").addEventListener("click", async () => {
+    await prepararJuego();
     renderRonda();
   });
   document.getElementById("btn-volver").addEventListener("click", () => volverA(rutaVolver()));

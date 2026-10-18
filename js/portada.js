@@ -1,14 +1,14 @@
 // js/portada.js
-// Los números de la portada salen del catálogo real (js/catalogo.js), no de
-// cifras inventadas. Antes decía "20+ maestros / 150+ estudiantes": además de
-// falso, la página pública no puede leer Firestore, porque las reglas piden
-// sesión para cualquier colección. Así que la portada presume lo que sí se
-// puede comprobar: las materias, los temas y los juegos que existen hoy.
+// Las cifras de la portada salen del catálogo real (js/catalogo.js), no de
+// números inventados. La página pública tampoco puede leer Firestore: las
+// reglas piden sesión para cualquier colección. Lo que se muestra es lo que sí
+// se puede comprobar, y si el colegio agrega un tema la portada sube sola.
 //
-// Se cargó solo catalogo.js (4 KB) y no el banco de preguntas (190 KB): la
-// portada no necesita las preguntas para contar los temas.
+// Se carga solo catalogo.js y malla.js, no los bancos de preguntas: para contar
+// los temas no hacen falta las preguntas.
 
-import { MATERIAS, MATERIAS_PROXIMAS, JUEGOS } from "./catalogo.js";
+import { MATERIAS, JUEGOS, totalTemas } from "./catalogo.js";
+import { GRADOS } from "./malla.js";
 
 function escapar(texto) {
   const div = document.createElement("div");
@@ -16,7 +16,10 @@ function escapar(texto) {
   return div.innerHTML;
 }
 
-const totalTemas = MATERIAS.reduce((suma, materia) => suma + materia.temas.length, 0);
+/** Temas de un área: la suma de los ciclos publicados en cada eje. */
+function temasDe(materia) {
+  return materia.ejes.reduce((suma, eje) => suma + Object.keys(eje.ciclos).length, 0);
+}
 
 document.getElementById("grid-temas").innerHTML = MATERIAS.map(
   (materia) => `
@@ -24,7 +27,7 @@ document.getElementById("grid-temas").innerHTML = MATERIAS.map(
       <div class="nivel-icono">${escapar(materia.icono)}</div>
       <h3>${escapar(materia.nombre)}</h3>
       <p>${escapar(materia.descripcion)}</p>
-      <div class="nivel-estrellas">${materia.temas.length} temas · 3 niveles</div>
+      <div class="nivel-meta">${temasDe(materia)} temas · ${materia.ejes.length} ejes · 3 niveles</div>
     </div>`
 ).join("");
 
@@ -37,20 +40,16 @@ document.getElementById("grid-juegos").innerHTML = JUEGOS.map(
     </div>`
 ).join("");
 
-document.getElementById("stats-portada").innerHTML = `
+const cifra = (valor, etiqueta) => `
   <div>
-    <h3><span data-count="${MATERIAS.length}">0</span></h3>
-    <p>Materias con juegos</p>
-  </div>
-  <div>
-    <h3><span data-count="${totalTemas}">0</span></h3>
-    <p>Temas para practicar</p>
-  </div>
-  <div>
-    <h3><span data-count="${JUEGOS.length}">0</span></h3>
-    <p>Formas de jugar</p>
-  </div>
-  <div>
-    <h3><span data-count="${MATERIAS_PROXIMAS.length}">0</span></h3>
-    <p>Materias por llegar</p>
+    <dt><span data-count="${valor}">0</span></dt>
+    <dd>${escapar(etiqueta)}</dd>
   </div>`;
+
+document.getElementById("stats-portada").innerHTML = [
+  cifra(MATERIAS.length, "Áreas con práctica"),
+  cifra(totalTemas(), "Temas disponibles"),
+  cifra(GRADOS.length, "Grados con contenido propio"),
+  cifra(JUEGOS.length, "Modalidades de juego")
+].join("");
+

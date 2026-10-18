@@ -82,7 +82,7 @@ async function pintarEleccion(uid) {
       ${activas
         .map((g) => {
           const juego = obtenerJuego(g.juego);
-          const tema = obtenerTema(g.materia, g.tema);
+          const tema = obtenerTema(g.tema);
           return `
             <a href="sala.html?g=${encodeURIComponent(g.id)}" class="materia-card ${obtenerMateria(g.materia)?.color || "card1"}">
               <h3>${escapar(g.nombre)}</h3>
@@ -148,12 +148,12 @@ function escucharMarcador(grupoId) {
       (err) => {
         // Un marcador que no se pudo leer no debe romper la sala: el botón de
         // iniciar y la lista de asistentes son lo importante.
-        console.error("SkillHouse (marcador):", err);
+        console.error("SkillHouse:", err);
         caja.hidden = true;
       }
     );
   } catch (err) {
-    console.error("SkillHouse (marcador):", err);
+    console.error("SkillHouse:", err);
     caja.hidden = true;
     return () => {};
   }
@@ -176,7 +176,7 @@ function pintar({ grupo, asistentes }) {
   pantalla.hidden = false;
 
   const juego = obtenerJuego(grupo.juego);
-  const tema = obtenerTema(grupo.materia, grupo.tema);
+  const tema = obtenerTema(grupo.tema);
 
   document.getElementById("sala-nombre").textContent = grupo.nombre || "Clase sin nombre";
   document.getElementById("sala-datos").textContent = [

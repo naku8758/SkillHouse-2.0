@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SkillHouse: la plataforma gratuita que ayuda a los estudiantes de sexto grado a dar el salto de primaria a secundaria aprendiendo jugando.">
+    <meta name="description" content="SkillHouse: la plataforma gratuita con la que los estudiantes de 1° a 11° practican sus catorce áreas aprendiendo jugando.">
     <link rel="icon" type="image/png" href="imag/logo.png">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/style.css">
@@ -36,9 +36,10 @@
             </span>
             <h1 class="titulo-principal">Bienvenidos a SkillHouse</h1>
             <div class="text">
-                    <p>El salto de primaria a secundaria es un reto gigante.<br>
-                    En SkillHouse, convertimos esa transición difícil en una etapa emocionante, ayudando <br>
-                    a los estudiantes de sexto grado a ganar seguridad mientras aprenden jugando.<br>
+                    <p>Verle a un niño una pantalla y que aprenda algo ya no es un lujo.<br>
+                    En SkillHouse, cada tema se juega como reto corto: el grado decide<br>
+                    cuántas opciones, cuántas preguntas y si hay reloj o no,<br>
+                    de 1° a 11° y en las catorce áreas del currículo.<br>
                     Y lo mejor de todo... ¡Completamente gratuito!</p>
             </div>
 
@@ -50,16 +51,12 @@
             <!-- js/portada.js llena estas cifras desde el catálogo real. El
                  guion es el marcador de posición: un "0" leído a tiempo parece
                  una cifra verdadera cuando todavía no hay nada en pantalla. -->
-            <div class="stats" id="stats-portada">
-                <div>
-                    <h3><span>—</span></h3>
-                    <p>Materias con juegos</p>
-                </div>
-                <div>
-                    <h3><span>—</span></h3>
-                    <p>Temas para practicar</p>
-                </div>
-            </div>
+            <dl class="stats" id="stats-portada">
+                <div><dt>—</dt><dd>Áreas con práctica</dd></div>
+                <div><dt>—</dt><dd>Temas disponibles</dd></div>
+                <div><dt>—</dt><dd>Grados con contenido propio</dd></div>
+                <div><dt>—</dt><dd>Modalidades de juego</dd></div>
+            </dl>
         </div>
         <div class="hero-image">
             <span class="chip-free">⭐ 100% gratuito</span>
@@ -73,14 +70,14 @@
         <section id="segunda" class="segunda">
         <section id="niveles" class="section">
             <h2>⭐ Temas</h2>
-            <p class="section-intro">Explora los temas clave de sexto grado con nuestro enfoque interactivo y divertido.</p>
+            <p class="section-intro">Catorce áreas, de 1° a 11°: cada tema pertenece a la banda de su ciclo y el juego se arma según el grado.</p>
             <!-- js/portada.js genera una tarjeta por materia del catálogo. -->
             <div class="grid-container sh-reveal-stagger" id="grid-temas">
                 <div class="nivel-card">
                     <div class="nivel-icono">📐</div>
                     <h3>Matemáticas</h3>
-                    <p>Productos notables, factorización, ecuaciones y sistemas, funciones, potenciación, Pitágoras y probabilidad.</p>
-                    <div class="nivel-estrellas">9 temas · 3 niveles</div>
+                    <p>El área y el tema que se están jugando.</p>
+                    <div class="nivel-meta">temas · ejes · 3 niveles</div>
                 </div>
             </div>
         </section>
@@ -102,8 +99,8 @@
             <div class="content-box sh-reveal">
                 <div class="icono-grande">👩‍🏫</div>
                 <div class="content-box-text">
-                    <h3>Clases con código, como en tu colegio</h3>
-                    <p>Tu profesor crea la clase de su materia y su curso, te da un código y tú entras desde esa materia. Ahí tus partidas quedan guardadas: el profesor ve tu puntaje y tú ves tu avance en Mi Biblioteca.</p>
+                    <h3>Clases con código, como en el salón</h3>
+                    <p>Tu profesor crea la clase de su materia y su curso, y el código del curso queda siempre visible. Con ese código quedas anotado al instante, sin aprobaciones: entras a la sala, esperas a que él inicie la clase y juegas. Tus partidas quedan guardadas con nota de 1,0 a 5,0; él las ve en el libro de notas del curso y tú en Mi Biblioteca.</p>
                 </div>
             </div>
         </section>
@@ -128,7 +125,7 @@
                     <label>Contraseña</label>
                     <input type="password" name="password" placeholder="********" required>
                 </div>
-                <p id="login-error" style="color:#c0392b; display:none; margin-top:10px; font-size:0.9rem;"></p>
+                <p id="login-error" style="color:#7C1DAB; display:none; margin-top:10px; font-size:0.9rem;"></p>
                 <button type="submit" class="btn-login" style="width: 100%; margin-top: 20px; cursor: pointer; border: none; font-size: 1rem;">Entrar</button>
             </form>
         </div>

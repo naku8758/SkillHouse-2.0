@@ -1,5 +1,5 @@
 // js/cursos.js
-// Cursos (601, 602, …). El administrador los crea desde su
+// Cursos del colegio (601, 602, …). El administrador los crea desde su
 // panel; un curso puede tener un director de curso asignado.
 //
 // Estructura en Firestore:
@@ -23,6 +23,7 @@ import {
   writeBatch,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import { gradoDeCurso } from "./malla.js";
 
 const PATRON_CODIGO = /^\d{3,4}$/;
 
@@ -37,11 +38,11 @@ function validarCodigoCurso(codigo) {
  * El código del curso se arma solo: grado + grupo en dos dígitos.
  *   6 + 1 -> "601"     6 + 11 -> "611"     11 + 3 -> "1103"
  *
- * Es la convención de la plataforma, y coincide con como los colegios numeran
- * sus grupos, así que el administrador escribe el grado y el grupo tal como los
- * ve en el listado. Los dos dígitos del grupo son los que permiten 601…611 (los
- * grupos A a K de un mismo grado) sin que el código se vuelva ambiguo: los
- * últimos dos dígitos siempre son el grupo y lo que queda antes es el grado.
+ * Es la forma en que el colegio nombra sus cursos, así que el administrador no
+ * tiene que traducir nada: escribe el grado y el grupo tal como los ve en el
+ * listado. Los dos dígitos del grupo son los que permiten 601…611 (los grupos
+ * A a K de sexto) sin que el código se vuelva ambiguo: los últimos dos dígitos
+ * siempre son el grupo y lo que queda antes es el grado.
  *
  * La letra se sigue aceptando (A = 1, B = 2, …, K = 11) por costumbre y porque
  * los cursos creados antes con "6 + A" ya viven en Firestore con el código
@@ -176,16 +177,34 @@ export async function eliminarCurso(codigo) {
 
 /**
  * Cursos en los que un profesor puede crear clases.
- *  - Director de curso: solo el suyo. Se aceptan las dos formas de saberlo —
- *    que el curso apunte al profesor (directorUid) o que la cuenta del profesor
- *    apunte al curso (datos.curso) — porque el administrador puede haber
- *    asignado solo una de las dos.
- *  - Profesor normal: cualquier curso existente.
+ *
+ * El administrador le asigna GRADOS (profesores.grados, por ejemplo [6, 7] a
+ * quien dicta sexto y séptimo). Con esa lista puesta, solo ve los cursos de
+ * esos grados; sin ella —cuenta creada antes del cambio, o un profesor al que
+ * todavía no le marcan grados— ve todos los cursos, que es como venía
+ * funcionando.
+ *
+ * El director de curso no es un caso aparte: ve los grados que le asignaron y,
+ * además y siempre, el curso que dirige, para que la dirección nunca lo deje
+ * sin su propio curso aunque el administrador se olvide de marcarle ese grado.
+ * La interfaz separa el curso dirigido ("Tu curso de dirección") de los demás
+ * ("Otros cursos"), pero para crear clases los dos valen igual.
  */
-export async function cursosDelProfesor({ uid, esDirector, curso }) {
+export async function cursosDelProfesor({ uid, esDirector, curso, grados }) {
   const todos = await obtenerCursos();
-  if (!esDirector) return todos;
-  return todos.filter((c) => c.directorUid === uid || (!!curso && c.codigo === curso));
+  const mias = (grados || []).map((g) => Number(g)).filter(Number.isInteger);
+  const visibles = mias.length
+    ? todos.filter((c) => mias.includes(gradoDeCurso(c.codigo)))
+    : todos;
+
+  // El curso que dirige siempre entra, aunque el administrador no le haya marcado
+  // ese grado: es el curso donde crea a sus estudiantes.
+  const dirigido = (c) => c.directorUid === uid || (!!curso && c.codigo === curso);
+  if (!esDirector) return visibles;
+  if (visibles.some(dirigido)) return visibles;
+
+  const suyo = todos.find(dirigido);
+  return suyo ? [suyo, ...visibles] : visibles;
 }
 
 /**

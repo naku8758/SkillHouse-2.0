@@ -6,6 +6,7 @@ import { suscribirSesion } from "../js/sesion.js";
 import { crearCurso, obtenerCursos, asignarDirector, eliminarCurso, codigoDeCurso } from "../js/cursos.js";
 import { copiarAlPortapapeles } from "../js/lista-credenciales.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import { gradoDeCurso } from "../js/malla.js";
 
 const form = document.getElementById("form-crear-curso");
 const lista = document.getElementById("lista-cursos");
@@ -27,6 +28,46 @@ function escapar(texto) {
 }
 
 document.getElementById("input-anio").value = new Date().getFullYear();
+
+// Como se lee cada grado en el listado. El código (601) es lo que usa el
+// sistema; el nombre es lo que el administrador tiene en la cabeza.
+const ORDINALES = {
+  1: "Primero", 2: "Segundo", 3: "Tercero", 4: "Cuarto", 5: "Quinto",
+  6: "Sexto", 7: "Séptimo", 8: "Octavo", 9: "Noveno", 10: "Décimo", 11: "Undécimo"
+};
+
+function filaCurso(c, nEst, nClases, directores) {
+  const opciones = [`<option value="">Sin director</option>`]
+    .concat(
+      directores.map((p) => {
+        const id = p.uid || p.id;
+        // Si ya dirige otro curso se avisa en el texto: al elegarlo, ese
+        // otro curso queda sin director (lo hace asignarDirector en el
+        // mismo lote), y eso no debe sorprender después.
+        const otro = p.curso && p.curso !== c.codigo ? ` · dirige ${escapar(p.curso)}` : "";
+        return `<option value="${escapar(id)}" ${c.directorUid === id ? "selected" : ""}>${escapar(p.username)}${otro}</option>`;
+      })
+    )
+    .join("");
+
+  return `
+    <tr>
+      <td><strong>${escapar(c.codigo)}</strong></td>
+      <td>${escapar(c.nombre)}</td>
+      <td>${escapar(c.anio || "")}</td>
+      <td>${nEst}</td>
+      <td>${nClases}</td>
+      <td>
+        <select data-director="${escapar(c.codigo)}" ${directores.length ? "" : "disabled"}>${opciones}</select>
+      </td>
+      <td>
+        <button class="btn-secundario" data-copiar="${escapar(c.codigo)}" title="Copiar el código para pasarlo al director">Copiar código</button>
+      </td>
+      <td>
+        <button class="btn-secundario" data-borrar="${escapar(c.codigo)}" ${nEst || nClases ? "disabled title='Tiene estudiantes o clases'" : ""}>Borrar</button>
+      </td>
+    </tr>`;
+}
 
 // El código se ve mientras se escribe para que el administrador sepa de antemano
 // qué curso va a quedar creado (y cuál le va a decir al director).
@@ -92,48 +133,47 @@ async function cargar() {
     return;
   }
 
-  const filas = cursos
-    .map((c) => {
-      const nEst = estudiantes.filter((e) => e.curso === c.codigo).length;
-      const nClases = grupos.filter((g) => g.curso === c.codigo).length;
-      const opciones = [`<option value="">Sin director</option>`]
-        .concat(
-          directores.map((p) => {
-            const id = p.uid || p.id;
-            // Si ya dirige otro curso se avisa en el texto: al elegarlo, ese
-            // otro curso queda sin director (lo hace asignarDirector en el
-            // mismo lote), y eso no debe sorprender después.
-            const otro = p.curso && p.curso !== c.codigo ? ` · dirige ${escapar(p.curso)}` : "";
-            return `<option value="${escapar(id)}" ${c.directorUid === id ? "selected" : ""}>${escapar(p.username)}${otro}</option>`;
-          })
-        )
-        .join("");
+  const conConteo = cursos.map((c) => ({
+    c,
+    nEst: estudiantes.filter((e) => e.curso === c.codigo).length,
+    nClases: grupos.filter((g) => g.curso === c.codigo).length
+  }));
+
+  // Un bloque por grado, en el orden 1° a 11°, igual que en el padrón de
+  // usuarios: quien entra aquí busca "los cursos de sexto", no la novena fila
+  // de una tabla. Los códigos que no se dejan leer como grado (un curso
+  // renombrado a mano en la consola) cierran el listado en vez de desaparecer.
+  const porGrado = new Map();
+  conConteo.forEach((x) => {
+    const grado = gradoDeCurso(x.c.codigo) || "otros";
+    if (!porGrado.has(grado)) porGrado.set(grado, []);
+    porGrado.get(grado).push(x);
+  });
+
+  const bloques = [...Object.keys(ORDINALES).map(Number), "otros"].filter((g) => porGrado.has(g));
+
+  lista.innerHTML = bloques
+    .map((grado) => {
+      const filas = porGrado.get(grado);
+      const titulo =
+        grado === "otros" ? "Otros códigos" : `Grado ${grado}° · ${ORDINALES[grado]}`;
+      const totalEst = filas.reduce((n, x) => n + x.nEst, 0);
+      const meta = `${filas.length} curso${filas.length === 1 ? "" : "s"} · ${totalEst} estudiante${
+        totalEst === 1 ? "" : "s"
+      }`;
 
       return `
-      <tr>
-        <td><strong>${escapar(c.codigo)}</strong></td>
-        <td>${escapar(c.nombre)}</td>
-        <td>${escapar(c.anio || "")}</td>
-        <td>${nEst}</td>
-        <td>${nClases}</td>
-        <td>
-          <select data-director="${escapar(c.codigo)}" ${directores.length ? "" : "disabled"}>${opciones}</select>
-        </td>
-        <td>
-          <button class="btn-secundario" data-copiar="${escapar(c.codigo)}" title="Copiar el código para pasarlo al director">Copiar código</button>
-        </td>
-        <td>
-          <button class="btn-secundario" data-borrar="${escapar(c.codigo)}" ${nEst || nClases ? "disabled title='Tiene estudiantes o clases'" : ""}>Borrar</button>
-        </td>
-      </tr>`;
+      <div class="padron-bloque">
+        <h3 class="padron-titulo">${escapar(titulo)}<span class="padron-conteo">${escapar(meta)}</span></h3>
+        <div class="tabla-envoltura">
+          <table class="tabla-resultados">
+            <thead><tr><th>Código</th><th>Nombre</th><th>Año</th><th>Estudiantes</th><th>Clases</th><th>Director de curso</th><th></th><th></th></tr></thead>
+            <tbody>${filas.map((x) => filaCurso(x.c, x.nEst, x.nClases, directores)).join("")}</tbody>
+          </table>
+        </div>
+      </div>`;
     })
     .join("");
-
-  lista.innerHTML = `
-    <table class="tabla-resultados">
-      <thead><tr><th>Código</th><th>Nombre</th><th>Año</th><th>Estudiantes</th><th>Clases</th><th>Director de curso</th><th></th><th></th></tr></thead>
-      <tbody>${filas}</tbody>
-    </table>`;
 
   lista.querySelectorAll("[data-director]").forEach((select) => {
     select.addEventListener("change", async () => {

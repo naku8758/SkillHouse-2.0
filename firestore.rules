@@ -75,11 +75,13 @@ service cloud.firestore {
     // El grado está escrito en el propio código del curso: 601 es el grado 6 y
     // 1103 es el grado 11, porque los dos últimos dígitos siempre son el grupo
     // (js/cursos.js:codigoDeCurso). Se saca del código y no de un campo, así que
-    // funciona igual con los cursos ya creados y con los nuevos.
+    // funciona igual con los cursos ya creados y con los nuevos. El doble int()
+    // deja el grado entero sin importar cómo divida el motor, y un código que no
+    // sea numérico hace fallar la conversión: la regla se niega, que es lo mismo
+    // que devolvía el viejo 0. Las reglas no aceptan el operador "? :", por eso
+    // va en una sola expresión.
     function gradoDelCurso(codigo) {
-      return codigo.matches(/[0-9]{3,4}/)
-        ? int(codigo.substring(0, codigo.length() - 2))
-        : 0;
+      return int(int(codigo) / 100);
     }
 
     // El grado de ese curso está entre los que el administrador le asignó al

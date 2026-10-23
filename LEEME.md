@@ -40,11 +40,10 @@ git checkout main                       # todo el trabajo está acá
 python3 -m http.server 5500
 ```
 
-Y abres `http://127.0.0.1:5500`. Con eso ya está, no hay `npm install` ni build.
-Si ves por acá un `package.json` y un `package-lock.json`, son sobrantes de una
-prueba en la que instalamos Firebase con npm; el proyecto **no** los usa: el SDK
-se carga desde el CDN de Google en cada archivo, así que puedes ignorarlos o
-borrarlos sin más.
+Y abres `http://127.0.0.1:5500`. Con eso ya está: no hay `npm install`, no hay
+build y no hay `package.json` que instalar. El SDK de Firebase se carga desde el
+CDN de Google en cada archivo (`js/firebase.js` y los `import` de las páginas),
+así que la carpeta funciona sola con cualquier servidor estático.
 
 Si lo que quieres es ver la portada sin cuenta, con eso basta. Para entrar con
 una cuenta necesitas que Firebase esté configurado y con las reglas publicadas
@@ -146,8 +145,9 @@ Lo que hace:
   propio director. El botón **Copiar código** de cada fila es para pasárselo al
   director.
 - **Crear cuentas**: estudiante, profesor, director o administrador, con materia y
-  curso. Le autogenera el correo y el PIN, y le muestra la clave una sola vez
-  para copiarla o descargar el CSV. A un estudiante también se lo puede crear el
+  curso. Le autogenera el correo y el PIN, y le muestra la clave para copiarla o
+  descargar el CSV; después esa clave sigue visible para el administrador en Claves y
+  en el padrón de Usuarios. A un estudiante también se lo puede crear el
   director de su curso (es lo único que lo diferencia de un profesor normal, §3).
 - **👥 Usuarios**: el padrón de todas las cuentas. Cruza la colección `usuarios`
   con la ficha de rol, así que es la única que te dice si una cuenta está de
@@ -207,8 +207,13 @@ Lo que hace:
   curso completo (`Notas por curso`) está en el panel del profesor (§6), y el
   administrador no lo necesita como página aparte: ya ve lo mismo desde dos ángulos,
   el promedio del curso en Reportes y la ficha individual en Usuarios.
-- No puede borrar un curso que tenga estudiantes o clases, y no deja asignarse a
-  él mismo como director si el curso ya tiene uno.
+- **Borrar un curso** ya no se niega si el curso tiene contenido: el botón abre un
+  recuadro en la misma página con lo que se va a perder y pide escribir `SI`. Al
+  confirmar se borran sus clases con las fichas de miembro, la sala y las notas; los
+  estudiantes **no se borran**, quedan sin curso y el administrador los reasigna
+  desde Usuarios; y el profesor que lo dirigía vuelve a profesor estándar. Un curso
+  vacío se borra sin más. No deja asignarse a él mismo como director si el curso ya
+  tiene uno.
 
 ### Profesor (y director de curso)
 
@@ -446,12 +451,17 @@ autorización para tratar esos datos la tiene que dar el colegio (§13).
 
 Cuando el administrador o un director crean una cuenta:
 
-- **Correo**: se arma del nombre completo, sin tildes ni espacios.
-  `Andrés Felipe Perdomo Cangrejo` → `AndresFC@skillhouse.edu.co`. Si está ocupado
-  prueba `AndresFC1@`, `AndresFC2@`... hasta el 30.
+- **Correo**: se arma del nombre completo, sin tildes ni espacios y **todo en
+  minúscula**, porque así es como Firebase Auth lo guarda y lo compara.
+  `Andrés Felipe Perdomo Cangrejo` → `andresfpc@skillhouse.edu.co` (el primer nombre va
+  completo y del resto solo la inicial). Si está ocupado prueba `andresfpc1@`,
+  `andresfpc2@`... hasta el 30.
 - **PIN**: 6 dígitos con `crypto.getRandomValues` (no `Math.random`, que es
-  predecible). Se muestra **una sola vez** en la pantalla de creación y en la
-  tabla de credenciales de esa sesión. Se puede copiar o descargar en CSV.
+  predecible). Sale en la pantalla de creación y sigue visible después en
+  Claves y en el padrón de Usuarios, que son páginas del administrador. Se
+  puede copiar o descargar en CSV. Se guarda ofuscado, no encriptado: si se
+  borra el documento `usuarios/{uid}` la clave se pierde con él y hay que
+  generar una nueva.
 - El campo de la clave está en `readonly` y tiene un ↻ para regenerarla antes de
   crear la cuenta.
 
@@ -533,7 +543,14 @@ Tres cosas que conviene saber:
   de miembros tiene que nacer vacía, la materia tiene que estar entre las que le
   asignaron y el curso tiene que existir. Y solo en los **grados que le
   asignaron**: si `profesores/{uid}.grados` está vacío, puede usar cualquier curso
-  (así siguen las cuentas creadas antes de este cambio).
+  (así siguen las cuentas creadas antes de este cambio). El grado se saca **del
+  propio código del curso** con `gradoDelCurso`: a `601` le quita los dos dígitos
+  del grupo y quedan 6, y a `1103` le quedan 11. No se saca de un campo del
+  documento porque `cursos/{codigo}` no guarda el grado, guarda `anio`, que es el
+  año lectivo: un `anio` de 2026 jamás iba a aparecer en una lista de grados, así
+  que con las reglas anteriores un profesor al que el administrador le marcó sus grados
+  no podía abrir el libro de notas ni crear una clase. Al leerse del código
+  funciona igual con los cursos que ya están creados, sin migrar nada.
 - **Al entrar un estudiante a una clase**: puede agregarse a sí mismo, y nada más.
   La regla (`soloSeAgregaASiMismo`) exige que los únicos cambios sean
   `miembrosUids`, que no quite a nadie y que el único uid añadido sea el suyo, y
@@ -551,7 +568,9 @@ Tres cosas que conviene saber:
   tres subcolecciones (`miembros`, `sala`, `resultados`), en
   `estudiantes/{uid}/resultados` y en `solicitudes_clave`. Antes todos esos estaban
   en `if false`. Un estudiante o un profe sigue sin poder borrar ninguna colección
-  ajena.
+  ajena. Son los mismos permisos que necesita el borrado en cascada de un curso
+  (Cursos → Borrar), así que publicar las reglas una vez cubre los dos botones: no
+  hace falta ninguna regla nueva para ese botón.
 - El **"plan b" del curso** también está en las reglas: un estudiante puede
   escribir `curso` en su propia ficha **solo si estaba vacío** y solo si el curso
   que escribe existe en `cursos`. Mover a un estudiante de un curso lleno a otro es
@@ -648,7 +667,7 @@ identidad se toca `css/tokens.css` y nada más; el §14 explica el detalle.
 
 Los tres juegos son motores: reciben el tema y la dificultad de la clase, no
 tienen preguntas propias hardcodeadas. Son Quiz de Lógica (opción múltiple),
-Puzzle de Código (ordenar pasos) y Carrera Espacial (contrarreloj). En modo clase
+Puzzle de Código (ordenar pasos) y Carrera Espacial (contrarreloj de 3° en adelante; en 1° y 2° juega sin reloj). En modo clase
 el resultado se guarda; en práctica no. Las opciones de cada pregunta se barajan
 al cargar la ronda, así que la respuesta correcta no está siempre en la primera
 posición.
@@ -831,7 +850,21 @@ ordenado para que lo haga alguien del colegio sin leer el resto del archivo.
   Con el único administrador no deja borrarlo; con dos administradores borrarte a ti
   mismo cierra la sesión. Si a una cuenta le cambias la clave a mano en Firebase
   Console, Borrar tiene que mostrar el aviso de que Auth no se borró y aun así
-  limpiar el padrón.
+  limpiar el padrón. El clic abre un recuadro dentro de la misma página (ya no es
+  una ventana del navegador, que se puede bloquear y dejar el botón "sin hacer
+  nada"): hay que escribir `SI` y pulsar **Borrar definitivamente**. Si algo
+  falla, ese recuadro escribe el motivo en rojo y el código de Firebase, y el
+  padrón lo repite abajo. Sale `permission-denied` casi siempre por lo mismo: las
+  reglas publicadas en la consola son más antiguas que este botón.
+- **Borrar curso** (página Cursos): borra el 601 teniendo estudiantes y clases. El
+  recuadro dice cuántos son; con `SI` se van `grupos/*` del curso con sus
+  `miembros`, `sala` y `resultados`, y desaparece `cursos/601`. Los muchachos
+  siguen en `estudiantes` con `curso: ""` —en el padrón salen en "Sin curso" y en
+  su Perfil pueden engancharse a otro código— y el director del curso queda en
+  `tipoProfesor: "estandar"`. No se borra ninguna cuenta de estudiante: eso es
+  deliberado. El historial personal del muchacho (`estudiantes/{uid}/resultados`)
+  tampoco se toca: sigue mostrando la clase que ya no existe, porque esa nota pasó
+  de verdad.
 - **Plan b**: en el padrón, quítele el curso a un estudiante con el selector de su
   fila (queda en "Sin curso"). Entra con él → **Perfil** → escribe el código del
   curso y el botón lo devuelve; con un código inexistente o con 602 cuando ya está
@@ -901,7 +934,12 @@ Tampoco se volvieron a correr contra la base el **borrado de cuentas** (hace un
 `deleteUser()` en una app secundaria y entre 5 y 300 escrituras en lote) ni el
 **plan b del curso**. El recorrido del §11 con una cuenta real de cada rol es lo
 que cierra eso. Si algo falla ahí, en el 90 % de los casos es que **faltó publicar
-`firestore.rules`** (§10), no un bug del código.
+`firestore.rules`** (§10), no un bug del código. Y ojo con esta
+entrega en concreto: **las reglas cambiaron** (lo del grado sacado del código del
+curso, §7), así que actualizarlas en la consola no es opcional. Mientras la
+consola siga con las reglas viejas, un profesor con grados asignados va a seguir
+sin poder crear clases, y eso se ve como un fallo del panel cuando es solo una
+regla sin publicar.
 
 **2. Lo que sí se verificó**, y cómo: sintaxis de los 66 archivos `.js`
 (`node --check`), que cada nombre importado exista en su módulo, que ningún
@@ -917,6 +955,23 @@ pasa a tira horizontal y toda tabla va dentro de un contenedor con
 página. El contenido del banco se auditó con un script que recorre los 292 temas
 por ciclo: 3.257 preguntas y 756 retos, cero temas sin contenido y cero preguntas
 mal formadas.
+
+**2 b. La verificación de esta entrega, que es mecánica.** Además de lo de arriba, cada
+página de las tres interfaces se ejecutó contra un Firestore de mentira dentro de Node: un
+arnés propio carga el módulo real de cada pantalla con un DOM mínimo y la fake Firestore, y
+la recorre en los cuatro estados que pasan de verdad —todo bien, `permission-denied`, corte
+de red con reintento y sin sesión—, más una pasada disparando los formularios y los botones.
+Lo que se mira no es que la página se pinte, sino **qué lee y qué escribe**, y que lo que
+escribe tenga la forma que `firestore.rules` acepta: crear la clase, matricularse con el
+código del curso, entrarse a una clase, cambiar el PIN propio, guardar una partida, y el
+panel de Usuarios cuando asigna materias y grados. También se prueban los frenos: borrar un
+curso que todavía tiene estudiantes dentro, o borrar al último administrador, se niegan con
+su mensaje en vez de borrar a medias. Los dos árboles dan el mismo reporte, pantalla por
+pantalla y escritura por escritura, salvo el código aleatorio de la clase creada. Ninguna
+promesa sin esperar, ningún `getElementById` sobre un nulo y ninguna excepción sin capturar
+en las 30 pantallas de cada copia. Lo que esto **no** prueba: que la consola de Firebase
+tenga publicadas estas reglas, y que un menor real entre con su PIN —eso es el recorrido del
+§11.
 
 **3. La pega de contenido que falta, dicha con números.** Cada tema del banco trae
 **3 preguntas por nivel** (9 por tema en total). Con la dificultad acumulativa eso

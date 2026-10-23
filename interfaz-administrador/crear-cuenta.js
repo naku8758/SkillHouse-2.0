@@ -243,7 +243,7 @@ form.addEventListener("submit", async (evento) => {
 
     mostrarMensaje(
       exitoEl,
-      `${username} ya puede entrar con ${cuenta.email} y la contraseña ${cuenta.clave}. Guárdala: no se vuelve a mostrar.`
+      `${username} ya puede entrar con ${cuenta.email} y la contraseña ${cuenta.clave}. Guárdala: desde aquí no se repite, aunque siempre la puedes volver a ver en Claves o en Usuarios.`
     );
 
     credenciales.agregar({

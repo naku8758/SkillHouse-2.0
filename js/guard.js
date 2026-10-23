@@ -19,7 +19,7 @@ import { suscribirSesion, signOut, auth, MOTIVO } from "./sesion.js";
 const SALUDOS = {
   estudiante: (nombre) => `Bienvenid@, ${nombre}`,
   profesor: (nombre) => `Bienvenid@, profe ${nombre}`,
-  administrador: (nombre) => `Panel de Coordinación — ${nombre}`
+  administrador: (nombre) => `Panel del administrador — ${nombre}`
 };
 
 /**

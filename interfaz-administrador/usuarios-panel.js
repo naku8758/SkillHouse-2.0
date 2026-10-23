@@ -27,7 +27,7 @@ import { eliminarCuenta } from "../js/credenciales.js";
 import { matricularEnCurso } from "../js/cursos.js";
 import { descargarTexto, copiarAlPortapapeles } from "../js/lista-credenciales.js";
 import { MATERIAS, obtenerMateria, obtenerJuego, obtenerTema } from "../js/catalogo.js";
-import { GRADOS, NOMBRE_GRADO } from "../js/malla.js";
+import { GRADOS, NOMBRE_GRADO, gradoDeCurso } from "../js/malla.js";
 import { estadoDeSala, SALA, NOMBRE_SALA } from "../js/sala.js";
 import { obtenerHistorialEstudiante, obtenerResultadosDelGrupo } from "../js/grupos.js";
 import { notaDeResultado, promedioDeNotas, formatearNota } from "../js/nota.js";
@@ -233,10 +233,6 @@ function selectorCurso(c) {
 }
 
 function accionesCelda(c) {
-  const esAdmin = c.rol === "administrador";
-  const confirmacion = esAdmin
-    ? `¿Borrar a ${c.username}?\n\nSe borra su acceso completo: Firebase Auth, su ficha de administrador y su documento de índice. Esta plataforma no puede recuperarlo.`
-    : `¿Borrar la cuenta de ${c.username} (${c.email})?\n\nSe borra su acceso, sus datos y su historial de partidas. Es irreversible.`;
   return `<span class="grupo-acciones">
     <button class="btn-secundario" data-ficha="${escapar(c.uid)}">Ficha</button>
     ${c.rol === "profesor"
@@ -244,7 +240,7 @@ function accionesCelda(c) {
       : ""}
     <button class="btn-secundario" data-copiar="${escapar(c.uid)}">Copiar</button>
     <button class="btn-accion" data-nueva="${escapar(c.uid)}">Nueva clave</button>
-    <button class="btn-borrar" data-borrar="${escapar(c.uid)}" data-confirma="${escapar(confirmacion)}" ${esAdmin ? "title='Borra también su documento de administrador'" : ""}>Borrar</button>
+    <button class="btn-borrar" data-borrar="${escapar(c.uid)}"${c.rol === "administrador" ? " title='Borra también su documento de administrador'" : ""}>Borrar</button>
   </span>`;
 }
 
@@ -453,7 +449,7 @@ function conectarBotones() {
   });
 
   lista.querySelectorAll("[data-borrar]").forEach((btn) => {
-    btn.addEventListener("click", () => borrarCuenta(btn.dataset.borrar, btn));
+    btn.addEventListener("click", () => pedirBorrado(btn.dataset.borrar, btn));
   });
 
   lista.querySelectorAll("[data-curso]").forEach((select) => {
@@ -485,7 +481,7 @@ async function generarNueva(uid, boton) {
     c.clave = nueva;
     pintarStats();
     pintarTabla();
-    mostrarAviso(`La nueva clave de ${c.username} es ${nueva}. Anótala: solo se muestra en esta pantalla.`);
+    mostrarAviso(`La nueva clave de ${c.username} es ${nueva}. Anótala: sale mientras exista el registro de esa cuenta, aquí y en Claves.`);
   } catch (err) {
     console.error(err);
     mostrarError(err.message || "No se pudo cambiar la contraseña.");
@@ -586,10 +582,12 @@ function mostrarAjuste(uid) {
  * del trabajo del administrador: en "➕ Crear usuario" se eligen al nacer la
  * cuenta, y aquí se corrigen cuando el colegio reparte las cargas del año.
  *
- * Los grados se guardan como números porque así los escriben "cursos.anio" y el
- * código del curso, y firestore.rules compara `docCurso(curso).anio in
- * docProfesor().grados` sin traducir nada. Sin grados marcados el profesor
- * conserva el comportamiento antiguo: puede crear clases en cualquier curso.
+ * Los grados se guardan como números de 1 a 11 porque el código del curso también
+ * lo es: 601 es el grado 6 y 1103 el grado 11. `gradoDelCurso()` en
+ * firestore.rules saca el grado de esas cifras (las dos últimas son el grupo),
+ * así que el filtro de aquí y las reglas coinciden sin campos extra. Sin grados
+ * marcados el profesor conserva el comportamiento antiguo: puede crear clases en
+ * cualquier curso.
  */
 async function guardarAjuste() {
   if (!ajusteUid) return;
@@ -615,7 +613,7 @@ async function guardarAjuste() {
     c.grados = grados;
 
     const habilitados = grados.length
-      ? cursos.filter((x) => grados.includes(Number(x.anio))).length
+      ? cursos.filter((x) => grados.includes(gradoDeCurso(x.codigo))).length
       : cursos.length;
     decirEn(
       ajusteExito,
@@ -702,7 +700,7 @@ async function fichaEstudiante(c) {
   ]);
 
   const porClase = new Map();
-  historial.forEach((r) {
+  historial.forEach((r) => {
     if (!r.grupoId) return;
     const fila = porClase.get(r.grupoId) || { nombre: r.juego, notas: [], partidas: 0 };
     fila.notas.push(notaDeResultado(r));
@@ -800,7 +798,7 @@ async function fichaEstudiante(c) {
 function codigosQueDicta(c) {
   const set = new Set(
     (c.grados.length
-      ? cursos.filter((x) => c.grados.includes(Number(x.anio)))
+      ? cursos.filter((x) => c.grados.includes(gradoDeCurso(x.codigo)))
       : cursos
     ).map((x) => String(x.codigo))
   );
@@ -1041,24 +1039,83 @@ document.getElementById("btn-ficha-cerrar").addEventListener("click", () => {
  * como el interesado con su PIN guardado para quitarlo de Firebase Auth y luego
  * borrar ficha, índice, clases e historial.
  *
- * Aquí solo se confirma, se muestra el resultado y se recarga el padrón. Si el
- * administrador se borra a sí mismo (posible solo si hay otro administrador), la
- * página se cierra sola: su sesión ya no existe.
+ * La confirmación se hace EN LA PÁGINA, no con alert/confirm/prompt del
+ * navegador. Un diálogo bloqueado (o una página abierta dentro de un iframe)
+ * hace que el clic no muestre nada y el botón parezca roto; aquí el paso
+ * siguiente siempre se ve. Y si Firestore o Auth rechazan algo, el mensaje
+ * dice qué fue y qué hacer, en vez de un genérico "no se pudo".
  */
-async function borrarCuenta(uid, boton) {
+const panelBorrar = document.getElementById("panel-borrar");
+const borrarTitulo = document.getElementById("borrar-titulo");
+const borrarDetalle = document.getElementById("borrar-detalle");
+const borrarCampo = document.getElementById("borrar-confirmar");
+const borrarError = document.getElementById("borrar-error");
+const btnBorrarIr = document.getElementById("btn-borrar-definitivo");
+let borrarPendiente = null;
+
+function explicarFallo(err) {
+  const codigo = String((err && err.code) || "");
+  const porCodigo = [
+    ["skillhouse/ultimo-administrador", err && err.message],
+    ["auth/requires-recent-login", "Firebase pide una sesión reciente para borrar accesos. Cierra sesión, vuelve a entrar como administrador e inténtalo de nuevo."],
+    ["auth/too-many-requests", "Firebase bloqueó los intentos por tantos seguidos. Espera unos minutos, o entra a Consola > Authentication y desbloquea el correo."],
+    ["auth/network-request-failed", "No hay conexión con Firebase. Revisa el internet e inténtalo otra vez."],
+    ["unavailable", "Firestore no respondió (sin conexión o saturado). Nada se borró; inténtalo de nuevo."],
+    ["permission-denied", "Firestore rechazó el borrado: las reglas publicadas en la consola son más antiguas que este botón. Pega el contenido de firestore.rules en Consola > Firestore Database > Reglas, pulsa Publicar y vuelve a intentar."]
+  ].find(([c]) => codigo === c || codigo.endsWith(c));
+  return porCodigo
+    ? `${porCodigo[1]}  (código: ${codigo || "sin código"})`
+    : `${(err && err.message) || "No se pudo borrar la cuenta."}  (código: ${codigo || "sin código"})`;
+}
+
+function pedirBorrado(uid, boton) {
   const c = cuentas.find((x) => x.uid === uid);
   if (!c) return;
+  // El HTML y el JS se sirven como archivos sueltos: si el navegador tiene
+  // guardada la página vieja, el recuadro no existe y el clic no daría señal.
+  if (!panelBorrar || !borrarCampo || !btnBorrarIr) {
+    mostrarError("La página de Usuarios está guardada vieja en el navegador. Recárgala con Ctrl + Shift + R y vuelve a intentar.");
+    return;
+  }
+  borrarPendiente = { c, boton };
+  borrarTitulo.textContent = `Borrar a ${c.username}`;
+  borrarDetalle.textContent = c.rol === "administrador"
+    ? `Es un administrador: se va su acceso de Firebase Auth, su ficha y su documento de índice. Esta plataforma no puede recuperarlo.`
+    : `Se borra su acceso, su ficha y todo su historial de partidas. Correos: ${c.email || "sin correo"}. Es irreversible.`;
+  borrarCampo.value = "";
+  borrarError.style.display = "none";
+  panelBorrar.style.display = "";
+  panelBorrar.scrollIntoView({ behavior: "smooth", block: "center" });
+  borrarCampo.focus();
+}
 
-  const texto = boton.dataset.confirma || `¿Borrar la cuenta de ${c.username}?`;
-  if (!window.confirm(texto)) return;
-  const respuesta = window.prompt("Último aviso: es irreversible. Escribe SI para borrar.");
-  if (!respuesta || respuesta.trim().toUpperCase() !== "SI") return;
+function cerrarBorrado() {
+  if (borrarPendiente && borrarPendiente.boton) {
+    borrarPendiente.boton.disabled = false;
+    borrarPendiente.boton.textContent = "Borrar";
+  }
+  borrarPendiente = null;
+  panelBorrar.style.display = "none";
+}
+
+async function ejecutarBorrado() {
+  if (!borrarPendiente) return;
+  const { c, boton } = borrarPendiente;
+
+  if (borrarCampo.value.trim().toUpperCase() !== "SI") {
+    borrarError.textContent = "Escribe SI en el recuadro para confirmar. Sin eso no se borra nada.";
+    borrarError.style.display = "";
+    borrarCampo.focus();
+    return;
+  }
 
   mostrarError("");
   mostrarAviso("");
+  borrarError.style.display = "none";
   boton.disabled = true;
-  const original = boton.textContent;
   boton.textContent = "Borrando...";
+  btnBorrarIr.disabled = true;
+  btnBorrarIr.textContent = "Borrando...";
 
   try {
     const resultado = await eliminarCuenta({ uid: c.uid, email: c.email, rol: c.rol, clave: c.clave });
@@ -1070,15 +1127,31 @@ async function borrarCuenta(uid, boton) {
       return;
     }
 
+    borrarPendiente = null;
+    panelBorrar.style.display = "none";
+    boton.textContent = "Borrar";
     await cargar();
     const avisos = (resultado.avisos || []).join(" ");
     mostrarAviso(`${c.username} quedó borrado del padrón.${avisos ? ` Revisa esto: ${avisos}` : ""}`);
   } catch (err) {
     console.error(err);
-    mostrarError(err.message || "No se pudo borrar la cuenta.");
+    borrarError.textContent = explicarFallo(err);
+    borrarError.style.display = "";
     boton.disabled = false;
-    boton.textContent = original;
+    boton.textContent = "Borrar";
+    mostrarError(explicarFallo(err));
+  } finally {
+    btnBorrarIr.disabled = false;
+    btnBorrarIr.textContent = "Borrar definitivamente";
   }
+}
+
+if (panelBorrar && borrarCampo && btnBorrarIr) {
+  btnBorrarIr.addEventListener("click", ejecutarBorrado);
+  document.getElementById("btn-borrar-cancelar").addEventListener("click", cerrarBorrado);
+  borrarCampo.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") ejecutarBorrado();
+  });
 }
 
 function pintarCursos() {

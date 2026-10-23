@@ -102,7 +102,7 @@ document.getElementById("form-crear-estudiante").addEventListener("submit", asyn
       perfil: { curso: curso.codigo, creadoPorUid: cuenta.uid, creadoPorNombre: cuenta.username }
     });
 
-    mostrar(exitoEl, `${username} puede entrar con ${creado.email} y la contraseña ${creado.clave}. Guárdala: no se vuelve a mostrar.`);
+    mostrar(exitoEl, `${username} puede entrar con ${creado.email} y la contraseña ${creado.clave}. Guárdala: aquí no se vuelve a mostrar y tú no puedes verla otra vez; si se pierde, la recupera el administrador desde Claves.`);
     credenciales.agregar({ rol: "estudiante", nombre: username, email: creado.email, clave: creado.clave, detalle: `Curso ${curso.codigo}` });
     renderizarCredenciales(cajaCredenciales, credenciales.todos());
 

@@ -113,7 +113,7 @@ async function cargar() {
     renderizar();
   } catch (err) {
     console.error(err);
-    contenedor.innerHTML = `<p class="estado-vacio">No se pudieron cargar las clases.</p>`;
+    contenedor.innerHTML = `<p class="estado-vacio">No se pudieron cargar las clases: ${escapar(err.code || err.message || "motivo desconocido")}. Revisa el servidor local y recarga la página.</p>`;
   }
 }
 

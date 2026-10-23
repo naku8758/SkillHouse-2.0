@@ -72,6 +72,16 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/grupos/$(grupoId)).data;
     }
 
+    // El grado está escrito en el propio código del curso: 601 es el grado 6 y
+    // 1103 es el grado 11, porque los dos últimos dígitos siempre son el grupo
+    // (js/cursos.js:codigoDeCurso). Se saca del código y no de un campo, así que
+    // funciona igual con los cursos ya creados y con los nuevos.
+    function gradoDelCurso(codigo) {
+      return codigo.matches(/[0-9]{3,4}/)
+        ? int(codigo.substring(0, codigo.length() - 2))
+        : 0;
+    }
+
     // El grado de ese curso está entre los que el administrador le asignó al
     // profesor (o el profesor no tiene grados marcados, que es el caso antiguo:
     // dicta en todo el colegio). Es lo que abre el libro de notas del curso: el
@@ -83,7 +93,7 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/cursos/$(codigo))
         && (!('grados' in docProfesor())
             || docProfesor().grados.size() == 0
-            || docCurso(codigo).anio in docProfesor().grados);
+            || gradoDelCurso(codigo) in docProfesor().grados);
     }
 
     function esDuenoDelGrupo(grupoId) {
@@ -121,7 +131,7 @@ service cloud.firestore {
     // no puede quitar a nadie, ni cambiarse el curso, ni tocar el resto de
     // campos.
     function soloSeAgregaASiMismo(grupoId, uid) {
-      const cambios = request.resource.data.miembrosUids.diff(resource.data.miembrosUids);
+      let cambios = request.resource.data.miembrosUids.diff(resource.data.miembrosUids);
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['miembrosUids'])
         && cambios.removed().size() == 0
         && cambios.added().toSet().difference([uid].toSet()).size() == 0;
@@ -206,7 +216,7 @@ service cloud.firestore {
         // clases de otro grado. Y el curso tiene que existir de verdad.
         || (request.auth.uid == uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curso'])
-          && (not ('curso' in resource.data) or resource.data.curso == '')
+          && (!('curso' in resource.data) || resource.data.curso == '')
           && exists(/databases/$(database)/documents/cursos/$(request.resource.data.curso)))
         // El administrador sí corrige un curso mal puesto: es el único que ve
         // el padrón completo y desde su panel de Usuarios hace el cambio.
@@ -305,7 +315,7 @@ service cloud.firestore {
         // dirige uno pero dicta su materia en los demás grados que le asignen.
         && (!('grados' in docProfesor())
             || docProfesor().grados.size() == 0
-            || docCurso(request.resource.data.curso).anio in docProfesor().grados);
+            || gradoDelCurso(request.resource.data.curso) in docProfesor().grados);
 
       // Solo el profesor dueño puede modificar o borrar su clase. El
       // administrador también: al borrar una cuenta hay que sacarla de

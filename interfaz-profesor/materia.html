@@ -7,7 +7,7 @@
     <title>Mis clases | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
     <link rel="stylesheet" href="../css/juegos.css?v=5">
-    <link rel="stylesheet" href="../css/panel.css?v=1">
+    <link rel="stylesheet" href="../css/panel.css?v=2">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("profesor");
@@ -48,7 +48,7 @@
 
         <section class="panel-box sh-reveal" id="caja-crear">
             <h2>Crear una clase nueva</h2>
-            <p class="panel-sub">La clase nace atada a tu materia y a un curso: tus estudiantes solo la encuentran desde la página de esa materia, y solo si están en ese curso.</p>
+            <p class="panel-sub">La clase nace atada a tu materia y a un curso: tus estudiantes solo la encuentran desde la página de esa materia, y solo si están en ese curso. El nivel de dificultad cambia qué preguntas se mezclan, cuántas opciones tiene cada una y cuánto tiempo da la Carrera; la cantidad de preguntas de la ronda la fija el grado del curso, no el nivel.</p>
             <p class="panel-sub" id="estado-formulario" style="display:none;"></p>
 
             <!-- novalidate: la validación la hace mis-clases.js y escribe el
@@ -82,9 +82,9 @@
                     <div class="campo">
                         <label for="select-dificultad">Dificultad</label>
                         <select id="select-dificultad" required>
-                            <option value="1">Nivel 1 - ⭐ (10 preguntas)</option>
-                            <option value="2">Nivel 2 - ⭐⭐ (20 preguntas)</option>
-                            <option value="3">Nivel 3 - ⭐⭐⭐ (30 preguntas)</option>
+                            <option value="1">Nivel 1 - ⭐ solo base</option>
+                            <option value="2">Nivel 2 - ⭐⭐ base + intermedia</option>
+                            <option value="3">Nivel 3 - ⭐⭐⭐ mixta, difícil primero</option>
                         </select>
                     </div>
                     <div class="campo">

@@ -16,7 +16,6 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  deleteDoc,
   query,
   where,
   updateDoc,
@@ -156,23 +155,69 @@ export async function asignarDirector({ codigo, uid, nombre }) {
 }
 
 /**
- * Borra un curso. Se niega si todavía tiene estudiantes o clases, para no
- * dejar cuentas colgadas de un curso que ya no existe.
+ * Borra un curso.
+ *
+ * Con `cascade` en falso se niega si el curso todavía tiene estudiantes o
+ * clases, que es el freno viejo: sirve para que nadie borre por descuido una
+ * promoción matriculada. La pantalla de Cursos ya no lo usa —ahora confirma en
+ * la propia página y borra en cascada—, pero la función lo mantiene por si
+ * alguien la llama desde otro lado.
+ *
+ * Con `cascade: true` el curso se va junto con lo que contiene, y cada dato
+ * recibe el trato que le corresponde:
+ *   - las clases del curso se borran con sus fichas de miembro, la presencia de
+ *     la sala y las notas;
+ *   - los estudiantes NO se borran: siguen existiendo y quedan sin curso, el
+ *     estado que la plataforma ya sabe manejar (el administrador les pone otro
+ *     desde Usuarios, o ellos escriben el código nuevo en su Perfil);
+ *   - quien lo dirigía vuelve a profesor estándar sin curso, para que no quede
+ *     apuntando a un curso que ya no existe.
+ * Borrar las cuentas de los niños en cascada sería lo más rápido y no se hace:
+ * nadie pidió ese dato y se perdería el historial de un menor.
  */
-export async function eliminarCurso(codigo) {
-  const [estudiantes, grupos] = await Promise.all([
-    getDocs(query(collection(db, "estudiantes"), where("curso", "==", codigo))),
-    getDocs(query(collection(db, "grupos"), where("curso", "==", codigo)))
+export async function eliminarCurso(codigo, { cascade = false } = {}) {
+  const limpio = String(codigo).trim();
+  const [estudiantes, grupos, directores] = await Promise.all([
+    getDocs(query(collection(db, "estudiantes"), where("curso", "==", limpio))),
+    getDocs(query(collection(db, "grupos"), where("curso", "==", limpio))),
+    getDocs(query(collection(db, "profesores"), where("curso", "==", limpio)))
   ]);
 
-  if (!estudiantes.empty) {
-    throw new Error(`No se puede borrar ${codigo}: todavía tiene ${estudiantes.size} estudiante(s).`);
-  }
-  if (!grupos.empty) {
-    throw new Error(`No se puede borrar ${codigo}: todavía tiene ${grupos.size} clase(s).`);
+  if (!cascade && (!estudiantes.empty || !grupos.empty)) {
+    throw new Error(
+      `No se puede borrar ${limpio}: todavía tiene ${estudiantes.size} estudiante(s) y ${grupos.size} clase(s).`
+    );
   }
 
-  await deleteDoc(doc(db, "cursos", codigo));
+  // Firestore no borra subcolecciones en cascada, así que el contenido de cada
+  // clase se lee antes de armar el lote.
+  const contenido = await Promise.all(
+    grupos.docs.flatMap((g) =>
+      ["miembros", "sala", "resultados"].map((c) =>
+        getDocs(collection(db, "grupos", g.id, c)).then((s) => s.docs.map((d) => d.ref))
+      )
+    )
+  );
+
+  const operaciones = [
+    ...contenido.flat().map((ref) => ({ ref })),
+    ...grupos.docs.map((g) => ({ ref: g.ref })),
+    ...estudiantes.docs.map((d) => ({ ref: d.ref, datos: { curso: "" } })),
+    ...directores.docs.map((d) => ({ ref: d.ref, datos: { curso: "", tipoProfesor: "estandar" } })),
+    { ref: doc(db, "cursos", limpio) }
+  ];
+
+  // Lotes de 400: Firestore admite 500 operaciones por lote y se deja margen.
+  for (let i = 0; i < operaciones.length; i += 400) {
+    const lote = writeBatch(db);
+    operaciones.slice(i, i + 400).forEach((op) => {
+      if (op.datos) lote.update(op.ref, op.datos);
+      else lote.delete(op.ref);
+    });
+    await lote.commit();
+  }
+
+  return { clases: grupos.size, estudiantes: estudiantes.size, directores: directores.size };
 }
 
 /**

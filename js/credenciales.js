@@ -91,8 +91,9 @@ export function generarClave() {
 }
 
 /**
- * "Andrés Felipe Perdomo Cangrejo" -> "AndresFPC": primer nombre completo +
- * inicial del resto, sin tildes ni símbolos.
+ * "Andrés Felipe Perdomo Cangrejo" -> "andresfpc": primer nombre completo +
+ * inicial del resto, sin tildes ni símbolos y todo en minúscula, que es como
+ * Firebase Auth guarda y compara los correos.
  */
 export function baseDelCorreo(nombreCompleto) {
   const limpiar = (texto) =>
@@ -105,7 +106,7 @@ export function baseDelCorreo(nombreCompleto) {
   if (!partes.length) return "";
 
   const [primero, ...resto] = partes;
-  return `${primero}${resto.map((p) => p[0]).join("")}`;
+  return `${primero}${resto.map((p) => p[0]).join("")}`.toLowerCase();
 }
 
 /**

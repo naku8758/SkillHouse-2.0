@@ -80,7 +80,7 @@ async function cargar() {
     ]);
   } catch (err) {
     console.error(err);
-    contenedor.innerHTML = `<p class="estado-vacio">No se pudieron cargar los datos de la base.</p>`;
+    contenedor.innerHTML = `<p class="estado-vacio">No se pudieron cargar los datos de la base: ${escapar(err.code || err.message || "motivo desconocido")}. Revisa el servidor local y recarga la página.</p>`;
     return;
   }
 

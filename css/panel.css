@@ -230,7 +230,7 @@ body{
     color:var(--sh-ink-900);
 }
 
-/* Borrar cuenta (padrón del administrador). Es la única acción destructiva del
+/* Borrar (padrón de Usuarios y lista de Cursos). Es la acción destructiva del
    panel, así que se ve distinta del resto de botones sin gritar: contorno rojo
    sobre blanco y relleno solo al pasar el cursor. */
 .btn-borrar{
@@ -249,6 +249,37 @@ body{
 }
 .btn-borrar:hover{ background:var(--sh-rojo); color:var(--sh-white); }
 .btn-borrar:disabled{ opacity:.5; cursor:progress; }
+
+/* Confirmación del borrado dentro de la propia página. Antes pedía el sí con
+   confirm() y prompt() del navegador: si el navegador tiene los diálogos
+   bloqueados, o la página está abierta dentro de un iframe, el clic no muestra
+   nada y el botón parece roto. Aquí la confirmación y el motivo del fallo se
+   ven siempre. */
+.panel-borrar{ border:1px solid var(--sh-rojo); }
+.panel-borrar .campo{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    max-width:300px;
+    margin-top:12px;
+}
+.panel-borrar #borrar-confirmar{
+    padding:8px 11px;
+    border:1px solid var(--sh-linea-fuerte);
+    border-radius:var(--sh-r-sm);
+    background:var(--sh-white);
+    font-family:var(--sh-font-body);
+    font-size:.9rem;
+    color:var(--sh-ink-900);
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-weight:700;
+}
+.panel-borrar #borrar-confirmar:focus{
+    outline:none;
+    border-color:var(--sh-accent);
+    box-shadow:0 0 0 3px var(--sh-accent-tint);
+}
 
 /* =====================================
    TARJETAS DE ÁREA, CURSO Y SALA
@@ -381,13 +412,13 @@ body{
    la marca ya usaba para sus tarjetas. Lo consume .materia-card a través
    de --sh-accento, así que agregar una materia nueva es una línea aquí.
 ===================================== */
-.card1{ --sh-accento:#9E12C1; }  /* Matemáticas            · rojo de marca */
+.card1{ --sh-accento:#9E12C1; }  /* Matemáticas            · morado encendido */
 .card2{ --sh-accento:#131B7C; }  /* Lengua Castellana      · azul noche */
-.card3{ --sh-accento:#0E448F; }  /* Ciencias Naturales     · verde */
-.card4{ --sh-accento:#7C0BA8; }  /* Inglés                 · magenta */
-.card5{ --sh-accento:#700FB6; }  /* Ciencias Sociales      · ámbar */
+.card3{ --sh-accento:#0E448F; }  /* Ciencias Naturales     · azul marca */
+.card4{ --sh-accento:#7C0BA8; }  /* Inglés                 · morado */
+.card5{ --sh-accento:#700FB6; }  /* Ciencias Sociales      · violeta */
 .card6{ --sh-accento:#5B2EFF; }  /* Tecnología             · índigo */
-.card7{ --sh-accento:#A218C4; }  /* Educación Artística    · rosa fuerte */
+.card7{ --sh-accento:#A218C4; }  /* Educación Artística    · magenta */
 .card8{ --sh-accento:#0E6D9C; }  /* Educación Física       · cian oscuro */
 .card9{ --sh-accento:#5B3BA8; }  /* Ética y Valores        · violeta */
 

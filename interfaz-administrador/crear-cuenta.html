@@ -7,7 +7,7 @@
     <title>Usuarios | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
     <link rel="stylesheet" href="../css/juegos.css?v=5">
-    <link rel="stylesheet" href="../css/panel.css?v=1">
+    <link rel="stylesheet" href="../css/panel.css?v=2">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("administrador");
@@ -49,9 +49,11 @@
         <section class="panel-box sh-reveal">
             <h2>Nueva cuenta</h2>
             <p class="panel-sub">
-                El correo sale del nombre (por ejemplo <strong>Andrés Perdomo</strong> → <code>AndresP@skillhouse.edu.co</code>);
-                si ya está ocupado, se le añade un número. La contraseña es un PIN de 6 dígitos: anótala o descarga la
-                lista de credenciales, porque no queda guardada en ningún lado y no se puede volver a mostrar.
+                El correo sale del nombre (por ejemplo <strong>Andrés Perdomo</strong> → <code>andresp@skillhouse.edu.co</code>);
+                si ya está ocupado, se le añade un número y siempre en minúscula. La contraseña es un PIN de 6 dígitos:
+                anótala o descarga la lista de credenciales. El PIN queda guardado en la base de forma
+                ofuscada (no encriptada) y solo el administrador lo puede volver a mostrar desde Claves o Usuarios, así
+                que si alguien borra ese registro ya no hay forma de recuperarlo.
             </p>
 
             <form id="form-crear-cuenta">

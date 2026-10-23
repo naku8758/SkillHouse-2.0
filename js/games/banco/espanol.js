@@ -140,7 +140,7 @@ export const BANCO = {
     preguntas: [
       { dificultad: 1, enunciado: "¿Cuál oración está completa?", opciones: ["Ana lava la losa.", "Ana lava la.", "Lava la losa con.", "Ana la losa."], correcta: 0 },
       { dificultad: 1, enunciado: "«El niño ___ pelota». ¿Qué falta?", opciones: ["juega con la", "corre al", "dorme en", "vuela sin"], correcta: 0 },
-      { dificultad: 1, enunciado: "¿Cuál oración empieza con mayúscula?", opciones: ["Mi gato come.", "mi gato come", "MI GATO come.", "Mi gato Come."], correcta: 0 },
+      { dificultad: 1, enunciado: "¿Cuál oración empieza con mayúscula?", opciones: ["Mi gato come.", "mi casa es grande.", "el perro ladra.", "la luna brilla."], correcta: 0 },
       { dificultad: 1, enunciado: "Escribe: «la luna sale». ¿Cómo debe terminar?", opciones: ["con punto: La luna sale.", "con punto, pero sin mayúscula", "con coma, ya", "así sin nada"], correcta: 0 },
       { dificultad: 1, enunciado: "¿Cuál oración dice algo completo?", opciones: ["Pipo vende pan.", "Pipo vende el.", "Vende pan muy.", "Pipo pan en."], correcta: 0 },
       { dificultad: 1, enunciado: "Para escribir sobre tu patio, primero piensas en:", opciones: ["qué haces allí y con quién", "tu zapato izquierdo", "el número de tu casa", "la firma del profe"], correcta: 0 },

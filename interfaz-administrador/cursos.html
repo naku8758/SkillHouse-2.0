@@ -7,7 +7,7 @@
     <title>Cursos | SkillHouse</title>
     <link rel="stylesheet" href="../css/tokens.css">
     <link rel="stylesheet" href="../css/juegos.css?v=5">
-    <link rel="stylesheet" href="../css/panel.css?v=1">
+    <link rel="stylesheet" href="../css/panel.css?v=2">
     <script type="module">
         import { protegerPagina } from "../js/guard.js";
         protegerPagina("administrador");
@@ -81,6 +81,20 @@
             <h2 id="titulo-cursos">Cursos</h2>
             <p class="panel-sub">Están separados por grado, de 1° a 11°, para que encuentres sexto u undécimo sin recorrer la lista entera. Estudiantes y clases enlazadas a cada curso, contadas en vivo.</p>
             <div id="lista-cursos"><p class="estado-vacio">Cargando cursos...</p></div>
+        </section>
+
+        <section class="panel-box panel-borrar" id="panel-borrar" style="display:none;">
+            <h2 id="borrar-titulo">Borrar curso</h2>
+            <p class="panel-sub" id="borrar-detalle"></p>
+            <div class="campo">
+                <label for="borrar-confirmar">Escribe <strong>SI</strong> para confirmar el borrado</label>
+                <input type="text" id="borrar-confirmar" autocomplete="off" placeholder="SI">
+            </div>
+            <p id="borrar-error" class="mensaje-error" style="display:none;"></p>
+            <div class="grupo-acciones" style="margin-top:14px;">
+                <button type="button" class="btn-borrar" id="btn-borrar-definitivo">Borrar definitivamente</button>
+                <button type="button" class="btn-secundario" id="btn-borrar-cancelar">Cancelar</button>
+            </div>
         </section>
 
     </main>

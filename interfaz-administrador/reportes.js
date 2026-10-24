@@ -4,6 +4,7 @@
 // Firestore no permite a un administrador consultar las subcolecciones de
 // otros usuarios con una sola consulta de grupo de colecciones.
 
+import { plural } from "../js/plural.js";
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS } from "../js/catalogo.js";
@@ -81,7 +82,7 @@ async function cargar() {
     resultados = porClase.flat();
 
     if (grupos.length > leidas.length) {
-      mostrarError(`Se leyeron las ${leidas.length} clases más recientes de ${grupos.length}; ${grupos.length - leidas.length} quedaron fuera del conteo de partidas.`);
+      mostrarError(`Se leyeron las ${plural(leidas.length, "clase")} más recientes de ${grupos.length}; quedaron fuera del conteo de partidas: ${grupos.length - leidas.length}.`);
     }
   } catch (err) {
     console.error(err);

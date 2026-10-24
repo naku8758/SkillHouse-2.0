@@ -8,6 +8,7 @@ import {
   collection,
   getDocs,
   updateDoc,
+  deleteDoc,
   doc,
   query,
   where,
@@ -19,6 +20,15 @@ function escapar(texto) {
   const div = document.createElement("div");
   div.textContent = texto == null ? "" : texto;
   return div.innerHTML;
+}
+
+// El motivo de un fallo tiene que verse en la pantalla: si solo se escribe en la
+// consola, un botón que no hace nada parece un botón roto.
+function avisarSugerencias(texto) {
+  const el = document.getElementById("aviso-sugerencias");
+  if (!el) return;
+  el.textContent = texto;
+  el.style.display = texto ? "block" : "none";
 }
 
 function formatearFecha(timestamp) {
@@ -87,7 +97,7 @@ async function cargarSugerencias() {
       .map(
         (s) => `
         <tr>
-          <td>${escapar(s.nombre || "Invitado")}</td>
+          <td>${escapar(s.nombre || "Sin nombre")}</td>
           <td>${escapar(s.mensaje)}</td>
           <td>${formatearFecha(s.fecha)}</td>
           <td>
@@ -95,6 +105,7 @@ async function cargarSugerencias() {
                     style="${s.atendida ? "opacity:.55;" : ""}">
               ${s.atendida ? "Atendida" : "Marcar atendida"}
             </button>
+            <button class="btn-borrar" data-borrar="${escapar(s.id)}" style="margin-left:6px;">Borrar</button>
           </td>
         </tr>`
       )
@@ -110,7 +121,43 @@ async function cargarSugerencias() {
         } catch (err) {
           console.error(err);
           btn.disabled = false;
-          alert("No se pudo actualizar la sugerencia.");
+          avisarSugerencias(`No se pudo marcar la sugerencia (${err && err.code ? err.code : "error"}).`);
+        }
+      });
+    });
+
+    // Las confirmaciones de borrado se hacen en la propia página, nunca con
+    // window.confirm: si el navegador tiene los diálogos bloqueados, o la página
+    // está dentro de un iframe, el clic no muestra nada y el botón parece roto.
+    // El primer clic pregunta y el segundo borra.
+    tabla.querySelectorAll("[data-borrar]").forEach((btn) => {
+      let preguntado = false;
+      btn.addEventListener("click", async () => {
+        if (!preguntado) {
+          preguntado = true;
+          btn.textContent = "¿Seguro?";
+          setTimeout(() => {
+            preguntado = false;
+            btn.textContent = "Borrar";
+          }, 6000);
+          return;
+        }
+
+        preguntado = false;
+        btn.disabled = true;
+        try {
+          await deleteDoc(doc(db, "sugerencias", btn.dataset.borrar));
+          avisarSugerencias("");
+          await cargarSugerencias();
+        } catch (err) {
+          console.error(err);
+          btn.disabled = false;
+          btn.textContent = "Borrar";
+          avisarSugerencias(
+            `No se pudo borrar la sugerencia (${err && err.code ? err.code : "error"}). ` +
+            "Si el mensaje es permission-denied, las reglas publicadas en este proyecto " +
+            "son más viejas que este botón: vuelve a publicar firestore.rules."
+          );
         }
       });
     });

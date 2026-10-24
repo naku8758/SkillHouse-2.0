@@ -2,6 +2,7 @@
 // Inicio del estudiante: las materias que existen en el catálogo, su curso
 // real y su propio resumen de juego.
 
+import { plural } from "../js/plural.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS, materiasDelGrado, temasDelGrado } from "../js/catalogo.js";
 import { gradoDeCurso } from "../js/malla.js";
@@ -37,7 +38,7 @@ suscribirSesion("estudiante", async (cuenta) => {
       href: `materia.html?m=${encodeURIComponent(materia.id)}`,
       icono: materia.icono,
       titulo: materia.nombre,
-      etiqueta: grado ? `${temas} temas para ${grado}°` : "Juegos disponibles",
+      etiqueta: grado ? `${plural(temas, "tema")} para ${grado}°` : "Juegos disponibles",
       color: materia.color
     });
   }).join("");
@@ -48,7 +49,7 @@ suscribirSesion("estudiante", async (cuenta) => {
   const curso = cuenta.datos.curso;
   document.getElementById("curso-alumno").textContent = curso
     ? `Curso ${curso} · tu cuenta la creó ${cuenta.datos.creadoPorNombre || "el administrador"}`
-    : "Pídele a tu director de curso o al administrador que te cree la cuenta: así quedas vinculado(a) a tu grado.";
+    : "Pídele a tu director de curso o al administrador que te cree la cuenta: con ella entras a las clases de tu grado.";
 
   let grupos = [];
   let historial = [];

@@ -214,6 +214,15 @@ Lo que hace:
   desde Usuarios; y el profesor que lo dirigía vuelve a profesor estándar. Un curso
   vacío se borra sin más. No deja asignarse a él mismo como director si el curso ya
   tiene uno.
+- **Inicio del panel** (`homepagec.html`): los conteos reales de la base de datos y
+  la tabla **Sugerencias recientes**, que es lo que llega desde Ayuda y
+  Sugerencias. Cada fila trae **Marcar atendida** y **Borrar**. El borrado se
+  confirma en la misma pantalla: el primer clic pone el botón en *¿Seguro?* y el
+  segundo elimina la sugerencia; si Firestore lo niega, el motivo se escribe arriba
+  de la tabla (no solo en la consola). Sin este botón la colección crecía para
+  siempre y el administrador no tenía cómo vaciarla. El nombre que llega en cada
+  fila es el que la persona escribió en Ayuda; si lo dejó vacío, la columna dice
+  **Sin nombre**, porque el formulario no obliga a identificarse.
 
 ### Profesor (y director de curso)
 
@@ -537,8 +546,13 @@ Tres cosas que conviene saber:
 - `solicitudes_clave` solo se crea con el `uid` propio, con `estado: "pendiente"`,
   con los campos justos y con el motivo limitado a 300 caracteres. Solo el
   administrador puede cerrarla.
-- `sugerencias` (las de ayuda.html) tiene el mismo tope: 1000 caracteres y solo
-  los cuatro campos que escribe el código.
+- `sugerencias` (las de ayuda.html) tiene el mismo tope: 1000 caracteres para el
+  mensaje, 60 para el nombre opcional y solo los cuatro campos que escribe el
+  código. Quien escribe puede dejar el nombre en blanco: el formulario lo permite
+  y la sugerencia llega como `Sin nombre`. Solo el administrador las lee, y es el
+  único que puede marcarlas como atendidas y **borrarlas** desde
+  `homepagec.html`: nadie más, ni siquiera el dueño del seudónimo, puede tocar
+  una sugerencia ya enviada.
 - **Al crear una clase**: el dueño tiene que ser el profesor que la crea, la lista
   de miembros tiene que nacer vacía, la materia tiene que estar entre las que le
   asignaron y el curso tiene que existir. Y solo en los **grados que le
@@ -566,11 +580,12 @@ Tres cosas que conviene saber:
 - **Permisos de borrado para el administrador**, que son los que hacen posible el
   botón Borrar: `delete` en `usuarios`, `estudiantes`, `profesores`, `grupos` y sus
   tres subcolecciones (`miembros`, `sala`, `resultados`), en
-  `estudiantes/{uid}/resultados` y en `solicitudes_clave`. Antes todos esos estaban
+  `estudiantes/{uid}/resultados`, en `solicitudes_clave` y ahora también en
+  `sugerencias`. Antes todos esos estaban
   en `if false`. Un estudiante o un profe sigue sin poder borrar ninguna colección
   ajena. Son los mismos permisos que necesita el borrado en cascada de un curso
-  (Cursos → Borrar), así que publicar las reglas una vez cubre los dos botones: no
-  hace falta ninguna regla nueva para ese botón.
+  (Cursos → Borrar), así que publicar las reglas una vez cubre los tres botones de
+  borrado del panel: Cuentas, Cursos y Sugerencias.
 - El **"plan b" del curso** también está en las reglas: un estudiante puede
   escribir `curso` en su propia ficha **solo si estaba vacío** y solo si el curso
   que escribe existe en `cursos`. Mover a un estudiante de un curso lleno a otro es
@@ -590,7 +605,9 @@ no funciona, el botón **Materias y grados** no guarda, el libro de notas del
 profesor sale en blanco (es la lectura de `estudiantes` por curso), los muchachos
 no pueden entrar a su clase sin código, y **los tres botones del padrón fallan**:
 Borrar sale `permission-denied`, el selector de curso de la fila no guarda, y el
-estudiante no puede reenganchar su curso desde Mi Perfil.
+estudiante no puede reenganchar su curso desde Mi Perfil. Lo mismo pasa con el botón
+Borrar de la tabla de sugerencias del inicio del panel: sin publicar, la sugerencia no
+se va y el aviso en pantalla lo dice.
 
 ## 8. Dónde está cada cosa en el código
 

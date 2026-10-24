@@ -15,6 +15,7 @@
 // código, así que la lista de estudiantes es solo el registro de quién ha
 // jugado, no un permiso.
 
+import { plural } from "../js/plural.js";
 import { obtenerMateria, obtenerTema, obtenerJuego, rutaDeJuego, temasDelGrado, temasDeMateria, JUEGOS } from "../js/catalogo.js";
 import { gradoDeCurso, cicloPorId, NOMBRE_GRADO } from "../js/malla.js";
 import { suscribirSesion } from "../js/sesion.js";
@@ -493,7 +494,7 @@ async function cargarGruposCon(promesa) {
         <p class="grupo-meta">Tema: ${escapar(tema?.nombre || "Sin tema")} · Dificultad ${escapar(String(grupo.dificultad || "—"))}</p>
         <div class="grupo-codigo">${escapar(grupo.codigo)}</div>
         <p><span class="grupo-sala grupo-sala--${estado}">Sala: ${escapar(NOMBRE_SALA[estado])}</span></p>
-        <p class="grupo-meta">${(grupo.miembrosUids || []).length} estudiante(s) en la clase</p>
+        <p class="grupo-meta">${plural((grupo.miembrosUids || []).length, "estudiante")} en la clase</p>
         <div class="grupo-acciones">
           <a class="btn-accion" style="text-decoration:none;" href="sala.html?g=${escapar(encodeURIComponent(grupo.id))}">📺 Abrir sala</a>
           <a class="btn-secundario" style="text-decoration:none;" href="${escapar(rutaPractica(grupo))}">Probar el juego</a>
@@ -577,7 +578,7 @@ async function mostrarResultados(grupoId, nombreGrupo) {
 
     if (!resultados.length) {
       resultadosContenido.innerHTML = `<p class="estado-vacio">
-        Todavía nadie ha jugado en esta clase${matriculados ? ` (${matriculados} estudiante(s) dentro)` : ""}.
+        Todavía nadie ha jugado en esta clase${matriculados ? ` (${plural(matriculados, "estudiante")} dentro)` : ""}.
       </p>`;
       return;
     }
@@ -611,7 +612,7 @@ async function mostrarResultados(grupoId, nombreGrupo) {
     const hanJugado = porEstudiante.size;
 
     resultadosContenido.innerHTML = `
-      <p class="panel-sub">${resultados.length} partida(s) de ${hanJugado} estudiante(s) ·
+      <p class="panel-sub">${plural(resultados.length, "partida")} de ${plural(hanJugado, "estudiante")} ·
         promedio ${promedio}% · mejor ${mejor}% · nota promedio ${escapar(formatearNota(notaGeneral))} de 5,0${
           matriculados ? ` · ${hanJugado} de ${matriculados} matriculados han jugado` : ""}</p>
 
@@ -791,7 +792,7 @@ document.getElementById("btn-duplicar-ok")?.addEventListener("click", async () =
     }
     mostrarMensaje(
       duplicarExito,
-      `Creadas ${creadas.length} copia(s). Códigos — ${creadas.join(" · ")}`
+      `Copias creadas: ${creadas.length}. Códigos — ${creadas.join(" · ")}`
     );
     await cargarGrupos();
   } catch (error) {

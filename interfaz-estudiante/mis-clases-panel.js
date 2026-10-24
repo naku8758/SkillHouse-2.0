@@ -44,7 +44,7 @@ async function cargarClases(uid, curso) {
   if (!grupos.length) {
     listaClases.innerHTML = `
       <p class="estado-vacio">
-        Todavía no hay clases para ${curso ? `tu curso ${escapeHtml(curso)}` : "tu cuenta"}. Cuando tu profesor(a) abra una,
+        Todavía no hay clases para ${curso ? `tu curso ${escapeHtml(curso)}` : "tu cuenta"}. Cuando tu docente abra una,
         aparece aquí. Si alguien te dio un código, úsalo en
         <a href="homepagea.html">Materias</a> para matricularte.
       </p>`;
@@ -73,7 +73,7 @@ async function cargarClases(uid, curso) {
         </div>
         <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego?.icono || "🎲"}</span>${escapeHtml(juego?.nombre || g.juego || "Juego")}</span>
         <p class="grupo-meta">${escapeHtml(materia?.nombre || "Materia")} · Curso ${escapeHtml(g.curso || "—")} · Dificultad ${g.dificultad || "—"}</p>
-        <p class="grupo-meta">Profesor(a): ${escapeHtml(g.profesorNombre || "Sin nombre")}</p>
+        <p class="grupo-meta">Docente: ${escapeHtml(g.profesorNombre || "Sin nombre")}</p>
         <p class="grupo-meta">Clase creada: ${formatearFecha(g.creadoEn) || "—"} · Tema: ${escapeHtml(tema?.nombre || "Sin tema")}</p>
         <p><span class="grupo-sala grupo-sala--${estado}">${etiquetaSala}</span></p>
         <div class="grupo-acciones">

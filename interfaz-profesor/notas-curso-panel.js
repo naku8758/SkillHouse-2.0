@@ -8,6 +8,7 @@
 // un filtro recomendado: en un grado con varias asignaturas propias, ver
 // "todas" puede ser media centena de clases.
 
+import { plural } from "../js/plural.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { cursosDelProfesor } from "../js/cursos.js";
 import { obtenerMateria, obtenerTema } from "../js/catalogo.js";
@@ -108,8 +109,8 @@ function pintarLibro(libro, codigo) {
   const materiaId = selectMateria.value;
   const nombreMateria = materiaId ? obtenerMateria(materiaId)?.nombre || materiaId : "";
   subEl.textContent = materiaId
-    ? `${nombreMateria} · ${libro.clases.length} clase(s) tuya(s) en el curso`
-    : `Todas tus materias en el curso · ${libro.clases.length} clase(s)`;
+    ? `${nombreMateria} · ${plural(libro.clases.length, "clase")} a tu cargo en el curso`
+    : `Todas tus materias en el curso · ${plural(libro.clases.length, "clase")}`;
 
   pintarResumen(libro);
 
@@ -121,7 +122,7 @@ function pintarLibro(libro, codigo) {
   }
 
   if (!libro.jugadas) {
-    contenidoEl.innerHTML = `<p class="estado-vacio">Tienes ${libro.clases.length} clase(s) en este curso, pero nadie ha jugado todavía. En cuanto un estudiante juegue, su nota aparece aquí.</p>`;
+    contenidoEl.innerHTML = `<p class="estado-vacio">Tienes ${plural(libro.clases.length, "clase")} en este curso, pero nadie ha jugado todavía. En cuanto un estudiante juegue, su nota aparece aquí.</p>`;
     btnDescargar.disabled = true;
     return;
   }
@@ -161,7 +162,7 @@ function pintarLibro(libro, codigo) {
     <p class="panel-sub" style="margin-top:10px;">Cada celda es el promedio de las partidas de ese estudiante en esa clase. Se leen hasta 300 partidas por clase, así que en una clase con muchísimas partidas la celda sale del más reciente.</p>`;
 
   if (clases.length > 8) {
-    decir(avisoEl, `Estás viendo ${clases.length} clases del curso. Filtra por materia para que la tabla se lea mejor y cargue más rápido.`);
+    decir(avisoEl, `Estás viendo ${plural(clases.length, "clase")} del curso. Filtra por materia para que la tabla se lea mejor y cargue más rápido.`);
   } else {
     decir(avisoEl, "");
   }

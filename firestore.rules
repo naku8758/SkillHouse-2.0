@@ -395,20 +395,24 @@ service cloud.firestore {
     // ------------------- Sugerencias de "Ayuda" -------------------
 
     match /sugerencias/{id} {
-      // Cualquiera puede opinar, incluso sin cuenta (los invitados), pero solo
-      // con la forma real que escribe js/ayuda.js y con el texto acotado: sin
-      // límite, un único visitante podía llenar la colección.
+      // Cualquiera puede opinar, incluso sin cuenta (las visitas), pero solo
+      // con la forma real que escribe js/ayuda.js y con los textos acotados:
+      // 1000 caracteres de sugerencia y 60 del nombre opcional. Sin límite, un
+      // único visitante podía llenar la colección o meter un nombre gigante.
       allow create: if request.resource.data.keys().hasOnly(['mensaje', 'nombre', 'atendida', 'fecha'])
                     && request.resource.data.mensaje is string
                     && request.resource.data.mensaje.size() > 0
                     && request.resource.data.mensaje.size() <= 1000
+                    && request.resource.data.nombre is string
+                    && request.resource.data.nombre.size() <= 60
                     && request.resource.data.atendida == false;
       allow read: if esAdmin();
-      // El admin solo marca la sugerencia como atendida; no reescribe el
-      // texto de quien opinó.
+      // El admin marca la sugerencia como atendida y la borra cuando ya no
+      // sirve; no reescribe el texto de quien opinó. Sin el delete, la
+      // colección crecía para siempre desde "Ayuda y Sugerencias".
       allow update: if esAdmin()
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['atendida']);
-      allow delete: if false;
+      allow delete: if esAdmin();
     }
 
     // ------------------- Solicitudes de cambio de contraseña -------------------

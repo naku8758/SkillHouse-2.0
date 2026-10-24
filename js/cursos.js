@@ -9,6 +9,7 @@
 // El ID del documento es el propio código, así que "601" no se puede
 // duplicar y basta con leer el documento para saber quién lo dirige.
 
+import { plural } from "./plural.js";
 import { db } from "./firebase.js";
 import {
   collection,
@@ -185,7 +186,7 @@ export async function eliminarCurso(codigo, { cascade = false } = {}) {
 
   if (!cascade && (!estudiantes.empty || !grupos.empty)) {
     throw new Error(
-      `No se puede borrar ${limpio}: todavía tiene ${estudiantes.size} estudiante(s) y ${grupos.size} clase(s).`
+      `No se puede borrar ${limpio}: todavía tiene ${plural(estudiantes.size, "estudiante")} y ${plural(grupos.size, "clase")}.`
     );
   }
 

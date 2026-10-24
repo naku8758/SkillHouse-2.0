@@ -7,6 +7,7 @@
 // 14 bancos para pintar una tabla sería castigar al navegador y a la red del
 // colegio, que es lo que este proyecto intenta evitar.
 
+import { plural } from "../js/plural.js";
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS, temasDeMateria } from "../js/catalogo.js";
@@ -96,7 +97,7 @@ async function cargar() {
       <div class="panel-box" style="margin-bottom:22px;">
         <h2>${escapar(materia.nombre)}</h2>
         <p class="panel-sub">
-          ${materia.ejes.length} ejes · ${ciclos} temas publicados · ${clases.length} clase(s) creada(s)<br>
+          ${plural(materia.ejes.length, "eje")} · temas publicados: ${ciclos} · clases creadas: ${clases.length}<br>
           Profesores que la dictan: ${docentes.length ? escapar(docentes.map((p) => p.username).join(", ")) : "ninguno todavía"}
         </p>
         <p><button type="button" class="btn-secundario" data-abrir="${escapar(materia.id)}">Ver contenido de cada tema</button></p>

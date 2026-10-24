@@ -19,6 +19,7 @@
 // sobre la colección `usuarios` está restringido en firestore.rules, así que
 // ningún otro rol obtiene esta lista aunque escriba el código a mano.
 
+import { plural } from "../js/plural.js";
 import { db } from "../js/firebase.js";
 import { suscribirSesion, signOut, auth } from "../js/sesion.js";
 import { collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
@@ -255,7 +256,7 @@ const COLUMNAS = {
       CORREO(c),
       PIN(c),
       CREADO(c),
-      `${estadoCelda(c)}<span class="grupo-meta"> ${enClases} clase(s)</span>`,
+      `${estadoCelda(c)}<span class="grupo-meta"> ${plural(enClases, "clase")}</span>`,
       selectorCurso(c),
       accionesCelda(c)
     ]
@@ -359,9 +360,9 @@ function bloqueEstudiantes(filas) {
         ? SIN_DATO.sin_curso
         : `Curso ${codigo} (ya no existe)`;
       const meta = [
-        `${listaCurso.length} cuenta(s)`,
+        `${plural(listaCurso.length, "cuenta")}`,
         curso?.anio ? `año ${curso.anio}` : "",
-        nombreDirector ? `director(a): ${nombreDirector}` : "sin director"
+        nombreDirector ? `dirigido por ${nombreDirector}` : "sin director"
       ].filter(Boolean).join(" · ");
       return bloque(titulo, meta, tabla(ordenNombres(listaCurso), "estudiante"));
     })
@@ -617,7 +618,7 @@ async function guardarAjuste() {
       : cursos.length;
     decirEn(
       ajusteExito,
-      `${c.username} ahora dicta ${materias.length} materia(s) y puede crear clases en ${habilitados} curso(s)` +
+      `${c.username} ahora dicta ${plural(materias.length, "materia")} y puede crear clases en ${plural(habilitados, "curso")}` +
         (grados.length ? ` de los grados ${grados.map((g) => `${g}°`).join(", ")}.` : " (no marcaste grados: cualquiera).")
     );
     pintarStats();
@@ -660,7 +661,7 @@ function encabezadoFicha(c) {
     c.email,
     c.curso ? `curso ${c.curso}${c.anio ? ` · año ${c.anio}` : ""}` : "sin curso",
     c.rol === "profesor" && c.grados.length ? `grados ${c.grados.map((g) => `${g}°`).join(", ")}` : "",
-    c.rol === "profesor" ? `${c.materias.length} materia(s)` : "",
+    c.rol === "profesor" ? `dicta ${plural(c.materias.length, "materia")}` : "",
     c.creadoPorNombre ? `creó la cuenta ${c.creadoPorNombre}` : "sin registro de quién la creó",
     `creada ${formatearFecha(c.creadoEn)}`
   ].filter(Boolean);
@@ -964,7 +965,7 @@ async function fichaProfesor(c) {
     [datos.suyas.filter((g) => g.activo).length, "Clases activas"],
     [datos.codigos.length, "Cursos donde dicta"],
     [datos.matriculados.length, "Estudiantes en esos cursos"],
-    [datos.partidas, `Partidas en sus ${datos.leidas.length} clases`],
+    [datos.partidas, `Partidas en sus ${plural(datos.leidas.length, "clase")}`],
     [datos.notas.length ? formatearNota(promedioDeNotas(datos.notas)) : "—", "Nota promedio"]
   ]);
 

@@ -7,6 +7,7 @@
 // Se carga solo catalogo.js y malla.js, no los bancos de preguntas: para contar
 // los temas no hacen falta las preguntas.
 
+import { plural } from "./plural.js";
 import { MATERIAS, JUEGOS, totalTemas } from "./catalogo.js";
 import { GRADOS } from "./malla.js";
 
@@ -27,7 +28,7 @@ document.getElementById("grid-temas").innerHTML = MATERIAS.map(
       <div class="nivel-icono">${escapar(materia.icono)}</div>
       <h3>${escapar(materia.nombre)}</h3>
       <p>${escapar(materia.descripcion)}</p>
-      <div class="nivel-meta">${temasDe(materia)} temas · ${materia.ejes.length} ejes · 3 niveles</div>
+      <div class="nivel-meta">${plural(temasDe(materia), "tema")} · ${plural(materia.ejes.length, "eje")} · 3 niveles</div>
     </div>`
 ).join("");
 

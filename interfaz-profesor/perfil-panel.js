@@ -2,6 +2,7 @@
 // Muestra los datos básicos del profesor y un resumen de la actividad en
 // todas sus clases (estadísticas agregadas + vistazo rápido de clases).
 
+import { plural } from "../js/plural.js";
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
@@ -86,7 +87,7 @@ suscribirSesion("profesor", async (cuenta) => {
             <span class="grupo-estado ${g.activo ? "grupo-estado--activo" : "grupo-estado--inactivo"}"><span class="dot"></span>${g.activo ? "Activa" : "Inactiva"}</span>
           </div>
           <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego.icono}</span>${escapeHtml(juego.nombre)}</span>
-          <p class="grupo-meta">${(g.miembrosUids || []).length} estudiante(s)</p>
+          <p class="grupo-meta">${plural((g.miembrosUids || []).length, "estudiante")}</p>
         </div>`;
       })
       .join("");

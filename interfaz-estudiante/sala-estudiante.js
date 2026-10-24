@@ -86,7 +86,7 @@ async function iniciar(cuenta) {
     `Curso ${grupo.curso || "—"}`,
     tema?.nombre || "",
     `${juego?.icono || ""} ${juego?.nombre || ""}`.trim(),
-    `Profesor(a): ${grupo.profesorNombre || "—"}`
+    `Docente: ${grupo.profesorNombre || "—"}`
   ].filter(Boolean).join(" · ");
 
   // Se anota la asistencia DESPUÉS de validar la pertenencia: las reglas de
@@ -131,12 +131,12 @@ async function iniciar(cuenta) {
            href="${escapar(rutaDeJuego(actual.juego, "../"))}?grupo=${encodeURIComponent(GRUPO_ID)}&m=${encodeURIComponent(actual.materia || "")}">
           ▶ ¡Entrar al juego!
         </a>
-        <p class="sala-meta" style="margin-top:10px;">Tu profesor(a) ya inició la clase. Entra y juega.</p>`;
+        <p class="sala-meta" style="margin-top:10px;">Tu docente ya inició la clase. Entra y juega.</p>`;
       decir("");
     } else if (estado === SALA.CERRADA) {
       accionEl.innerHTML = `<p class="sala-meta">La clase quedó cerrada. Si quieres seguir practicando el tema, usa el modo práctica de la materia.</p>`;
     } else {
-      accionEl.innerHTML = `<p class="sala-meta">Espera a que tu profesor(a) pulse <strong>Iniciar clase</strong> en el tablero. Esta pantalla se actualiza sola.</p>`;
+      accionEl.innerHTML = `<p class="sala-meta">Espera a que tu docente pulse <strong>Iniciar clase</strong> en el tablero. Esta pantalla se actualiza sola.</p>`;
     }
   });
 }

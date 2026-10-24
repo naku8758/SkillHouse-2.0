@@ -108,7 +108,7 @@ function iniciarPagina(cuenta) {
         exitoEl,
         resultado.matriculado
           ? `Quedas en el curso ${resultado.grupo.curso} y dentro de "${resultado.grupo.nombre}". Tus clases de ${MATERIA.nombre} aparecen abajo.`
-          : `Ya estás en "${resultado.grupo.nombre}". Entra a la sala desde su tarjeta y espera a que tu profesor(a) inicie la clase.`
+          : `Ya estás en "${resultado.grupo.nombre}". Entra a la sala desde su tarjeta y espera a que tu docente inicie la clase.`
       );
 
       form.reset();
@@ -140,8 +140,8 @@ async function cargarGrupos(uid, curso) {
   if (!grupos.length) {
     lista.innerHTML = `<p class="estado-vacio">${
       curso
-        ? `Todavía no hay clases de ${escapeHtml(MATERIA.nombre)} para tu curso ${escapeHtml(curso)}. Cuando tu profesor(a) abra una, aparece aquí sola.`
-        : `Todavía no tienes clases de ${escapeHtml(MATERIA.nombre)}. Escribe el código que te dio tu profesor(a) y quedas matriculado.`
+        ? `Todavía no hay clases de ${escapeHtml(MATERIA.nombre)} para tu curso ${escapeHtml(curso)}. Cuando tu docente abra una, aparece aquí sola.`
+        : `Todavía no tienes clases de ${escapeHtml(MATERIA.nombre)}. Escribe el código que te dio tu docente y quedas anotado.`
     }</p>`;
     return;
   }
@@ -171,7 +171,7 @@ async function cargarGrupos(uid, curso) {
           </span>
         </div>
         <span class="grupo-juego-label"><span class="grupo-juego-icono">${juego?.icono || "🎲"}</span>${escapeHtml(juego?.nombre || g.juego || "Juego")}</span>
-        <p class="grupo-meta">Profesor(a): ${escapeHtml(g.profesorNombre || "—")}</p>
+        <p class="grupo-meta">Docente: ${escapeHtml(g.profesorNombre || "—")}</p>
         <p class="grupo-meta">Curso: ${escapeHtml(g.curso || "—")} · Tema: ${escapeHtml(tema?.nombre || "Sin tema")}</p>
         <p><span class="grupo-sala grupo-sala--${estado}">${etiquetaSala}</span></p>
         <div class="grupo-acciones">

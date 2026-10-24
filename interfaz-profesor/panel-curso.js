@@ -6,6 +6,7 @@
 // matricula a los estudiantes de ESE grado. Cada estudiante nace con el curso
 // ya puesto, y ese curso es el que después se valida al unirse a una clase.
 
+import { plural } from "../js/plural.js";
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { crearCuenta, generarClave, baseDelCorreo, DOMINIO_CORREO } from "../js/credenciales.js";
@@ -254,7 +255,7 @@ suscribirSesion("profesor", async (c) => {
   document.getElementById("titulo-curso").textContent = `Curso ${codigo}`;
   const nombreCurso = curso?.nombre || `Grado ${codigo}`;
   document.getElementById("subtitulo-curso").textContent =
-    `${nombreCurso} · ${c.datos.materias?.length || 0} materia(s) a tu cargo`;
+    `${nombreCurso} · ${plural(c.datos.materias?.length || 0, "materia")} a tu cargo`;
   document.title = `Curso ${codigo} · SkillHouse`;
 
   await Promise.all([cargarEstudiantes(), cargarClases()]);

@@ -1,6 +1,7 @@
 // interfaz-administrador/cursos.js
 // Alta, listado y asignación de director de los cursos de la institución.
 
+import { plural } from "../js/plural.js";
 import { db } from "../js/firebase.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { crearCurso, obtenerCursos, asignarDirector, eliminarCurso, codigoDeCurso } from "../js/cursos.js";
@@ -68,7 +69,7 @@ function filaCurso(c, nEst, nClases, directores) {
       </td>
       <td>
         <button class="btn-borrar" data-borrar="${escapar(c.codigo)}"${
-    nEst || nClases ? ` title="Tiene ${nEst} estudiante(s) y ${nClases} clase(s)"` : ""
+    nEst || nClases ? ` title="Tiene ${plural(nEst, "estudiante")} y ${plural(nClases, "clase")}"` : ""
   }>Borrar</button>
       </td>
     </tr>`;
@@ -250,7 +251,7 @@ function pedirBorrado(codigo, boton) {
   borrarTitulo.textContent = `Borrar el curso ${codigo}`;
   borrarDetalle.textContent =
     x.nEst || x.nClases
-      ? `Tiene ${x.nEst} estudiante(s) y ${x.nClases} clase(s). Se borran esas clases con sus notas; los estudiantes siguen existiendo pero quedan sin curso, y el administrador los reasigna en Usuarios. El director de este curso vuelve a profesor estándar.`
+      ? `Tiene ${plural(x.nEst, "estudiante")} y ${plural(x.nClases, "clase")}. Se borran esas clases con sus notas; los estudiantes siguen existiendo pero quedan sin curso, y el administrador los reasigna en Usuarios. El director de este curso vuelve a profesor estándar.`
       : "Está vacío: no tiene clases ni estudiantes matriculados, así que se borra sin más.";
   borrarCampo.value = "";
   borrarError.style.display = "none";
@@ -293,8 +294,8 @@ async function ejecutarBorrado() {
     panelBorrar.style.display = "none";
     mostrar(
       exitoEl,
-      `Curso ${codigo} borrado: ${resumen.clases} clase(s) eliminada(s) y ${resumen.estudiantes} estudiante(s) quedaron sin curso${
-        resumen.directores ? ` (${resumen.directores} director(s) volvieron a profesor estándar)` : ""
+      `Curso ${codigo} borrado · clases eliminadas: ${resumen.clases} · estudiantes que quedaron sin curso: ${resumen.estudiantes}${
+        resumen.directores ? ` (directores que volvieron a profesor estándar: ${resumen.directores})` : ""
       }.`
     );
     await cargar();

@@ -184,7 +184,7 @@ function pintar({ grupo, asistentes }) {
     `Curso ${grupo.curso || "—"}`,
     tema?.nombre || "Sin tema",
     `${juego?.icono || ""} ${juego?.nombre || grupo.juego || ""}`.trim(),
-    `Profesor(a): ${grupo.profesorNombre || "—"}`
+    `Docente: ${grupo.profesorNombre || "—"}`
   ].filter(Boolean).join(" · ");
 
   document.getElementById("sala-codigo").textContent = grupo.codigo || "—";

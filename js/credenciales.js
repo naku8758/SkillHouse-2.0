@@ -81,13 +81,16 @@ export function revelarClave(valorGuardada) {
  * los primeros grados lo teclee sin errores.
  */
 export function generarClave() {
-  const MAX = 4294967296; // 2^32
-  const limite = MAX - (MAX % 10); // múltiplo de 10 más alto: evita sesgo
+  const PINES = 1000000; // 10^6: todos los PINs de 6 dígitos, del 000000 al 999999
+  const MAX = 4294967296; // 2^32, lo que entrega un Uint32
+  const limite = MAX - (MAX % PINES); // múltiplo de 10^6 más alto: evita sesgo
   let valor;
   do {
     valor = crypto.getRandomValues(new Uint32Array(1))[0];
   } while (valor >= limite);
-  return String(valor % limite).padStart(6, "0");
+  // El módulo es contra PINES, no contra limite: contra `limite` salían PINes
+  // de 9 y 10 dígitos aunque la pantalla prometiera 6.
+  return String(valor % PINES).padStart(6, "0");
 }
 
 /**

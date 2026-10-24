@@ -103,7 +103,7 @@ suscribirSesion("estudiante", async (cuenta) => {
     ? `Miembro desde el ${fechaRegistro}`
     : "";
   document.getElementById("perfil-curso").textContent = cursoPropio
-    ? `Curso ${cursoPropio}${datos.creadoPorNombre ? ` · director(a): ${datos.creadoPorNombre}` : ""}`
+    ? `Curso ${cursoPropio}${datos.creadoPorNombre ? ` · dirigido por ${datos.creadoPorNombre}` : ""}`
     : "Tu cuenta aún no está vinculada a un curso.";
 
   inicializarSelectorAvatar({

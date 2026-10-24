@@ -12,6 +12,7 @@
 //     profesor de varios cursos eso eran decenas de lecturas en cada carga de
 //     portada. Ese resumen vive en "Mi Biblioteca", que se entra a propósito.
 
+import { plural } from "../js/plural.js";
 import { suscribirSesion } from "../js/sesion.js";
 import { MATERIAS, obtenerMateria } from "../js/catalogo.js";
 import { obtenerGruposDelProfesor } from "../js/grupos.js";
@@ -32,7 +33,7 @@ function rutaClases(materiaId, codigoCurso) {
 function tarjetaCurso(curso, conteo, esDirigido) {
   const etiqueta = esDirigido ? "👥 Curso que diriges" : "🎓 Cursos que dictas";
   const datos = conteo
-    ? `${conteo.clases} clase(s) · ${conteo.estudiantes} estudiante(s)`
+    ? `${plural(conteo.clases, "clase")} · ${plural(conteo.estudiantes, "estudiante")}`
     : "Contando tus clases...";
 
   return `

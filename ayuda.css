@@ -253,7 +253,43 @@ body{
 
 .sugerencias-box textarea:focus{
     border-color: var(--sh-cyan);
-    box-shadow: 0 0 0 3px rgba(35,170,237,.2;
+    box-shadow: 0 0 0 3px rgba(35,170,237,.25);
+}
+
+/* El campo del nombre se ve igual que la caja del texto, pero de una línea. */
+.sugerencias-box input[type="text"]{
+    width:100%;
+    margin-bottom:12px;
+    padding:13px 16px;
+    border:1px solid rgba(139,107,255,.4);
+    border-radius:var(--sh-r-md);
+    outline:none;
+    font-family: var(--sh-font-body);
+    font-size:1rem;
+    background: rgba(255,255,255,.06);
+    color:#fff;
+    transition: border-color var(--sh-fast), box-shadow var(--sh-fast);
+}
+.sugerencias-box input[type="text"]::placeholder{ color: rgba(234,235,255,.4); }
+
+.sugerencias-box input[type="text"]:focus{
+    border-color: var(--sh-cyan);
+    box-shadow: 0 0 0 3px rgba(35,170,237,.25);
+}
+
+.sugerencias-nota{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 12px;
+    margin-top:8px;
+    font-family: var(--sh-font-body);
+    font-size:.8rem;
+    line-height:1.5;
+    color: var(--sh-on-dark-soft);
+}
+.sugerencias-nota #contador-sugerencia{
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
 }
 
 /* =========================
@@ -275,7 +311,7 @@ body{
 
 .btn-enviar:hover{
     transform:translateY(-3px);
-    box-shadow: 0 10px 24px rgba(35,170,237,.4;
+    box-shadow: 0 10px 24px rgba(35,170,237,.35);
 }
 
 /* =========================

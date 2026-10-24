@@ -61,16 +61,17 @@
                 <strong>materia</strong> y la lista se reordena sola: el año y el curso salen de los
                 cursos que creaste, así que un curso vacío también aparece y se le pueden asignar
                 estudiantes. Aquí ves también el <strong>PIN de cada cuenta</strong>:
-                solo lo ve el administrador, porque es el único rol al que Firestore le deja listar la
-                colección de usuarios. Si compartes pantalla o descargas el CSV, recuerda que ese
-                archivo contiene todas las claves.
+                solo lo ve el administrador, porque las reglas de acceso le dejan traer la lista
+                completa de cuentas a él y a nadie más. Si compartes pantalla o descargas el CSV,
+                recuerda que ese archivo contiene todas las claves.
             </p>
             <p class="panel-sub">
-                "Registro incompleto" significa que la cuenta existe en Firebase y que esta plataforma
-                guardó su ficha. Si pone <strong>Registro incompleto</strong>, esa cuenta se creó a
-                mano en Firebase Console y no tiene curso ni materia: el estudiante no puede jugar
+                "Registro incompleto" significa que la cuenta existe, pero la plataforma no le
+                encontró ficha; la ficha es donde viven su curso y su materia. Suele pasar con las
+                cuentas creadas a mano en Firebase Console en vez de desde ➕
+                <a href="crear-cuenta.html">Crear usuario</a>: sin ficha, el estudiante no puede jugar
                 y el profesor no puede crear clases. Bórrala de aquí con <strong>Borrar</strong> y
-                créala de nuevo desde ➕ <a href="crear-cuenta.html">Crear usuario</a>.
+                créala de nuevo desde esa misma página.
             </p>
             <div class="form-fila" style="margin-bottom:14px;">
                 <div class="campo">

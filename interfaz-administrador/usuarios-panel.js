@@ -118,7 +118,7 @@ function construir(cuentasBase, perfilesBase) {
       tipoProfesor: perfil.tipoProfesor || "",
       curso,
       // Un profesor estándar no tiene curso, así que tampoco año: el filtro por
-      // año deliberately deja fuera a quien no pertenece a ningún grado.
+      // año deja fuera a quien no pertenece a ningún grado.
       anio: anioDeCurso(curso),
       materias: perfil.materias || [],
       grados: (perfil.grados || []).map((g) => Number(g)).filter(Number.isInteger),
@@ -396,8 +396,8 @@ function bloqueProfesores(filas) {
       const materia = obtenerMateria(id);
       const titulo = materia ? `${materia.icono} ${materia.nombre}` : SIN_DATO.sin_materia;
       const directores = listaMateria.filter((c) => c.tipoProfesor === "director");
-      const meta = `${listaMateria.length} profesor(es)${
-        directores.length ? ` · ${directores.length} director(es)` : ""
+      const meta = `${plural(listaMateria.length, "profesor")}${
+        directores.length ? ` · ${plural(directores.length, "director")}` : ""
       }`;
       return bloque(titulo, meta, tabla(ordenNombres(listaMateria), "profesor"));
     })

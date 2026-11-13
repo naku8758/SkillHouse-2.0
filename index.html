@@ -4,134 +4,396 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SkillHouse: la plataforma gratuita con la que los estudiantes de 1° a 11° practican sus catorce áreas aprendiendo jugando.">
+    <meta name="theme-color" content="#080B21">
     <link rel="icon" type="image/png" href="imag/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/landing.css">
     <title>SkillHouse | Aprende jugando</title>
+    <script>
+        document.documentElement.classList.add("sh-landing-js");
+        window.__shRevealFallback = window.setTimeout(function () {
+            document.querySelectorAll(".reveal").forEach(function (el) {
+                el.classList.add("is-visible");
+            });
+        }, 3200);
+    </script>
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/portada.js"></script>
 </head>
-<body>
+<body class="landing" id="inicio">
 
-    <header>
-        <div class="logo">
-            <img src="imag/logo.png" alt="logo" width="78" height="60">
-            <p class="logoskillhouse">SkillHouse</p>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+    <header class="site-header" id="site-header">
+        <div class="container header__inner">
+            <a class="brand" href="#inicio" aria-label="SkillHouse, ir al inicio">
+                <img src="imag/logo.png" alt="" width="44" height="44">
+                <span class="brand__name">SkillHouse<span class="brand__dot">.</span></span>
+            </a>
+
+            <nav class="main-nav" aria-label="Principal">
+                <a class="nav-link" href="#temas">Temas</a>
+                <a class="nav-link" href="#juegos">Juegos</a>
+                <a class="nav-link" href="#clases">Clases</a>
+                <a class="nav-cta" href="invitado.html">
+                    Jugar como invitado
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                </a>
+                <a class="btn-login" href="#" onclick="abrirModal('modal-login'); return false;">Ingreso</a>
+            </nav>
+
+            <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
+                <span></span><span></span><span></span>
+            </button>
         </div>
-        <nav>
-            <a href="#niveles" class="nav-link">Temas</a>
-            <a href="#juegos" class="nav-link">Juegos</a>
-            <a href="#aprendizaje" class="nav-link">Aprendizaje</a>
-            <a href="invitado.html" class="nav-link">Jugar como invitado</a>
-
-            <a href="#" onclick="abrirModal('modal-login'); return false;" class="btn-login">Ingreso</a>
-        </nav>
     </header>
 
-    <main class="hero">
-        <div class="hero-text">
-            <span class="badge">
-                ✦ Aprende Jugando
-            </span>
-            <h1 class="titulo-principal">Bienvenidos a SkillHouse</h1>
-            <div class="text">
-                    <p>Verle a un niño una pantalla y que aprenda algo ya no es un lujo.<br>
-                    En SkillHouse, cada tema se juega como reto corto: el grado decide<br>
-                    cuántas opciones, cuántas preguntas y si hay reloj o no,<br>
-                    de 1° a 11° y en las catorce áreas del currículo.<br>
-                    Y lo mejor de todo... ¡Completamente gratuito!</p>
+    <div class="mobile-menu" id="mobile-menu" aria-hidden="true" inert>
+        <nav class="mobile-menu__nav" aria-label="Menú móvil">
+            <a href="#temas">Temas</a>
+            <a href="#juegos">Juegos</a>
+            <a href="#clases">Clases</a>
+            <a href="ayuda.html" target="_blank" rel="noopener">Ayuda y sugerencias</a>
+            <a class="btn btn--primary" href="invitado.html">
+                Jugar como invitado
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </a>
+        </nav>
+        <p class="mobile-menu__note">Gratis, sin cuenta y de 1° a 11°.</p>
+    </div>
+
+    <main id="contenido">
+
+        <section class="hero" id="hero" aria-labelledby="hero-title">
+            <div class="hero__bg" aria-hidden="true">
+                <span class="hero__aurora hero__aurora--1"></span>
+                <span class="hero__aurora hero__aurora--2"></span>
+                <span class="hero__aurora hero__aurora--3"></span>
+                <span class="hero__stars"></span>
+                <span class="hero__grid"></span>
             </div>
 
-            <div class="hero-cta">
-                <a href="invitado.html" class="btn-registro">🎮 Jugar como invitado</a>
-                <a href="#niveles" class="btn-login">Ver temas</a>
+            <div class="container hero__inner">
+                <div class="hero__copy">
+                    <span class="hero__badge">
+                        <span class="hero__badge-dot" aria-hidden="true"></span>
+                        Plataforma gratuita · 1° a 11°
+                    </span>
+
+                    <h1 class="hero__title" id="hero-title">
+                        <span>Bienvenidos a</span>
+                        <span class="hero__title-brand">SkillHouse</span>
+                    </h1>
+
+                    <p class="hero__claim">Aprender se siente como jugar.</p>
+
+                    <p class="hero__lead">
+                        Verle a un niño una pantalla y que aprenda algo ya no es un lujo.
+                        En SkillHouse, cada tema se juega como reto corto: el grado decide
+                        cuántas opciones, cuántas preguntas y si hay reloj o no, de 1° a 11°
+                        y en las catorce áreas del currículo. Y lo mejor de todo...
+                        ¡Completamente gratuito!
+                    </p>
+
+                    <div class="hero__actions">
+                        <a class="btn btn--primary" href="invitado.html">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
+                            Jugar como invitado
+                        </a>
+                        <a class="btn btn--ghost" href="#temas">
+                            Ver los temas
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg>
+                        </a>
+                    </div>
+
+                    <dl class="hero__stats" id="stats-portada">
+                        <div class="stat">
+                            <dt><span data-count="14">14</span></dt>
+                            <dd>Áreas con práctica</dd>
+                        </div>
+                        <div class="stat">
+                            <dt><span data-count="0">—</span></dt>
+                            <dd>Temas disponibles</dd>
+                        </div>
+                        <div class="stat">
+                            <dt><span data-count="11">11</span></dt>
+                            <dd>Grados con contenido propio</dd>
+                        </div>
+                        <div class="stat">
+                            <dt><span data-count="3">3</span></dt>
+                            <dd>Modalidades de juego</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div class="hero__visual" id="hero-visual">
+                    <div class="hero__orbit hero__orbit--1" aria-hidden="true"></div>
+                    <div class="hero__orbit hero__orbit--2" aria-hidden="true"></div>
+
+                    <div class="hero__stage">
+                        <div class="hero__frame">
+                            <div class="hero__browser" aria-hidden="true">
+                                <span></span><span></span><span></span>
+                                <em>skillhouse.app / clase / 601</em>
+                            </div>
+                            <img src="imag/homepage1.PNG" alt="Estudiante de SkillHouse leyendo rodeada de caminos de aprendizaje" width="820" height="390" fetchpriority="high" decoding="async">
+                        </div>
+
+                        <div class="hero__frame hero__frame--small">
+                            <img src="imag/homepage2.PNG" alt="Profesora de SkillHouse frente a un tablero con fórmulas" width="820" height="382" loading="lazy" decoding="async">
+                        </div>
+
+                        <div class="hero__chip hero__chip--free">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.9 6.26L21.5 9.3l-4.75 4.6 1.12 6.6L12 17.4 6.13 20.5l1.12-6.6L2.5 9.3l6.6-1.04L12 2Z"/></svg>
+                            100% gratuito
+                        </div>
+
+                        <div class="hero__chip hero__chip--areas">
+                            <strong>14</strong> áreas · <strong>11</strong> grados
+                        </div>
+
+                        <div class="hero__pet hero__pet--fox" aria-hidden="true">
+                            <img src="imag/zorro_1.png" alt="" width="180" height="165" loading="lazy" decoding="async">
+                        </div>
+                        <div class="hero__pet hero__pet--owl" aria-hidden="true">
+                            <img src="imag/buho_2.png" alt="" width="150" height="112" loading="lazy" decoding="async">
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- js/portada.js llena estas cifras desde el catálogo real. El
-                 guion es el marcador de posición: un "0" leído a tiempo parece
-                 una cifra verdadera cuando todavía no hay nada en pantalla. -->
-            <dl class="stats" id="stats-portada">
-                <div><dt>—</dt><dd>Áreas con práctica</dd></div>
-                <div><dt>—</dt><dd>Temas disponibles</dd></div>
-                <div><dt>—</dt><dd>Grados con contenido propio</dd></div>
-                <div><dt>—</dt><dd>Modalidades de juego</dd></div>
-            </dl>
+            <a class="hero__scroll" href="#temas" aria-label="Bajar a los temas">
+                <span aria-hidden="true"></span>
+            </a>
+        </section>
+
+        <div class="marquee" aria-label="Áreas de aprendizaje">
+            <div class="marquee__track">
+                <ul class="marquee__list" id="marquee-temas"></ul>
+                <ul class="marquee__list" id="marquee-temas-clon" aria-hidden="true"></ul>
+            </div>
         </div>
-        <div class="hero-image">
-            <span class="chip-free">⭐ 100% gratuito</span>
-            <div class="main-card"><img src="imag/homepage1.PNG" alt="Estudiante explorando el aprendizaje con SkillHouse" width="400" height=""></div>
-            <div class="sub-card"><img src="imag/homepage2.PNG" alt="Profesora guiando una clase con SkillHouse" width="200" height=""></div>
-        </div>
+
+        <section class="section section--temas" id="temas" aria-labelledby="temas-title">
+            <div class="container">
+                <div class="section__head reveal">
+                    <div class="section__head-copy">
+                        <span class="eyebrow">El mapa</span>
+                        <h2 class="section__title" id="temas-title">Catorce formas<br>de aprender.</h2>
+                    </div>
+                    <p class="section__intro">
+                        Catorce áreas, de 1° a 11°: cada tema pertenece a la banda de su ciclo
+                        y el juego se arma según el grado. Elige una tarjeta y empieza por
+                        donde quieras.
+                    </p>
+                </div>
+
+                <div class="temas-grid" id="grid-temas">
+                    <noscript>
+                        <p class="temas-fallback">Activa JavaScript para ver las 14 áreas. Mientras tanto, puedes <a href="invitado.html">jugar como invitado</a>.</p>
+                    </noscript>
+                </div>
+
+                <div class="section__foot reveal">
+                    <p><strong>¿No sabes por dónde empezar?</strong> El selector te lleva paso a paso: grado, área, tema y dificultad.</p>
+                    <a class="link-arrow" href="invitado.html">
+                        Abrir el selector
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section--juegos" id="juegos" aria-labelledby="juegos-title">
+            <div class="container">
+                <div class="section__head section__head--dark reveal">
+                    <div class="section__head-copy">
+                        <span class="eyebrow eyebrow--cyan">El recreo</span>
+                        <h2 class="section__title" id="juegos-title">Tres juegos.<br>Una misma chispa.</h2>
+                    </div>
+                    <p class="section__intro">
+                        Practica lo aprendido con retos cortos y divertidos, pensados para
+                        que la lógica, el código y la exploración se sientan como un juego.
+                    </p>
+                </div>
+
+                <div class="juegos-grid" id="grid-juegos"></div>
+
+                <div class="juegos__note reveal">
+                    <span class="juegos__note-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3"/><path d="M12 18v3"/><path d="m5.6 5.6 2.1 2.1"/><path d="m16.3 16.3 2.1 2.1"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m5.6 18.4 2.1-2.1"/><path d="m16.3 7.7 2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>
+                    </span>
+                    <p><strong>Sin cuenta para empezar.</strong> Elige grado, área, tema y dificultad; el juego se arma solo.</p>
+                    <a class="link-arrow link-arrow--light" href="invitado.html">
+                        Probar los tres
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section--clases" id="clases" aria-labelledby="clases-title">
+            <div class="container clases__grid">
+                <div class="clases__media reveal">
+                    <div class="clases__frame">
+                        <img src="imag/homepage2.PNG" alt="Profesora de SkillHouse guiando una clase frente a un tablero" width="820" height="382" loading="lazy" decoding="async">
+                    </div>
+
+                    <div class="clases__code-card" aria-hidden="true">
+                        <span class="clases__card-label">Código del curso</span>
+                        <strong>601</strong>
+                        <span class="clases__card-hint">Compártelo con tu clase</span>
+                    </div>
+
+                    <div class="clases__grade-card" aria-hidden="true">
+                        <span class="clases__card-label">Última partida</span>
+                        <strong>4.8</strong>
+                        <span class="clases__card-hint">Guardada en Mi Biblioteca</span>
+                    </div>
+                </div>
+
+                <div class="clases__copy reveal">
+                    <span class="eyebrow">Aprendizaje acompañado</span>
+                    <h2 class="section__title" id="clases-title">Clases con código,<br>como en el salón.</h2>
+                    <p>
+                        Tu profesor crea la clase de su materia y su curso, y el código del
+                        curso queda siempre visible. Con ese código quedas anotado al
+                        instante, sin aprobaciones: entras a la sala, esperas a que él inicie
+                        la clase y juegas. Tus partidas quedan guardadas con nota de 1,0 a
+                        5,0; él las ve en el libro de notas del curso y tú en Mi Biblioteca.
+                    </p>
+
+                    <ul class="clases__list">
+                        <li>
+                            <span class="clases__list-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h6"/><path d="M7 16h4"/></svg>
+                            </span>
+                            <div>
+                                <strong>El código del curso, siempre a la vista</strong>
+                                <span>Con ese código entras a la sala sin esperar aprobación.</span>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="clases__list-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 4-4 3 3 5-6"/><path d="M16 8h3v3"/></svg>
+                            </span>
+                            <div>
+                                <strong>Partidas con nota de 1,0 a 5,0</strong>
+                                <span>El profesor las ve en el libro de notas del curso.</span>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="clases__list-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg>
+                            </span>
+                            <div>
+                                <strong>Todo queda en Mi Biblioteca</strong>
+                                <span>Tus partidas y tu progreso, en un solo lugar.</span>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <a class="btn btn--primary" href="#" onclick="abrirModal('modal-login'); return false;">
+                        Entrar a mi clase
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="cierre" id="empezar" aria-labelledby="cierre-title">
+            <div class="cierre__bg" aria-hidden="true"></div>
+            <div class="container cierre__inner">
+                <div class="cierre__copy reveal">
+                    <span class="eyebrow eyebrow--light">Tu primera ronda</span>
+                    <h2 id="cierre-title">¿Aprendemos jugando?</h2>
+                    <p>
+                        Elige tu grado, tu área y tu tema. No necesitas cuenta para empezar.
+                        Si tu colegio ya usa SkillHouse, entra con tu usuario y sigue donde
+                        quedaste.
+                    </p>
+                </div>
+                <div class="cierre__actions reveal">
+                    <a class="btn btn--light" href="invitado.html">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
+                        Jugar como invitado
+                    </a>
+                    <a class="btn btn--ghost" href="#temas">Explorar los temas</a>
+                </div>
+            </div>
+
+            <div class="cierre__pets" aria-hidden="true">
+                <img src="imag/ardilla_1.png" alt="" width="120" height="110" loading="lazy" decoding="async">
+                <img src="imag/osopanda_1.png" alt="" width="120" height="96" loading="lazy" decoding="async">
+                <img src="imag/zorro_1.png" alt="" width="140" height="128" loading="lazy" decoding="async">
+                <img src="imag/buho_1.png" alt="" width="120" height="90" loading="lazy" decoding="async">
+            </div>
+        </section>
 
     </main>
 
-    <main class="secciones">
-        <section id="segunda" class="segunda">
-        <section id="niveles" class="section">
-            <h2>⭐ Temas</h2>
-            <p class="section-intro">Catorce áreas, de 1° a 11°: cada tema pertenece a la banda de su ciclo y el juego se arma según el grado.</p>
-            <!-- js/portada.js genera una tarjeta por materia del catálogo. -->
-            <div class="grid-container sh-reveal-stagger" id="grid-temas">
-                <div class="nivel-card">
-                    <div class="nivel-icono">📐</div>
-                    <h3>Matemáticas</h3>
-                    <p>El área y el tema que se están jugando.</p>
-                    <div class="nivel-meta">temas · ejes · 3 niveles</div>
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer__top">
+                <div class="footer__brand">
+                    <a class="brand" href="#inicio" aria-label="SkillHouse, ir al inicio">
+                        <img src="imag/logo.png" alt="" width="40" height="40">
+                        <span class="brand__name">SkillHouse<span class="brand__dot">.</span></span>
+                    </a>
+                    <p>Aprender se siente como jugar. Una plataforma gratuita para practicar las catorce áreas del currículo, de 1° a 11°.</p>
                 </div>
-            </div>
-        </section>
-        <section id="juegos" class="section">
-            <h2>🎮 Juegos</h2>
-            <p class="section-intro">Practica lo aprendido con retos cortos y divertidos, pensados para que la lógica, el código y la exploración se sientan como un juego.</p>
-            <!-- js/portada.js genera una tarjeta por juego. -->
-            <div class="grid-container sh-reveal-stagger" id="grid-juegos">
-                <div class="juego-card">
-                    <div class="juego-icono">🎮</div>
-                    <h3>Quiz de Lógica</h3>
-                    <p>Pon a prueba tu razonamiento con preguntas rápidas y desafiantes.</p>
-                </div>
-            </div>
-        </section>
-        <section id="aprendizaje" class="section">
-            <h2>📚 Clases con tus maestros</h2>
-            <p class="section-intro">Un espacio para acompañar tu progreso, sin perder el contacto humano.</p>
-            <div class="content-box sh-reveal">
-                <div class="icono-grande">👩‍🏫</div>
-                <div class="content-box-text">
-                    <h3>Clases con código, como en el salón</h3>
-                    <p>Tu profesor crea la clase de su materia y su curso, y el código del curso queda siempre visible. Con ese código quedas anotado al instante, sin aprobaciones: entras a la sala, esperas a que él inicie la clase y juegas. Tus partidas quedan guardadas con nota de 1,0 a 5,0; él las ve en el libro de notas del curso y tú en Mi Biblioteca.</p>
-                </div>
-            </div>
-        </section>
-        </section>
-    </main>
 
-    <footer>
-        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
-        <a href="ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+                <nav class="footer__col" aria-label="Explorar">
+                    <p class="footer__title">Explorar</p>
+                    <a href="#temas">Temas</a>
+                    <a href="#juegos">Juegos</a>
+                    <a href="#clases">Clases</a>
+                    <a href="invitado.html">Jugar como invitado</a>
+                </nav>
+
+                <nav class="footer__col" aria-label="SkillHouse">
+                    <p class="footer__title">SkillHouse</p>
+                    <a href="ayuda.html" target="_blank" rel="noopener">Ayuda y sugerencias</a>
+                    <a href="#" onclick="abrirModal('modal-login'); return false;">Ingreso</a>
+                    <a href="#empezar">Empezar</a>
+                </nav>
+            </div>
+
+            <div class="footer__bottom">
+                <p class="footer__credit">Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+                <p>© <span id="year">2026</span> SkillHouse · Hecho en Colombia</p>
+            </div>
+        </div>
     </footer>
 
-    <div id="modal-login" class="modal">
+    <div id="modal-login" class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title" aria-hidden="true">
         <div class="modal-content">
-            <span class="close" onclick="cerrarModal('modal-login')">&times;</span>
-            <h2 style="margin-bottom: 20px;">Iniciar Sesión</h2>
+            <button type="button" class="close" onclick="cerrarModal('modal-login')" aria-label="Cerrar inicio de sesión">&times;</button>
+            <span class="eyebrow eyebrow--cyan">Tu cuenta</span>
+            <h2 id="login-title">Iniciar sesión</h2>
+            <p class="modal-intro">Entra con el usuario que te dio tu colegio.</p>
             <form id="form-login" action="#" method="POST">
                 <div class="form-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" name="email" placeholder="ejemplo@correo.com" required>
+                    <label for="login-email">Correo electrónico</label>
+                    <input id="login-email" type="email" name="email" placeholder="ejemplo@correo.com" autocomplete="email" required>
                 </div>
                 <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" name="password" placeholder="********" required>
+                    <label for="login-password">Contraseña</label>
+                    <input id="login-password" type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
                 </div>
-                <p id="login-error" style="color:#7C1DAB; display:none; margin-top:10px; font-size:0.9rem;"></p>
-                <button type="submit" class="btn-login" style="width: 100%; margin-top: 20px; cursor: pointer; border: none; font-size: 1rem;">Entrar</button>
+                <p id="login-error" role="alert" style="display:none;"></p>
+                <button type="submit" class="btn btn--primary modal-submit">Entrar</button>
             </form>
+            <p class="modal-foot">¿No tienes cuenta? <a href="invitado.html">Juega como invitado</a>.</p>
         </div>
     </div>
 
-<script src="js/scripts.js"></script>
-<script src="js/ui.js" defer></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/landing-motion.js" defer></script>
 </body>
 </html>

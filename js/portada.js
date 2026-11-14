@@ -102,7 +102,7 @@ const tarjetas = MATERIAS.map((materia, indice) => {
 
   return `
     <a class="tema-card tema-card--${materia.id}${feature} reveal"
-       href="invitado.html"
+       href="invitado.html?materia=${encodeURIComponent(materia.id)}#selector"
        data-materia="${escapar(materia.id)}"
        style="--accent:${acento}; --tint:${tinte}; --reveal-delay:${indice * 32}ms"
        aria-label="Jugar ${escapar(materia.nombre)} como invitado">
@@ -237,7 +237,7 @@ const ESCENAS = {
 
 const juegos = JUEGOS.map((juego, indice) => `
   <a class="game-card game-card--${juego.id} reveal"
-     href="invitado.html"
+     href="invitado.html?juego=${encodeURIComponent(juego.id)}#selector"
      data-juego="${escapar(juego.id)}"
      style="--reveal-delay:${indice * 90}ms"
      aria-label="Jugar ${escapar(juego.nombre)} como invitado">

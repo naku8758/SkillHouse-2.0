@@ -30,7 +30,6 @@
     gap:16px;
     background:var(--sh-white);
     border:1px solid var(--sh-linea);
-    border-left:3px solid var(--sh-oro-claro);
     border-radius:var(--sh-r-md);
     padding:20px 24px;
     margin-bottom:22px;
@@ -193,7 +192,6 @@
     position:relative;
     background:var(--sh-white);
     border:1px solid var(--sh-linea);
-    border-left:3px solid var(--sh-linea-fuerte);
     border-radius:var(--sh-r-md);
     padding:16px 18px;
     display:flex;
@@ -413,6 +411,7 @@
    PANTALLA DE JUEGO (quiz / puzzle / carrera)
 ===================================== */
 .juego-body{
+    margin:0;
     background:var(--sh-night-1);
     min-height:100vh;
     display:flex;
@@ -421,6 +420,9 @@
     padding:24px;
     font-family:var(--sh-font-body);
 }
+html.juego-html{ background:var(--sh-night-1); }
+html.juego-html::-webkit-scrollbar-track{ background:var(--sh-navy-900); }
+html.juego-html::-webkit-scrollbar-thumb{ border-color:var(--sh-navy-900); }
 
 .juego-caja{
     background:var(--sh-white);
@@ -435,15 +437,31 @@
 .juego-topbar{
     display:flex;
     justify-content:space-between;
-    align-items:center;
+    align-items:flex-start;
     margin-bottom:14px;
     gap:12px;
 }
+.juego-topbar > div:first-child{ min-width:0; flex:1 1 auto; }
+.juego-topbar > .juego-grupo-nombre{
+    flex:0 0 auto;
+    padding-top:2px;
+    text-align:right;
+    white-space:nowrap;
+}
 .juego-topbar h1{
+    display:flex;
+    align-items:center;
+    gap:8px;
     font-family:var(--sh-font-display);
     font-size:1.15rem;
     font-weight:600;
     color:var(--sh-ink-900);
+}
+.juego-topbar h1 svg{
+    width:20px;
+    height:20px;
+    flex:0 0 auto;
+    color:var(--sh-accent);
 }
 .juego-topbar .juego-grupo-nombre{
     font-size:.78rem;
@@ -497,6 +515,7 @@
 .opcion-btn{
     text-align:left;
     padding:11px 14px;
+    min-height:44px;
     border-radius:var(--sh-r-sm);
     border:1px solid var(--sh-linea-fuerte);
     background:var(--sh-white);
@@ -579,17 +598,20 @@
     gap:4px;
 }
 .btn-flecha{
+    display:grid;
+    place-items:center;
     background:transparent;
     border:1px solid var(--sh-linea-fuerte);
     color:var(--sh-ink-600);
     border-radius:var(--sh-r-sm);
-    width:24px;
-    height:24px;
-    font-size:.7rem;
+    width:30px;
+    height:30px;
+    padding:0;
     cursor:pointer;
-    transition:border-color var(--sh-fast), color var(--sh-fast);
+    transition:border-color var(--sh-fast), color var(--sh-fast), background var(--sh-fast);
 }
-.btn-flecha:hover{ border-color:var(--sh-accent); color:var(--sh-accent); }
+.btn-flecha svg{ width:15px; height:15px; }
+.btn-flecha:hover{ border-color:var(--sh-accent); color:var(--sh-accent); background:var(--sh-accent-tint); }
 .puzzle-item.correcto{ border-color:var(--sh-verde); background:rgba(62,90,129,.08); }
 .puzzle-item.incorrecto{ border-color:var(--sh-danger); background:rgba(108,31,163,.05); }
 
@@ -608,17 +630,31 @@
     position:absolute;
     right:9px;
     top:50%;
+    display:grid;
+    place-items:center;
+    width:22px;
+    height:22px;
     transform:translateY(-50%);
-    font-size:1.05rem;
+    color:#fff;
+    opacity:.85;
 }
+.carrera-meta svg{ width:16px; height:16px; }
 .carrera-rocket{
     position:absolute;
     top:50%;
+    display:grid;
+    place-items:center;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:#fff;
+    color:var(--sh-indigo);
+    left:calc(16px + (100% - 32px) * var(--p, 0));
     transform:translate(-50%,-50%);
-    font-size:1.2rem;
     transition:left .5s var(--sh-ease);
-    filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));
+    box-shadow:0 3px 8px rgba(0,0,0,.28);
 }
+.carrera-rocket svg{ width:19px; height:19px; }
 .carrera-enunciado{
     text-align:center;
     font-size:1.35rem;
@@ -631,7 +667,24 @@
    PANTALLA FINAL DE JUEGO
 ===================================== */
 .resultado-final{ text-align:center; }
-.resultado-final .resultado-emoji{ font-size:2rem; margin-bottom:6px; }
+.resultado-final .resultado-icono{
+    display:grid;
+    place-items:center;
+    width:64px;
+    height:64px;
+    margin:0 auto 12px;
+    border-radius:50%;
+    background:var(--sh-accent-tint);
+    color:var(--sh-accent);
+}
+.resultado-final .resultado-icono svg{ width:32px; height:32px; }
+.resultado-icono--superior{ background:rgba(91,46,255,.12); color:#5B2EFF; }
+.resultado-icono--alto{ background:rgba(35,170,237,.14); color:#0E6D9C; }
+.resultado-icono--basico{ background:rgba(52,118,211,.12); color:#3476D3; }
+.resultado-icono--inferior,
+.resultado-icono--aviso{ background:rgba(117,30,179,.10); color:#751EB3; }
+.resultado-icono--espera{ background:rgba(91,46,255,.10); color:var(--sh-indigo); }
+.resultado-icono--cerrada{ background:rgba(62,90,129,.10); color:#3E5A81; }
 .resultado-final h2{
     font-family:var(--sh-font-display);
     color:var(--sh-ink-900);
@@ -645,6 +698,13 @@
     gap:10px;
     justify-content:center;
     flex-wrap:wrap;
+}
+.juego-caja .btn-accion,
+.juego-caja .btn-secundario{
+    min-height:42px;
+    height:auto;
+    padding:10px 18px;
+    border-radius:12px;
 }
 
 /* =====================================
@@ -665,7 +725,7 @@
 
 .modal-contenido.modal-dos-columnas {
     background: var(--sh-white);
-    border-top: 3px solid var(--sh-accent);
+    border: 1px solid var(--sh-linea);
     padding: 26px;
     border-radius: var(--sh-r-lg);
     width: 620px;
@@ -835,6 +895,19 @@
     .form-fila{ flex-direction:column; align-items:stretch; }
     .panel-box{ padding:18px 16px; }
     .page-hero{ padding:16px 18px; }
+}
+@media(max-width:520px){
+    .juego-body{ padding:14px; }
+    .juego-caja{ padding:22px 16px; }
+    .juego-topbar{ flex-direction:column; align-items:flex-start; gap:4px; }
+    .juego-topbar h1{ font-size:1.05rem; }
+    .juego-topbar > .juego-grupo-nombre{ text-align:left; white-space:normal; }
+    .carrera-enunciado{ font-size:1.15rem; }
+    .puzzle-item{ gap:8px; padding:9px 10px; }
+    .puzzle-item .puzzle-handle{ gap:4px; }
+    .btn-flecha{ width:36px; height:36px; }
+    .btn-flecha svg{ width:16px; height:16px; }
+    .resultado-final h2{ font-size:1.15rem; }
 }
 
 /* ============================================================
@@ -1088,5 +1161,6 @@
     cursor:pointer;
     margin-bottom:14px;
 }
+.btn-voz svg{ width:16px; height:16px; flex:0 0 auto; color:var(--sh-accent); }
 .btn-voz:hover{ border-color:var(--sh-accent); background:var(--sh-accent-tint); }
 

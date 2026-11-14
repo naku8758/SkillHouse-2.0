@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/landing.css?v=2">
     <title>SkillHouse | Aprende jugando</title>
     <script>
         document.documentElement.classList.add("sh-landing-js");
@@ -22,7 +22,7 @@
     </script>
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/portada.js"></script>
+    <script type="module" src="js/portada.js?v=2"></script>
 </head>
 <body class="landing" id="inicio">
 
@@ -58,10 +58,13 @@
             <a href="#juegos">Juegos</a>
             <a href="#clases">Clases</a>
             <a href="ayuda.html" target="_blank" rel="noopener">Ayuda y sugerencias</a>
-            <a class="btn btn--primary" href="invitado.html">
-                Jugar como invitado
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-            </a>
+            <div class="mobile-menu__actions">
+                <a class="btn btn--primary" href="invitado.html">
+                    Jugar como invitado
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                </a>
+                <a class="btn btn--ghost" href="#" data-open-login>Ingreso</a>
+            </div>
         </nav>
         <p class="mobile-menu__note">Gratis, sin cuenta y de 1° a 11°.</p>
     </div>
@@ -152,10 +155,6 @@
                             100% gratuito
                         </div>
 
-                        <div class="hero__chip hero__chip--areas">
-                            <strong>14</strong> áreas · <strong>11</strong> grados
-                        </div>
-
                         <div class="hero__pet hero__pet--fox" aria-hidden="true">
                             <img src="imag/zorro_1.png" alt="" width="180" height="165" loading="lazy" decoding="async">
                         </div>
@@ -167,7 +166,7 @@
             </div>
 
             <a class="hero__scroll" href="#temas" aria-label="Bajar a los temas">
-                <span aria-hidden="true"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg>
             </a>
         </section>
 
@@ -372,7 +371,9 @@
 
     <div id="modal-login" class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title" aria-hidden="true">
         <div class="modal-content">
-            <button type="button" class="close" onclick="cerrarModal('modal-login')" aria-label="Cerrar inicio de sesión">&times;</button>
+            <button type="button" class="close" onclick="cerrarModal('modal-login')" aria-label="Cerrar inicio de sesión">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
             <span class="eyebrow eyebrow--cyan">Tu cuenta</span>
             <h2 id="login-title">Iniciar sesión</h2>
             <p class="modal-intro">Entra con el usuario que te dio tu colegio.</p>
@@ -394,6 +395,6 @@
 
     <script src="js/scripts.js"></script>
     <script src="js/ui.js" defer></script>
-    <script src="js/landing-motion.js" defer></script>
+    <script src="js/landing-motion.js?v=2" defer></script>
 </body>
 </html>

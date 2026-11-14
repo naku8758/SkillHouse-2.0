@@ -19,6 +19,7 @@ import { nombreDelTema, obtenerMateria } from "../js/catalogo.js";
 import { gradoDeCurso } from "../js/malla.js";
 import { obtenerPreguntasPorTema, resolverTemaAleatorio } from "../js/games/banco.js";
 import { ajustesDe, aplicarCiclo, hablar, hayVoz, detenerVoz } from "../js/games/ajustes.js";
+import { ICONOS, iconoResultado } from "../js/games/iconos.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
@@ -165,7 +166,7 @@ function mostrarAviso(aviso) {
   clearInterval(intervaloTiempo);
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">⚠️</div>
+      <div class="resultado-icono resultado-icono--aviso">${ICONOS.aviso}</div>
       <h2>${aviso.titulo}</h2>
       <p>${aviso.texto}</p>
       <div class="resultado-acciones">
@@ -193,15 +194,15 @@ function renderPregunta() {
   contenedor.innerHTML = `
     <div class="juego-topbar">
       <div>
-        <h1>🚀 Carrera Espacial</h1>
+        <h1>${ICONOS.carrera} Carrera Espacial</h1>
         <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"} · ${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}${materia ? " · " + escapeHtml(materia.nombre) : ""}</p>
       </div>
       <div class="juego-grupo-nombre">Problema ${indiceActual + 1} de ${total}</div>
     </div>
 
     <div class="carrera-pista">
-      <div class="carrera-meta">🏁</div>
-      <div class="carrera-rocket" id="carrera-rocket" style="left:${progresoPista}%">🚀</div>
+      <div class="carrera-meta">${ICONOS.meta}</div>
+      <div class="carrera-rocket" id="carrera-rocket" style="--p:${progresoPista / 100}">${ICONOS.carrera}</div>
     </div>
 
     <div class="juego-progreso">${
@@ -211,7 +212,7 @@ function renderPregunta() {
     }</div>
 
     <span class="pregunta-categoria">${tiempoPorPreguntaMs ? "Resuelve antes de que se acabe el tiempo" : "Resuelve a tu ritmo, sin reloj"}</span>
-    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">🔊 Escuchar el problema</button>` : ""}
+    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">${ICONOS.altavoz} Escuchar el problema</button>` : ""}
     <p class="pregunta-texto carrera-enunciado">${escapeHtml(p.enunciado)}</p>
 
     <div class="opciones-lista opciones-grid" id="opciones-lista">
@@ -268,7 +269,7 @@ function seleccionarOpcion(indiceElegido) {
     puntaje++;
     botones[indiceElegido].classList.add("opcion-correcta");
     const rocket = document.getElementById("carrera-rocket");
-    if (rocket) rocket.style.left = Math.round((puntaje / problemasRonda.length) * 100) + "%";
+    if (rocket) rocket.style.setProperty("--p", puntaje / problemasRonda.length);
   } else {
     if (indiceElegido >= 0) botones[indiceElegido].classList.add("opcion-incorrecta");
     botones[p.correcta].classList.add("opcion-correcta");
@@ -306,7 +307,6 @@ async function terminarRonda() {
   const nota = notaDesdeFraccion(puntaje, total);
   const nivel = desempenio(nota);
   const llegoALaMeta = puntaje === total;
-  const emoji = llegoALaMeta ? "🏆" : nota >= 4 ? "🎉" : nota >= 3 ? "🚀" : "💪";
   const mensaje = llegoALaMeta
     ? "¡Llegaste a la meta sin fallar ninguna!"
     : nota >= 3
@@ -315,7 +315,7 @@ async function terminarRonda() {
 
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">${emoji}</div>
+      <div class="resultado-icono resultado-icono--${nivel.clase}">${iconoResultado(nivel.clase)}</div>
       <h2>Resolviste ${puntaje} de ${total} (${porcentaje}%)</h2>
       <p class="resultado-nota">Nota: <strong>${formatearNota(nota)}</strong> / 5,0
         <span class="nota-nivel nota-nivel--${nivel.clase}">${nivel.nombre}</span></p>

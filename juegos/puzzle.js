@@ -18,6 +18,7 @@ import { nombreDelTema, obtenerMateria } from "../js/catalogo.js";
 import { gradoDeCurso } from "../js/malla.js";
 import { obtenerRetosPorTema, resolverTemaAleatorio } from "../js/games/banco.js";
 import { ajustesDe, aplicarCiclo, hablar, hayVoz, detenerVoz } from "../js/games/ajustes.js";
+import { ICONOS, iconoResultado } from "../js/games/iconos.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
@@ -166,7 +167,7 @@ function mostrarAviso(aviso) {
   detenerVoz();
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">⚠️</div>
+      <div class="resultado-icono resultado-icono--aviso">${ICONOS.aviso}</div>
       <h2>${aviso.titulo}</h2>
       <p>${aviso.texto}</p>
       <div class="resultado-acciones">
@@ -197,7 +198,7 @@ function renderRonda() {
   contenedor.innerHTML = `
     <div class="juego-topbar">
       <div>
-        <h1>🧩 Puzzle de Código</h1>
+        <h1>${ICONOS.puzzle} Puzzle de Código</h1>
         <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"} · ${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}</p>
       </div>
       <div class="juego-grupo-nombre">Reto ${indiceActual + 1} de ${total}</div>
@@ -205,7 +206,7 @@ function renderRonda() {
     <div class="juego-progreso"><div class="juego-progreso-relleno" style="width:${progreso}%"></div></div>
 
     <span class="pregunta-categoria">${escapeHtml(reto.titulo)}</span>
-    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">🔊 Escuchar el reto</button>` : ""}
+    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">${ICONOS.altavoz} Escuchar el reto</button>` : ""}
     <p class="puzzle-descripcion">${escapeHtml(descripcion)}</p>
 
     <ul class="puzzle-lista" id="puzzle-lista"></ul>
@@ -247,8 +248,8 @@ function renderLista() {
         <span class="puzzle-num">${i + 1}</span>
         <span class="puzzle-texto">${escapeHtml(paso)}</span>
         <span class="puzzle-handle">
-          <button type="button" class="btn-flecha" data-mover="arriba" data-indice="${i}" aria-label="Mover arriba">▲</button>
-          <button type="button" class="btn-flecha" data-mover="abajo" data-indice="${i}" aria-label="Mover abajo">▼</button>
+          <button type="button" class="btn-flecha" data-mover="arriba" data-indice="${i}" aria-label="Mover arriba">${ICONOS.arriba}</button>
+          <button type="button" class="btn-flecha" data-mover="abajo" data-indice="${i}" aria-label="Mover abajo">${ICONOS.abajo}</button>
         </span>
       </li>`
     )
@@ -358,7 +359,6 @@ async function terminarJuego() {
 
   const nota = notaDesdeFraccion(puntaje, total);
   const nivel = desempenio(nota);
-  const emoji = nota >= 4.5 ? "🏆" : nota >= 4 ? "🎉" : nota >= 3 ? "🙂" : "💪";
   const mensaje =
     nota >= 4
       ? "¡Piensas como toda una programadora/programador!"
@@ -368,7 +368,7 @@ async function terminarJuego() {
 
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">${emoji}</div>
+      <div class="resultado-icono resultado-icono--${nivel.clase}">${iconoResultado(nivel.clase)}</div>
       <h2>Resolviste ${puntaje} de ${total} retos (${porcentaje}%)</h2>
       <p class="resultado-nota">Nota: <strong>${formatearNota(nota)}</strong> / 5,0
         <span class="nota-nivel nota-nivel--${nivel.clase}">${nivel.nombre}</span></p>

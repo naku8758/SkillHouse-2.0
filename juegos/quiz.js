@@ -18,6 +18,7 @@ import { nombreDelTema, obtenerMateria } from "../js/catalogo.js";
 import { gradoDeCurso } from "../js/malla.js";
 import { obtenerPreguntasPorTema, resolverTemaAleatorio } from "../js/games/banco.js";
 import { ajustesDe, aplicarCiclo, hablar, hayVoz, detenerVoz } from "../js/games/ajustes.js";
+import { ICONOS, iconoResultado } from "../js/games/iconos.js";
 
 const contenedor = document.getElementById("juego-caja");
 const params = new URLSearchParams(window.location.search);
@@ -162,7 +163,7 @@ function mostrarAviso(aviso) {
   detenerVoz();
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">⚠️</div>
+      <div class="resultado-icono resultado-icono--aviso">${ICONOS.aviso}</div>
       <h2>${aviso.titulo}</h2>
       <p>${aviso.texto}</p>
       <div class="resultado-acciones">
@@ -190,7 +191,7 @@ function renderPregunta() {
   contenedor.innerHTML = `
     <div class="juego-topbar">
       <div>
-        <h1>🎮 Quiz de Lógica</h1>
+        <h1>${ICONOS.quiz} Quiz de Lógica</h1>
         <p class="juego-grupo-nombre">${grupoActual ? "Grupo: " + escapeHtml(grupoActual.nombre) : esInvitado ? "Invitado (sin guardar)" : "Modo práctica"}${materia ? " · " + escapeHtml(materia.nombre) : ""}</p>
       </div>
       <div class="juego-grupo-nombre">Pregunta ${indiceActual + 1} de ${total}</div>
@@ -198,7 +199,7 @@ function renderPregunta() {
     <div class="juego-progreso"><div class="juego-progreso-relleno" style="width:${progreso}%"></div></div>
 
     <span class="pregunta-categoria">${escapeHtml(nombreDelTema(temaId))} · ${NOMBRES_DIFICULTAD[dificultad] || "Intermedio"}</span>
-    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">🔊 Escuchar la pregunta</button>` : ""}
+    ${ajustes.voz ? `<button type="button" class="btn-voz" id="btn-escuchar">${ICONOS.altavoz} Escuchar la pregunta</button>` : ""}
     <p class="pregunta-texto">${escapeHtml(p.enunciado)}</p>
 
     <div class="opciones-lista" id="opciones-lista">
@@ -270,7 +271,6 @@ async function terminarRonda() {
 
   const nota = notaDesdeFraccion(puntaje, total);
   const nivel = desempenio(nota);
-  const emoji = nota >= 4.5 ? "🏆" : nota >= 4 ? "🎉" : nota >= 3 ? "🙂" : "💪";
   const mensaje =
     nota >= 4
       ? "¡Excelente trabajo!"
@@ -280,7 +280,7 @@ async function terminarRonda() {
 
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">${emoji}</div>
+      <div class="resultado-icono resultado-icono--${nivel.clase}">${iconoResultado(nivel.clase)}</div>
       <h2>Obtuviste ${puntaje} de ${total} (${porcentaje}%)</h2>
       <p class="resultado-nota">Nota: <strong>${formatearNota(nota)}</strong> / 5,0
         <span class="nota-nivel nota-nivel--${nivel.clase}">${nivel.nombre}</span></p>

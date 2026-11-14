@@ -3,147 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Elige grado, área, tema y dificultad y juega en SkillHouse sin crear cuenta. Tres juegos educativos para estudiantes de 1° a 11°.">
+    <meta name="theme-color" content="#080B21">
     <link rel="icon" type="image/png" href="imag/logo.png">
-    <title>Jugar como invitado | SkillHouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/juegos.css?v=5">
-    <style>
-        /* Ajustes puntuales solo de esta página, sin tocar style.css */
-        .hero.hero--invitado{ padding-bottom:40px; }
-        .hero--invitado .titulo-principal{ font-size:2.6rem; }
-        .selector-card{
-            background:var(--sh-white);
-            border-radius:var(--sh-r-xl);
-            padding:32px 30px;
-            box-shadow:var(--sh-shadow-lg);
-            margin-top:-46px;
-            position:relative;
-            z-index:3;
-        }
-        .juego-card{ cursor:pointer; border:none; text-align:left; width:100%; font-family:var(--sh-font-body); }
-        .juego-card:focus-visible{ outline:2px solid var(--sh-cyan); outline-offset:3px; }
-        .juego-card .juego-cta{
-            display:inline-flex; align-items:center; gap:6px;
-            margin-top:14px; font-weight:700; font-size:.85rem;
-            color:var(--sh-cyan);
-        }
-        .invitado-aviso{
-            text-align:center;
-            color:var(--sh-ink-400);
-            font-size:.9rem;
-            margin-top:10px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/invitado.css?v=1">
+    <title>Jugar como invitado | SkillHouse</title>
 </head>
-<body>
+<body class="invitado" id="inicio">
 
-    <header>
-        <div class="logo">
-            <img src="imag/logo.png" alt="logo" width="78" height="60">
-            <p class="logoskillhouse">SkillHouse</p>
+    <a class="skip-link" href="#selector">Saltar al selector de práctica</a>
+
+    <header class="inv-header">
+        <div class="inv-container inv-header__inner">
+            <a class="inv-brand" href="index.html" aria-label="SkillHouse, volver al inicio">
+                <img src="imag/logo.png" alt="" width="40" height="40">
+                <span>SkillHouse<span class="inv-brand__dot">.</span></span>
+            </a>
+
+            <nav class="inv-nav" aria-label="Principal">
+                <a class="inv-nav__link" href="index.html" aria-label="Volver al inicio">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>
+                    <span class="inv-nav__label">Volver al inicio</span>
+                </a>
+                <a class="inv-nav__link inv-nav__link--help" href="ayuda.html" target="_blank" rel="noopener">
+                    Ayuda
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+                </a>
+                <a class="inv-btn inv-btn--login btn-login" href="#" onclick="abrirModal('modal-login'); return false;">Ingreso</a>
+            </nav>
         </div>
-        <nav>
-            <a href="index.html" class="nav-link">← Volver al inicio</a>
-            <a href="#" onclick="abrirModal('modal-login'); return false;" class="btn-login">Ingreso</a>
-        </nav>
     </header>
 
-    <main class="hero hero--invitado">
-        <div class="hero-text" style="max-width:640px; margin:0 auto; text-align:center;">
-            <span class="badge">🕹️ Sin necesidad de cuenta</span>
-            <h1 class="titulo-principal">Juega como invitado</h1>
-            <div class="text">
-                <p>Elige el grado, la materia, el tema y la dificultad, y entra directo a jugar. No necesitas cuenta, pero tampoco se guarda tu resultado.</p>
+    <main>
+        <section class="inv-hero" aria-labelledby="inv-title">
+            <div class="inv-hero__bg" aria-hidden="true">
+                <span class="inv-hero__aurora inv-hero__aurora--1"></span>
+                <span class="inv-hero__aurora inv-hero__aurora--2"></span>
+                <span class="inv-hero__aurora inv-hero__aurora--3"></span>
+                <span class="inv-hero__stars"></span>
+                <span class="inv-hero__grid"></span>
             </div>
+
+            <div class="inv-container inv-hero__inner">
+                <span class="inv-badge">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2Z"/></svg>
+                    Sin cuenta, sin instalar
+                </span>
+
+                <h1 class="inv-title" id="inv-title">Juega como <span>invitado</span></h1>
+
+                <p class="inv-lead">
+                    Elige grado, área, tema y dificultad. En segundos entras a un reto corto
+                    y practicas sin crear cuenta. Si después quieres guardar tu progreso,
+                    tu profesor puede darte acceso.
+                </p>
+
+                <ul class="inv-facts" aria-label="Qué incluye el modo invitado">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>
+                        14 áreas del currículo
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>
+                        De 1° a 11°
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>
+                        Tres juegos
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="inv-container">
+            <section class="inv-selector" id="selector" aria-labelledby="selector-title">
+                <div class="inv-selector__head">
+                    <div>
+                        <span class="inv-eyebrow">Paso 1</span>
+                        <h2 id="selector-title">Elige qué practicar</h2>
+                    </div>
+                    <span class="inv-selector__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/></svg>
+                    </span>
+                </div>
+
+                <p class="inv-selector__intro">
+                    El grado define cómo se juega: en 1° y 2° hay dos opciones, sin reloj y
+                    con la pregunta leída en voz alta; en 10° y 11°, cuatro opciones, hasta
+                    doce preguntas y tiempo corto.
+                </p>
+
+                <div class="inv-fields">
+                    <div class="inv-field">
+                        <label for="select-grado-invitado">Grado</label>
+                        <div class="inv-select">
+                            <select id="select-grado-invitado" name="grado"></select>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="inv-field">
+                        <label for="select-materia-invitado">Materia</label>
+                        <div class="inv-select">
+                            <select id="select-materia-invitado" name="materia"></select>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="inv-field">
+                        <label for="select-tema-invitado">Tema</label>
+                        <div class="inv-select">
+                            <select id="select-tema-invitado" name="tema"></select>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="inv-field">
+                        <label for="select-dificultad-invitado">Dificultad</label>
+                        <div class="inv-select">
+                            <select id="select-dificultad-invitado" name="dificultad">
+                                <option value="1">Nivel 1 · Fácil</option>
+                                <option value="2" selected>Nivel 2 · Intermedio</option>
+                                <option value="3">Nivel 3 · Difícil</option>
+                            </select>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="inv-hint" id="aviso-ciclo-invitado" aria-live="polite"></p>
+            </section>
         </div>
-    </main>
 
-    <main class="secciones" style="padding:0 6% 70px;">
-        <section class="selector-card sh-reveal">
-            <h2 style="margin-bottom:6px;">🎯 Elige qué practicar</h2>
-            <p class="section-intro" style="margin-bottom:22px;">El grado define cómo se juega: en 1° y 2° hay dos opciones, sin reloj y con la pregunta leída en voz alta; en 10° y 11°, cuatro opciones, hasta doce preguntas y tiempo corto.</p>
-            <div class="form-fila">
-                <div class="campo">
-                    <label for="select-grado-invitado">Grado</label>
-                    <select id="select-grado-invitado"></select>
+        <section class="inv-games" aria-labelledby="games-title">
+            <div class="inv-container">
+                <div class="inv-section-head">
+                    <div>
+                        <span class="inv-eyebrow">Paso 2</span>
+                        <h2 id="games-title">Elige tu juego</h2>
+                    </div>
+                    <p>Los tres juegos usan el grado, el tema y la dificultad que elegiste arriba.</p>
                 </div>
-                <div class="campo">
-                    <label for="select-materia-invitado">Materia</label>
-                    <select id="select-materia-invitado"></select>
+
+                <div class="inv-games__grid">
+                    <button type="button" class="inv-game inv-game--quiz" data-juego-invitado="quiz">
+                        <span class="inv-game__top">
+                            <span class="inv-game__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l2.5-3A8.5 8.5 0 1 1 21 11.5z"/><path d="M9.6 8.8a2.4 2.4 0 1 1 3.7 2c-.8.6-1.3 1.1-1.3 2.2"/><path d="M12 16h.01"/></svg>
+                            </span>
+                            <span class="inv-game__tag">Razonamiento</span>
+                        </span>
+                        <span class="inv-game__body">
+                            <strong>Quiz de Lógica</strong>
+                            <span>Preguntas de opción múltiple, a tu ritmo y sin cronómetro.</span>
+                        </span>
+                        <span class="inv-game__cta">
+                            Jugar ahora
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                        </span>
+                    </button>
+
+                    <button type="button" class="inv-game inv-game--puzzle" data-juego-invitado="puzzle">
+                        <span class="inv-game__top">
+                            <span class="inv-game__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4a2 2 0 1 0 4 0h2v6h-4a2 2 0 1 0 0 4h4v4h-6v-2a2 2 0 1 0-4 0v2H3v-6h2a2 2 0 1 0 0-4H3V5h6z"/></svg>
+                            </span>
+                            <span class="inv-game__tag">Lógica</span>
+                        </span>
+                        <span class="inv-game__body">
+                            <strong>Puzzle de Código</strong>
+                            <span>Ordena los pasos correctos de un proceso paso a paso.</span>
+                        </span>
+                        <span class="inv-game__cta">
+                            Jugar ahora
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                        </span>
+                    </button>
+
+                    <button type="button" class="inv-game inv-game--carrera" data-juego-invitado="carrera">
+                        <span class="inv-game__top">
+                            <span class="inv-game__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 3 5.5 7 5.5 11.5 0 2-.4 3.8-1.2 5.5H7.7a12.7 12.7 0 0 1-1.2-5.5C6.5 10 8.5 6 12 3z"/><circle cx="12" cy="10" r="2.2"/><path d="M7.7 15.5 4 20l4.5-.8"/><path d="m16.3 15.5 3.7 4.5-4.5-.8"/><path d="M10 22h4"/></svg>
+                            </span>
+                            <span class="inv-game__tag">Velocidad</span>
+                        </span>
+                        <span class="inv-game__body">
+                            <strong>Carrera Espacial</strong>
+                            <span>Responde rápido: cada acierto avanza tu cohete en la pista.</span>
+                        </span>
+                        <span class="inv-game__cta">
+                            Jugar ahora
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                        </span>
+                    </button>
                 </div>
-                <div class="campo">
-                    <label for="select-tema-invitado">Tema</label>
-                    <select id="select-tema-invitado"></select>
-                </div>
-                <div class="campo">
-                    <label for="select-dificultad-invitado">Dificultad</label>
-                    <select id="select-dificultad-invitado">
-                        <option value="1">Nivel 1 - ⭐</option>
-                        <option value="2" selected>Nivel 2 - ⭐⭐</option>
-                        <option value="3">Nivel 3 - ⭐⭐⭐</option>
-                    </select>
+
+                <div class="inv-note">
+                    <span class="inv-note__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/></svg>
+                    </span>
+                    <p><strong>¿Quieres guardar tu progreso?</strong> Pídele a tu profesor o a tu institución el correo y la contraseña de tu cuenta.</p>
+                    <a class="inv-link" href="#" onclick="abrirModal('modal-login'); return false;">
+                        Entrar con mi cuenta
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
                 </div>
             </div>
-            <p class="section-intro" id="aviso-ciclo-invitado"></p>
-        </section>
-
-        <section style="padding-top:50px;">
-            <h2>🎮 Elige tu juego</h2>
-            <p class="section-intro">Los tres juegos usan el tema y la dificultad que elegiste arriba.</p>
-            <div class="grid-container">
-                <button type="button" class="juego-card sh-reveal" data-juego-invitado="quiz">
-                    <div class="juego-icono">🎮</div>
-                    <h3>Quiz de Lógica</h3>
-                    <p>Preguntas de opción múltiple, a tu ritmo y sin cronómetro.</p>
-                    <span class="juego-cta">Jugar →</span>
-                </button>
-                <button type="button" class="juego-card sh-reveal" data-juego-invitado="puzzle">
-                    <div class="juego-icono">🧩</div>
-                    <h3>Puzzle de Código</h3>
-                    <p>Ordena los pasos correctos de un proceso paso a paso.</p>
-                    <span class="juego-cta">Jugar →</span>
-                </button>
-                <button type="button" class="juego-card sh-reveal" data-juego-invitado="carrera">
-                    <div class="juego-icono">🚀</div>
-                    <h3>Carrera Espacial</h3>
-                    <p>Responde rápido: cada acierto avanza tu cohete en la pista.</p>
-                    <span class="juego-cta">Jugar →</span>
-                </button>
-            </div>
-            <p class="invitado-aviso">¿Quieres guardar tu progreso y que tu profesor vea tus resultados? Pídele a tu profesor o a tu institución el correo y la contraseña de tu cuenta.</p>
         </section>
     </main>
 
-    <footer>
-        <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
-        <a href="ayuda.html" target="_blank" class="link-ayuda">Ayuda y Sugerencias ↗</a>
+    <footer class="inv-footer">
+        <div class="inv-container inv-footer__inner">
+            <div class="inv-footer__brand">
+                <a class="inv-brand" href="index.html" aria-label="SkillHouse, volver al inicio">
+                    <img src="imag/logo.png" alt="" width="38" height="38">
+                    <span>SkillHouse<span class="inv-brand__dot">.</span></span>
+                </a>
+                <p>Aprender se siente como jugar. Una plataforma gratuita para practicar las catorce áreas del currículo, de 1° a 11°.</p>
+            </div>
+
+            <nav class="inv-footer__col" aria-label="Explorar">
+                <p>Explorar</p>
+                <a href="index.html">Inicio</a>
+                <a href="index.html#temas">Temas</a>
+                <a href="index.html#juegos">Juegos</a>
+            </nav>
+
+            <nav class="inv-footer__col" aria-label="SkillHouse">
+                <p>SkillHouse</p>
+                <a href="ayuda.html" target="_blank" rel="noopener">Ayuda y sugerencias</a>
+                <a href="#" onclick="abrirModal('modal-login'); return false;">Ingreso</a>
+                <a href="invitado.html">Jugar como invitado</a>
+            </nav>
+        </div>
+
+        <div class="inv-container inv-footer__bottom">
+            <p>Desarrollado por: Aprendiz Garzon Juan &amp; Tovar Sara | Técnico de Programación de Software - CENIGRAF</p>
+            <p>© <span id="year">2026</span> SkillHouse · Hecho en Colombia</p>
+        </div>
     </footer>
 
-    <div id="modal-login" class="modal">
+    <div id="modal-login" class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title" aria-hidden="true">
         <div class="modal-content">
-        <span class="close" onclick="cerrarModal('modal-login')">&times;</span>
-        <h2 style="margin-bottom: 20px;">Iniciar Sesión</h2>
+            <button type="button" class="modal-close" onclick="cerrarModal('modal-login')" aria-label="Cerrar inicio de sesión">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+            <span class="inv-eyebrow inv-eyebrow--cyan">Tu cuenta</span>
+            <h2 id="login-title">Iniciar sesión</h2>
+            <p class="modal-intro">Entra con el usuario que te dio tu colegio.</p>
 
-        <form id="form-login" action="#" method="POST">
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <input type="email" name="email" placeholder="ejemplo@correo.com" required>
-            </div>
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" name="password" placeholder="********" required>
-            </div>
-            <p id="login-error" style="color:#7C1DAB; display:none; margin-top:10px; font-size:0.9rem;"></p>
-            <button type="submit" class="btn-login" style="width: 100%; margin-top: 20px; cursor: pointer; border: none; font-size: 1rem;">Entrar</button>
-        </form>
+            <form id="form-login" action="#" method="POST">
+                <div class="form-group">
+                    <label for="login-email">Correo electrónico</label>
+                    <input id="login-email" type="email" name="email" placeholder="ejemplo@correo.com" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input id="login-password" type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                <p id="login-error" role="alert" style="display:none;"></p>
+                <button type="submit" class="modal-submit">Entrar</button>
+            </form>
+
+            <p class="modal-foot">¿No tienes cuenta? <a href="index.html#empezar">Juega como invitado</a>.</p>
         </div>
     </div>
 
-<script src="js/scripts.js"></script>
-<script src="js/ui.js" defer></script>
-<script type="module" src="js/firebase.js"></script>
-<script type="module" src="js/auth.js"></script>
-<script type="module" src="js/invitado.js"></script>
+    <script src="js/scripts.js"></script>
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/invitado.js?v=1"></script>
 </body>
 </html>

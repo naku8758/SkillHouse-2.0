@@ -10,6 +10,7 @@
 
 import { cicloDelTema } from "../catalogo.js";
 import { ajustesDeCiclo } from "../malla.js";
+import { ICONOS } from "./iconos.js";
 
 export function cicloDe(temaId) {
   return cicloDelTema(temaId) || "c3";
@@ -55,7 +56,7 @@ export function hablar(texto) {
 /** Botón para volver a escuchar la pregunta. */
 export function botonVoz(texto) {
   if (!hayVoz()) return "";
-  return `<button type="button" class="btn-voz" id="btn-escuchar" aria-label="Escuchar la pregunta">🔊 Escuchar</button>`;
+  return `<button type="button" class="btn-voz" id="btn-escuchar" aria-label="Escuchar la pregunta">${ICONOS.altavoz} Escuchar</button>`;
 }
 
 /** Conecta el botón de voz con el texto actual de la pregunta. */

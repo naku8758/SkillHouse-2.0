@@ -11,12 +11,14 @@
 import { obtenerMateria, materiasDelGrado, temasDelGrado, rutaDeJuego } from "./catalogo.js";
 import { GRADOS, cicloDeGrado } from "./malla.js";
 
-const GRADO_por_DEFECTO = 6;
+const GRADO_POR_DEFECTO = 6;
+const PARAMS = new URLSearchParams(window.location.search);
 
 const selectGrado = document.getElementById("select-grado-invitado");
 const selectMateria = document.getElementById("select-materia-invitado");
 const selectTema = document.getElementById("select-tema-invitado");
 const selectDificultad = document.getElementById("select-dificultad-invitado");
+const botonesJuego = Array.from(document.querySelectorAll("[data-juego-invitado]"));
 
 function escapeHtml(texto) {
   const div = document.createElement("div");
@@ -25,12 +27,16 @@ function escapeHtml(texto) {
 }
 
 function gradoElegido() {
-  return Number(selectGrado.value) || GRADO_por_DEFECTO;
+  return Number(selectGrado.value) || GRADO_POR_DEFECTO;
+}
+
+function opcionesDe(select) {
+  return Array.from(select.options).map((opcion) => opcion.value);
 }
 
 function poblarGrados() {
   selectGrado.innerHTML = GRADOS.map(
-    (grado) => `<option value="${grado}"${grado === GRADO_por_DEFECTO ? " selected" : ""}>${grado}°</option>`
+    (grado) => `<option value="${grado}"${grado === GRADO_POR_DEFECTO ? " selected" : ""}>${grado}°</option>`
   ).join("");
 }
 
@@ -38,11 +44,11 @@ function poblarMaterias() {
   const grado = gradoElegido();
   const anterior = selectMateria.value;
   const areas = materiasDelGrado(grado);
-  selectMateria.innerHTML = areas.map(
-    (materia) => `<option value="${escapeHtml(materia.id)}">${escapeHtml(materia.icono)} ${escapeHtml(materia.nombre)}</option>`
-  ).join("");
+  selectMateria.innerHTML = areas
+    .map((materia) => `<option value="${escapeHtml(materia.id)}">${escapeHtml(materia.nombre)}</option>`)
+    .join("");
   // Si el área elegida se dicta también en el nuevo grado, se conserva.
-  if (areas.some((m) => m.id === anterior)) selectMateria.value = anterior;
+  if (areas.some((materia) => materia.id === anterior)) selectMateria.value = anterior;
 }
 
 function poblarTemas() {
@@ -52,12 +58,35 @@ function poblarTemas() {
   selectTema.innerHTML = temas
     .map((tema) => `<option value="${escapeHtml(tema.id)}">${escapeHtml(tema.nombre)}</option>`)
     .join("");
-  selectTema.disabled = !temas.length;
+  selectTema.disabled = temas.length === 0;
 }
 
-function avisarSinContenido() {
+function hayTemaDisponible() {
+  return !selectTema.disabled && selectTema.options.length > 0 && Boolean(selectTema.value);
+}
+
+function actualizarEstadoJuegos() {
+  const disponible = hayTemaDisponible();
+  botonesJuego.forEach((boton) => {
+    boton.disabled = !disponible;
+    if (disponible) {
+      boton.removeAttribute("title");
+    } else {
+      boton.title = "Elige un tema para poder jugar";
+    }
+  });
+}
+
+function avisarCiclo() {
   const nota = document.getElementById("aviso-ciclo-invitado");
   if (!nota) return;
+
+  if (!hayTemaDisponible()) {
+    nota.textContent =
+      "No hay temas disponibles para esta combinación. Prueba con otra materia o con otro grado.";
+    return;
+  }
+
   const ciclo = cicloDeGrado(gradoElegido());
   nota.textContent =
     ciclo === "c1"
@@ -71,23 +100,66 @@ function avisarSinContenido() {
       : "En 10° y 11°: 4 opciones, hasta 12 preguntas y 11 segundos por pregunta.";
 }
 
-poblarGrados();
-poblarMaterias();
-poblarTemas();
-avisarSinContenido();
+function marcarJuegoPreferido() {
+  const juego = PARAMS.get("juego");
+  if (!juego) return;
+  const boton = botonesJuego.find((candidato) => candidato.dataset.juegoInvitado === juego);
+  if (boton) boton.classList.add("is-preferred");
+}
+
+function aplicarParametrosIniciales() {
+  poblarGrados();
+
+  const gradoUrl = Number(PARAMS.get("grado"));
+  if (GRADOS.includes(gradoUrl)) selectGrado.value = String(gradoUrl);
+
+  poblarMaterias();
+  const materiaUrl = PARAMS.get("materia");
+  if (materiaUrl && opcionesDe(selectMateria).includes(materiaUrl)) {
+    selectMateria.value = materiaUrl;
+  }
+
+  poblarTemas();
+  const temaUrl = PARAMS.get("tema");
+  if (temaUrl && opcionesDe(selectTema).includes(temaUrl)) {
+    selectTema.value = temaUrl;
+  }
+
+  const dificultadUrl = Number(PARAMS.get("dificultad"));
+  if ([1, 2, 3].includes(dificultadUrl)) {
+    selectDificultad.value = String(dificultadUrl);
+  }
+
+  marcarJuegoPreferido();
+  actualizarEstadoJuegos();
+  avisarCiclo();
+}
+
+aplicarParametrosIniciales();
 
 selectGrado.addEventListener("change", () => {
   poblarMaterias();
   poblarTemas();
-  avisarSinContenido();
+  actualizarEstadoJuegos();
+  avisarCiclo();
 });
-selectMateria.addEventListener("change", poblarTemas);
 
-document.querySelectorAll("[data-juego-invitado]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const juego = btn.dataset.juegoInvitado;
+selectMateria.addEventListener("change", () => {
+  poblarTemas();
+  actualizarEstadoJuegos();
+  avisarCiclo();
+});
+
+selectTema.addEventListener("change", actualizarEstadoJuegos);
+
+botonesJuego.forEach((boton) => {
+  boton.addEventListener("click", () => {
+    if (boton.disabled) return;
+
+    const juego = boton.dataset.juegoInvitado;
     const tema = selectTema.value;
     if (!juego || !tema) return;
+
     const url = new URL(rutaDeJuego(juego, ""), window.location.href);
     url.searchParams.set("invitado", "1");
     url.searchParams.set("tema", tema);
@@ -97,3 +169,80 @@ document.querySelectorAll("[data-juego-invitado]").forEach((btn) => {
     window.location.href = url.toString();
   });
 });
+
+/* ---------------------- MODAL DE INGRESO ---------------------- */
+// scripts.js expone abrirModal/cerrarModal para toda la app. Aquí se
+// envuelven solo para el modal de login: foco atrapado, Escape, fondo
+// clicable y aria-hidden sincronizado.
+const modalLogin = document.getElementById("modal-login");
+const SELECTOR_ENFOCABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+let ultimoFoco = null;
+
+function abrirLogin() {
+  if (!modalLogin) return;
+  ultimoFoco = document.activeElement;
+  modalLogin.style.display = "flex";
+  modalLogin.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  document.addEventListener("keydown", manejarTecladoModal);
+
+  window.requestAnimationFrame(() => {
+    const primero = modalLogin.querySelector("#login-email") || modalLogin.querySelector(SELECTOR_ENFOCABLE);
+    if (primero) primero.focus();
+  });
+}
+
+function cerrarLogin() {
+  if (!modalLogin) return;
+  modalLogin.style.display = "none";
+  modalLogin.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  document.removeEventListener("keydown", manejarTecladoModal);
+
+  if (ultimoFoco && typeof ultimoFoco.focus === "function" && document.contains(ultimoFoco)) {
+    ultimoFoco.focus();
+  }
+}
+
+function manejarTecladoModal(evento) {
+  if (evento.key === "Escape") {
+    evento.preventDefault();
+    cerrarLogin();
+    return;
+  }
+  if (evento.key !== "Tab") return;
+
+  const enfocables = Array.from(modalLogin.querySelectorAll(SELECTOR_ENFOCABLE)).filter(
+    (elemento) => elemento.offsetParent !== null
+  );
+  if (enfocables.length === 0) return;
+
+  const primero = enfocables[0];
+  const ultimo = enfocables[enfocables.length - 1];
+
+  if (evento.shiftKey && document.activeElement === primero) {
+    evento.preventDefault();
+    ultimo.focus();
+  } else if (!evento.shiftKey && document.activeElement === ultimo) {
+    evento.preventDefault();
+    primero.focus();
+  }
+}
+
+if (modalLogin) {
+  window.abrirModal = function (id) {
+    if (id === "modal-login") abrirLogin();
+  };
+  window.cerrarModal = function (id) {
+    if (id === "modal-login") cerrarLogin();
+  };
+
+  modalLogin.addEventListener("click", (evento) => {
+    if (evento.target === modalLogin) cerrarLogin();
+  });
+}
+
+/* ---------------------- DETALLES DE LA PÁGINA ---------------------- */
+const year = document.getElementById("year");
+if (year) year.textContent = String(new Date().getFullYear());

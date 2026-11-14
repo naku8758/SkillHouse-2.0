@@ -6,6 +6,7 @@
 // manda el estado.
 
 import { escucharEstadoSala, estadoDeSala, SALA } from "./sala.js";
+import { ICONOS } from "./games/iconos.js";
 
 function escapar(texto) {
   const div = document.createElement("div");
@@ -28,7 +29,7 @@ export function pantallaDeEspera(contenedor, grupo) {
 
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">⏳</div>
+      <div class="resultado-icono resultado-icono--espera">${ICONOS.reloj}</div>
       <h2>Tu profesor todavía no ha iniciado la clase</h2>
       <p>Ya estás dentro de <strong>${escapar(grupo.nombre)}</strong>${
         codigo ? ` (código <code>${escapar(codigo)}</code>)` : ""
@@ -48,7 +49,7 @@ export function pantallaDeEspera(contenedor, grupo) {
 export function pantallaDeClaseCerrada(contenedor, grupo) {
   contenedor.innerHTML = `
     <div class="resultado-final">
-      <div class="resultado-emoji">🔒</div>
+      <div class="resultado-icono resultado-icono--cerrada">${ICONOS.candado}</div>
       <h2>Esta clase ya terminó</h2>
       <p>El profesor cerró <strong>${escapar(grupo.nombre)}</strong>. Si quieres
       seguir practicando el tema, usa el modo práctica de la materia.</p>

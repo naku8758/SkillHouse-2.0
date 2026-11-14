@@ -147,8 +147,21 @@
   }
 
   if (mobileMenu) {
-    mobileMenu.querySelectorAll("a").forEach((link) => {
+    mobileMenu.querySelectorAll("a:not([data-open-login])").forEach((link) => {
       link.addEventListener("click", () => cerrarMenu({ devolverFoco: false }));
+    });
+
+    // El ingreso del menú móvil cierra el menú antes de abrir el modal y deja
+    // el foco en la hamburguesa, que es el punto de retorno natural al cerrar.
+    mobileMenu.querySelectorAll("[data-open-login]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        cerrarMenu({ devolverFoco: false });
+        if (menuToggle) menuToggle.focus();
+        if (typeof window.abrirModal === "function") {
+          window.abrirModal("modal-login");
+        }
+      });
     });
 
     mobileMenu.addEventListener("keydown", (event) => {
